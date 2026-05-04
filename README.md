@@ -88,6 +88,7 @@ Out of scope:
 
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
 - [Evaluation framework](./docs/evaluation-framework.md)
+- [Candidate shortlist](./docs/candidate-shortlist.md)
 - [IAM documentation wiki](./docs/wiki/README.md)
 - [Authentication vs Authorization](./docs/wiki/01-authentication-vs-authorization.md)
 - [OAuth2](./docs/wiki/02-oauth2.md)

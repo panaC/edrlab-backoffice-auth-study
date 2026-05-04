@@ -141,6 +141,7 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 | Topic | Supporting wiki page |
 | --- | --- |
 | Product-neutral comparison method | [Evaluation Framework](./evaluation-framework.md) |
+| Candidate options for later evaluation | [Candidate Shortlist](./candidate-shortlist.md) |
 | Authentication and authorization boundary | [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md) |
 | OAuth2 roles, tokens, and scopes | [OAuth2](./wiki/02-oauth2.md) |
 | OIDC login and identity claims | [OpenID Connect](./wiki/03-openid-connect.md) |
