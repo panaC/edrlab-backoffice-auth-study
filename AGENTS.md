@@ -43,7 +43,7 @@ During Phase 1:
 5. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
 6. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
 7. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
-8. Every wiki page must include a `References` section.
+8. Every `docs/wiki/` page must include a `References` section.
 9. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
 10. Keep Mermaid diagrams simple and directly related to the explanation.
 11. Cross-reference overlapping topics instead of duplicating large sections.
