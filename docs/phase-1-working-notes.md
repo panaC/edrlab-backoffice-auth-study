@@ -12,6 +12,74 @@ The expected system is an internal backoffice IAM control plane for fewer than 1
 | Expected | Strongly implied by the requirements or by conservative IAM practice, but details can be finalized later. |
 | Study question | Must be answered before a final recommendation, but should not be assumed during Phase 1. |
 
+## OAuth2/OIDC Requirement Rationale and Alternatives
+
+The current brief says the authorization server must support "OAuth2 authentication and authorization flows." That wording should be treated carefully. OAuth2 is primarily an authorization framework for obtaining and using access tokens. OpenID Connect (OIDC) is the identity layer on top of OAuth2 that provides user authentication semantics, ID tokens, and standard identity claims.
+
+For this project, the sharper requirement is:
+
+- use OIDC-compatible login for human backoffice users when standardized user authentication is needed;
+- use OAuth2-compatible access-token flows when clients, APIs, and services need a standard way to request, receive, validate, and restrict access.
+
+This distinction matters because a logged-in user is not automatically authorized to call a protected backoffice API. The system must still decide whether the actor may perform the requested operation, such as `members:read`, `members:disable`, `roles:assign`, or access to a specific internal service.
+
+### Why OAuth2/OIDC is a reasonable default
+
+OAuth2/OIDC is useful if the backoffice IAM control plane has multiple trust boundaries: a browser client, protected APIs, an administration API, service-to-service callers, and possibly managed or self-hosted IAM products. In that shape, the protocol gives the project a common vocabulary and integration contract:
+
+| Project need | Why OAuth2/OIDC helps |
+| --- | --- |
+| Browser-based backoffice login | OIDC provides a standard login and identity layer instead of a custom authentication protocol. |
+| Protected internal APIs | APIs can receive access tokens and validate issuer, audience, lifetime, signature or introspection result, and required permissions. |
+| Multiple resource servers | Each service can enforce access without sharing a web session store or directly handling user credentials. |
+| Administration API | Privileged operations can require explicit permissions and can be audited as control-plane changes. |
+| Service-to-service access | OAuth2 Client Credentials Flow gives machine clients a standard model distinct from human users. |
+| Candidate comparison | Managed providers, self-hosted products, libraries, and hybrid options can be compared against the same protocol expectations. |
+
+The strongest reason to keep OAuth2/OIDC in the requirements layer is not fashion or user count. It is separation of responsibilities. The authorization server or identity provider authenticates users and issues tokens. Clients use tokens. Resource servers validate tokens and enforce permissions. Administration APIs manage IAM state under stricter authorization and audit controls.
+
+### What OAuth2/OIDC does not solve by itself
+
+OAuth2/OIDC should not be treated as the whole authorization design. The project still needs explicit requirements for:
+
+- member lifecycle states such as active, disabled, deleted, suspended, or archived;
+- role and permission modeling;
+- which API operations require which permissions;
+- whether roles and permissions appear in token claims or are checked through another lookup;
+- how quickly removed access must stop working;
+- service-account ownership, rotation, disablement, and auditability;
+- admin self-escalation controls;
+- audit event content, retention, export, and review.
+
+OAuth2 also introduces complexity. The team must understand clients, redirect URIs, token lifetimes, scopes, audiences, issuer validation, signing keys, refresh tokens, revocation or introspection, and failure modes. If those concepts are not actually needed, adopting OAuth2 can make a small internal system harder to operate.
+
+### When OAuth2/OIDC may be overkill
+
+OAuth2/OIDC should be challenged if the real system is only one server-rendered internal application with one backend, one database, and no independent APIs or machine clients. In that narrower design, a traditional server-side session with application-level RBAC might satisfy the business need with less protocol surface.
+
+OAuth2/OIDC is also less compelling if every protected resource is behind a single trusted reverse proxy and the application only needs coarse application-level allow/deny rules. That pattern may be simpler, but it is usually weak for operation-level administration permissions such as role assignment, client creation, or member disablement.
+
+The requirement should therefore not be "use OAuth2 because modern authentication uses OAuth2." It should be "use OAuth2/OIDC where the project needs standardized login, token issuance, token validation, API protection, service clients, and provider interoperability."
+
+### Alternatives to evaluate
+
+The alternatives below are not final recommendations. They are design options to challenge against the same requirements.
+
+| Alternative | Where it may fit | Main limitation |
+| --- | --- | --- |
+| Server-side sessions with application RBAC | A single internal application owns login, session state, roles, permissions, and all protected operations. | Poorer fit for multiple independently deployed APIs, service-to-service callers, and future provider interoperability. |
+| Existing corporate SSO plus local authorization | The company already has a workforce identity provider for login, MFA, and employee lifecycle. | The project still needs local roles, permissions, admin API behavior, access checks, service authentication, and audit mapping. |
+| Reverse-proxy or gateway authentication | Coarse access to internal web applications is enough. | Usually insufficient for per-operation authorization inside a privileged administration API. |
+| API keys or mTLS for services | Machine-to-machine calls are the only problem being solved. | Does not solve human login, delegated user access, role assignment, or member lifecycle. |
+| Custom session or JWT token system | The system is small, fully internal, and the team accepts owning security-sensitive token behavior. | Easy to get validation, key rotation, revocation, expiry, audience handling, and incident response wrong. |
+| SAML-based SSO | Enterprise login integration is the primary requirement. | Less natural for protecting APIs and service-to-service access than OAuth2/OIDC. |
+
+### Current study position
+
+OAuth2/OIDC should remain in the requirements as a strong baseline because the project scope includes browser login, protected APIs, an administration API, RBAC, service-to-service authentication, managed and self-hosted comparison, and later PoC planning.
+
+However, the requirement should stay challengeable. Later evaluation should confirm that OAuth2/OIDC is justified by actual system boundaries and operational needs, not merely by convention. If the project narrows to a single internal application with no independent APIs or machine clients, a simpler session-based model may deserve serious consideration.
+
 ## Requirements Inventory
 
 ### Identity and Member Lifecycle
@@ -155,6 +223,7 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 ## References
 
 - [RFC 6749 - The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749)
+- [RFC 6750 - The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://www.rfc-editor.org/rfc/rfc6750)
 - [RFC 9700 - Best Current Practice for OAuth 2.0 Security](https://www.rfc-editor.org/rfc/rfc9700)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [OWASP API Security Top 10](https://owasp.org/API-Security/)
