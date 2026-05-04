@@ -26,8 +26,6 @@ For this study, the future system is assumed to protect internal backoffice serv
 | [Admin API](./08-admin-api.md) | Covers administrator-only APIs for members, roles, permissions, clients, service accounts, audit logs, and privileged operations. |
 | [Security Best Practices](./09-security-best-practices.md) | Summarizes conservative security practices for tokens, secrets, PKCE, validation, least privilege, auditability, rate limiting, and password handling. |
 
-Some links may point to pages that are planned but not yet written.
-
 ## Big-picture model
 
 IAM combines identity, tokens, clients, APIs, and authorization data. The terms are easy to blur, so this wiki keeps them separate:
@@ -71,7 +69,7 @@ flowchart LR
     AS --> Client
     Client --> API
     API --> Decision
-    Decision -. "JWKS, introspection, or policy lookup" .-> AS
+    Decision -. "JWKS, introspection, metadata, or authorization lookup" .-> AS
 
     Admin --> AdminAPI
     AdminAPI --> Data
@@ -83,7 +81,7 @@ flowchart LR
 
 In practice, these boxes may be separate systems, modules inside one system, or capabilities provided by existing software. An OAuth2 authorization server and an OIDC identity provider are often one logical component, sometimes called an OpenID Provider, but authentication can also be delegated to another identity provider. Phase 1 does not choose which arrangement is best.
 
-The key responsibility boundary is that IAM data is managed by the authorization and administration side. A resource server should not need to be the owner of member, role, permission, client, or service account records. It validates tokens and enforces access using trusted token claims, authorization server metadata and keys, token introspection, or an explicit authorization lookup depending on the eventual design.
+The key responsibility boundary is that IAM data is managed by the authorization and administration side. A resource server should not need to be the owner of member, role, permission, client, or service account records. It validates tokens and enforces access using trusted token claims, authorization server metadata and keys, token introspection, local policy, or an explicit authorization lookup depending on the eventual design.
 
 ## End-to-end login and API flow
 
@@ -111,6 +109,8 @@ sequenceDiagram
 ```
 
 The important separation is that login is not the same as API authorization. A successful login proves the user authenticated. It does not automatically mean the user can read members, update billing data, create clients, or call an administrator-only endpoint. The resource server still needs to validate the access token and enforce the required permission for the requested operation.
+
+The permission check may be based on token claims, local policy configuration, a lookup into IAM data, or a separate authorization service. This README names the responsibility without choosing which runtime pattern should be used later.
 
 For browser-based backoffice clients, the modern OAuth2 direction is Authorization Code Flow with PKCE rather than the older Implicit Flow. See [OAuth2 Flows](./06-oauth2-flows.md) and the OAuth2 security best current practice for why token exposure and redirect handling matter.
 
