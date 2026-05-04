@@ -54,31 +54,36 @@ The diagram below is a vocabulary map, not a final architecture recommendation.
 
 ```mermaid
 flowchart LR
-    User[User / Member]
-    Admin[Administrator]
-    Client[Backoffice Client]
-    AS[Authorization Server]
-    IdP[Identity Provider]
-    API[Backoffice Service / Resource Server]
-    AdminAPI[Administration API]
-    Data[IAM Data: members, roles, permissions, clients, service accounts]
-    Service[Backend Service Client]
+    User["User / Member"]
+    Admin["Administrator"]
+    Client["Backoffice Client"]
+    AS["Authorization Server / OpenID Provider"]
+    ExternalIdP["External Identity Provider (optional)"]
+    API["Backoffice Service / Resource Server"]
+    AdminAPI["Administration API"]
+    Data["IAM Data: members, roles, permissions, clients, service accounts"]
+    Service["Backend Service Client"]
+    Decision["Token validation and permission check"]
 
     User --> Client
     Client --> AS
-    AS --> IdP
+    AS -. "may delegate authentication" .-> ExternalIdP
     AS --> Client
     Client --> API
-    API --> Data
+    API --> Decision
+    Decision -. "JWKS, introspection, or policy lookup" .-> AS
 
     Admin --> AdminAPI
     AdminAPI --> Data
+    AS --> Data
 
     Service --> AS
     Service --> API
 ```
 
-In practice, these boxes may be separate systems, modules inside one system, or capabilities provided by existing software. Phase 1 does not choose which arrangement is best. It only explains what each responsibility means and what evidence should inform later decisions.
+In practice, these boxes may be separate systems, modules inside one system, or capabilities provided by existing software. An OAuth2 authorization server and an OIDC identity provider are often one logical component, sometimes called an OpenID Provider, but authentication can also be delegated to another identity provider. Phase 1 does not choose which arrangement is best.
+
+The key responsibility boundary is that IAM data is managed by the authorization and administration side. A resource server should not need to be the owner of member, role, permission, client, or service account records. It validates tokens and enforces access using trusted token claims, authorization server metadata and keys, token introspection, or an explicit authorization lookup depending on the eventual design.
 
 ## End-to-end login and API flow
 
