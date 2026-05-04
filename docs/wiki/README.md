@@ -25,6 +25,7 @@ For this study, the future system is assumed to protect internal backoffice serv
 | [Service-to-Service Authentication](./07-service-to-service-authentication.md) | Covers machine-to-machine authentication, service accounts, client credentials, private key JWT, mTLS, and service permissions. |
 | [Admin API](./08-admin-api.md) | Covers administrator-only APIs for members, roles, permissions, clients, service accounts, audit logs, and privileged operations. |
 | [Security Best Practices](./09-security-best-practices.md) | Summarizes conservative security practices for tokens, secrets, PKCE, validation, least privilege, auditability, rate limiting, and password handling. |
+| [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md) | Covers audit event content, access review workflows, retention, evidence, and operational responsibility boundaries. |
 
 ## Big-picture model
 

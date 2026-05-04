@@ -99,3 +99,4 @@ Out of scope:
 - [Service-to-Service Authentication](./docs/wiki/07-service-to-service-authentication.md)
 - [Administration APIs](./docs/wiki/08-admin-api.md)
 - [Security Best Practices](./docs/wiki/09-security-best-practices.md)
+- [Auditability, Access Reviews, and Operational Ownership](./docs/wiki/10-auditability-access-reviews-operational-ownership.md)
