@@ -80,6 +80,73 @@ OAuth2/OIDC should remain in the requirements as a strong baseline because the p
 
 However, the requirement should stay challengeable. Later evaluation should confirm that OAuth2/OIDC is justified by actual system boundaries and operational needs, not merely by convention. If the project narrows to a single internal application with no independent APIs or machine clients, a simpler session-based model may deserve serious consideration.
 
+## OIDC Requirement Rationale and Alternatives
+
+OIDC should be analyzed separately from OAuth2 access-token flows. OAuth2 can protect APIs, but it does not by itself define a complete login protocol for the backoffice UI. OIDC adds the standardized identity layer: a client can redirect a user to an OpenID Provider, receive proof that authentication occurred, and obtain identity claims about the signed-in subject.
+
+For this project, OIDC is needed if the backoffice client must rely on an external or centralized identity component for login rather than owning all username, password, MFA, and session behavior locally. OIDC gives the project a standard way to answer:
+
+- who signed in;
+- which issuer authenticated the user;
+- which client the authentication result was issued for;
+- when the authentication result expires;
+- which stable subject identifier should be used to link the login to a member record;
+- where to discover provider metadata and signing keys.
+
+### Why OIDC is a reasonable default
+
+| Project need | Why OIDC helps |
+| --- | --- |
+| Standardized user login | The backoffice client can use a well-known login protocol instead of inventing its own authentication exchange. |
+| Identity claims | The client can receive a stable subject identifier and basic identity claims in a standard shape. |
+| Managed or self-hosted IdP comparison | Providers can be evaluated against the same OIDC expectations: discovery, issuer, clients, redirect handling, ID tokens, and user claims. |
+| Corporate identity integration | If a workforce IdP already exists, OIDC can let the project delegate login, MFA, and account authentication to that system. |
+| Separation between login and API access | OIDC answers authentication questions, while access tokens and resource-server checks answer API authorization questions. |
+| Safer interoperability | OIDC Discovery and provider metadata reduce hardcoded assumptions about endpoints, issuers, and signing keys. |
+
+The main reason to require OIDC is not that every internal app needs federated login. It is that this project is studying an IAM control plane, not a single page with a password form. If the future system may compare managed identity providers, self-hosted identity products, or hybrid models, OIDC is the common identity contract that keeps the login side product-neutral.
+
+### What OIDC does not solve by itself
+
+OIDC should not be mistaken for authorization. An ID token can tell the client that a user authenticated with a provider. It should not be treated as proof that the user may call `POST /members`, assign roles, create service clients, or access a particular backoffice service. Those decisions still belong to the authorization model and must be enforced server-side.
+
+OIDC also does not remove the need to define:
+
+- the source of truth for member records;
+- onboarding and offboarding behavior;
+- whether email, username, or an immutable provider subject links to the local member;
+- role and permission assignment;
+- administrator privileges;
+- audit events for privileged changes;
+- how disabled users lose sessions, refresh tokens, and API access;
+- what happens if the identity provider is unavailable.
+
+If the provider manages passwords and MFA, the project may avoid owning those pieces directly. But that moves operational dependency to the provider. The study still needs to understand account recovery, lockout behavior, identity proofing expectations, MFA policy, admin access recovery, outage handling, and export or migration options.
+
+### When OIDC may be unnecessary
+
+OIDC may be unnecessary if the final system is deliberately narrower than the current study scope: one internal server-rendered application, one backend, no separate resource servers, no managed provider comparison, no corporate SSO requirement, and no need for provider interoperability. In that case, server-side sessions with local authentication and RBAC can be simpler.
+
+OIDC may also be unnecessary if login is already handled by a trusted internal gateway that forwards authenticated identity to the application. That can be operationally simple, but the trust boundary becomes the gateway. The application must be sure headers cannot be spoofed, direct access bypasses are blocked, and operation-level authorization still happens inside the API.
+
+SAML can also satisfy enterprise SSO requirements. It may be a better fit where the company's existing identity infrastructure is SAML-first. For this project, the limitation is that SAML mainly addresses login federation; it is less natural than OIDC/OAuth2 for API token validation, service clients, and modern provider/library comparison.
+
+### Alternatives to evaluate
+
+| Alternative | Where it may fit | Main limitation |
+| --- | --- | --- |
+| Local login with server-side sessions | A small internal monolith owns all authentication and authorization. | The team owns password policy, MFA decisions, account recovery, session security, and offboarding behavior. |
+| Corporate SSO through SAML | The company already has a SAML-based workforce identity platform. | Does not provide the same API-oriented token model as OIDC/OAuth2. |
+| Gateway-authenticated identity headers | A trusted reverse proxy or access gateway authenticates users before requests reach the app. | Header spoofing, bypass paths, audit attribution, and operation-level authorization must be controlled carefully. |
+| Existing workforce IdP with OIDC | The company already has an OIDC-capable identity provider. | This still uses OIDC, but the project may not need to operate its own OpenID Provider. |
+| Application-specific session bridge over external login | The app exchanges external identity for its own session cookie. | The bridge must define identity linking, session expiry, logout, disablement behavior, and auditability. |
+
+### Current study position
+
+OIDC should remain a requirement for the study because the project scope includes standardized backoffice login, comparison of managed and self-hosted IAM options, possible corporate identity integration, and a need to keep authentication separate from API authorization.
+
+The requirement should be challenged if later scoping proves the system is only a single internal app with no provider interoperability need. In that narrower case, OIDC may be an integration cost rather than a requirement. Until then, OIDC is the clearest product-neutral way to describe the user-authentication layer without prematurely choosing a vendor or custom login implementation.
+
 ## Requirements Inventory
 
 ### Identity and Member Lifecycle
@@ -226,6 +293,7 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 - [RFC 6750 - The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://www.rfc-editor.org/rfc/rfc6750)
 - [RFC 9700 - Best Current Practice for OAuth 2.0 Security](https://www.rfc-editor.org/rfc/rfc9700)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+- [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
 - [OWASP API Security Top 10](https://owasp.org/API-Security/)
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
