@@ -37,16 +37,20 @@ Primary trust boundaries:
 
 ## Method
 
-This document uses a lightweight STRIDE-style structure:
+This document uses a lightweight STRIDE-style structure.
 
-| STRIDE category | IAM examples |
-| --- | --- |
-| Spoofing | Stolen session cookie, stolen token, fake client, wrong issuer. |
-| Tampering | Role assignment abuse, redirect URI change, token claim manipulation, audit log alteration. |
-| Repudiation | Missing audit events, mutable names without stable IDs, unaudited break-glass. |
-| Information disclosure | Token or secret leakage, audit export exposure, overbroad member reads. |
-| Denial of service | Locking out admins, breaking token validation, IAM/provider outage. |
-| Elevation of privilege | Self-escalation, broken audience validation, overbroad service account, compromised admin. |
+STRIDE is a threat-identification mnemonic commonly associated with Microsoft's threat modeling practice. It groups possible threats into six categories: Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege. In practical reviews, the categories are used as prompts while walking assets, data flows, trust boundaries, and sensitive operations: for each component or interaction, ask whether an attacker could impersonate something, modify something, deny responsibility, see data they should not see, make the system unavailable, or gain authority they should not have.
+
+STRIDE is useful for this study because IAM systems concentrate authentication, authorization, token issuance, session state, administrator authority, and audit evidence. The model helps keep review coverage broad without prematurely choosing a risk scoring method, tool, provider, or final control set. It is not a complete risk-management process by itself; identified threats still need context, severity, mitigations, residual-risk notes, and later verification.
+
+| STRIDE category | Security property usually tested | IAM examples |
+| --- | --- | --- |
+| Spoofing | Authentication and identity proof | Stolen session cookie, stolen token, fake client, wrong issuer. |
+| Tampering | Integrity | Role assignment abuse, redirect URI change, token claim manipulation, audit log alteration. |
+| Repudiation | Accountability and non-repudiation | Missing audit events, mutable names without stable IDs, unaudited break-glass. |
+| Information disclosure | Confidentiality | Token or secret leakage, audit export exposure, overbroad member reads. |
+| Denial of service | Availability | Locking out admins, breaking token validation, IAM/provider outage. |
+| Elevation of privilege | Authorization | Self-escalation, broken audience validation, overbroad service account, compromised admin. |
 
 The threat model should be maintained. It should change when the architecture, provider, token strategy, admin API, BFF behavior, or operational model changes.
 
@@ -243,6 +247,8 @@ These require more detail when the final stack or provider is known:
 ## References
 
 - [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html)
+- [Microsoft Threat Modeling Tool - Threats](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats)
+- [Microsoft Security Development Lifecycle - Threat Modeling](https://www.microsoft.com/en-us/securityengineering/sdl/threatmodeling)
 - [OWASP API Security Top 10 - 2023](https://owasp.org/API-Security/editions/2023/en/0x11-t10/)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)

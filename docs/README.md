@@ -10,11 +10,17 @@ Use [docs/wiki](./wiki/README.md) for general IAM concepts, terminology, protoco
 
 Start here:
 
+- [Phase 2 requirements baseline](./phase-2-requirements-baseline.md)
+- [Phase 2 open-question triage](./phase-2-open-question-triage.md)
+- [Phase 2 service and permission inventory](./phase-2-service-permission-inventory.md)
 - [Phase 1 working notes](./phase-1-working-notes.md)
 - [IAM documentation wiki](./wiki/README.md)
 
 Study documents:
 
+- [Phase 2 Requirements Baseline](./phase-2-requirements-baseline.md)
+- [Phase 2 Open-Question Triage](./phase-2-open-question-triage.md)
+- [Phase 2 Service and Permission Inventory](./phase-2-service-permission-inventory.md)
 - [Minimal backoffice IAM architecture notes](./minimal-backoffice-iam-architecture.md)
 - [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
 - [Member Lifecycle](./member-lifecycle.md)

@@ -23,7 +23,9 @@ The expected output remains a documented, evidence-based technical recommendatio
 - [Project brief](./README.md)
 - [Agent instructions](./AGENTS.md)
 - [Documentation index](./docs/README.md)
+- [Phase 2 requirements baseline](./docs/phase-2-requirements-baseline.md)
+- [Phase 2 open-question triage](./docs/phase-2-open-question-triage.md)
+- [Phase 2 service and permission inventory](./docs/phase-2-service-permission-inventory.md)
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
 - [Evaluation framework](./docs/evaluation-framework.md)
 - [Candidate shortlist](./docs/candidate-shortlist.md)
-
