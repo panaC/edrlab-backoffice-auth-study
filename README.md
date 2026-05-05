@@ -122,4 +122,5 @@ Out of scope:
 - [Administration APIs](./docs/wiki/08-admin-api.md)
 - [Security Best Practices](./docs/wiki/09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./docs/wiki/10-auditability-access-reviews-operational-ownership.md)
+- [MFA, 2FA, Passwordless, and One-Time Passwords](./docs/wiki/11-mfa-2fa-passwordless-and-otp.md)
 - [Administrator Authentication Policy](./docs/administrator-authentication-policy.md)

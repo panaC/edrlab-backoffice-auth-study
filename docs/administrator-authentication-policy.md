@@ -73,6 +73,8 @@ Passwordless authenticators or hardware-backed authenticators may be attractive 
 
 The study should not treat SMS or email codes as equal to stronger possession-based authenticators without documenting the risk. If a managed or self-hosted provider offers several factors, the evaluation should record which factors are supported, which are default, and which are realistic for the internal team.
 
+For the broader conceptual comparison of MFA, 2FA, passwordless login, OTPs, SMS, email, passkeys, WebAuthn, enrollment, and recovery, see [MFA, 2FA, Passwordless, and One-Time Passwords](./wiki/11-mfa-2fa-passwordless-and-otp.md).
+
 ## Break-glass access
 
 Break-glass access is emergency administrator access for situations where normal administration is unavailable. It is not automatically required for the first PoC, but the study should decide whether production needs it.
@@ -126,6 +128,7 @@ Failing to plan administrator recovery can make the system secure in theory but 
 - [Admin API](./wiki/08-admin-api.md)
 - [Security Best Practices](./wiki/09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./wiki/10-auditability-access-reviews-operational-ownership.md)
+- [MFA, 2FA, Passwordless, and One-Time Passwords](./wiki/11-mfa-2fa-passwordless-and-otp.md)
 
 ## Open study questions
 

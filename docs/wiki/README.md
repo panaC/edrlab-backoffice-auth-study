@@ -26,6 +26,7 @@ For this study, the future system is assumed to protect internal backoffice serv
 | [Admin API](./08-admin-api.md) | Covers administrator-only APIs for members, roles, permissions, clients, service accounts, audit logs, and privileged operations. |
 | [Security Best Practices](./09-security-best-practices.md) | Summarizes conservative security practices for tokens, secrets, PKCE, validation, least privilege, auditability, rate limiting, and password handling. |
 | [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md) | Covers audit event content, access review workflows, retention, evidence, and operational responsibility boundaries. |
+| [MFA, 2FA, Passwordless, and One-Time Passwords](./11-mfa-2fa-passwordless-and-otp.md) | Explains MFA, 2FA, passwordless authentication, OTP families, SMS, email, passkeys, WebAuthn, enrollment, recovery, and step-up trade-offs. |
 
 Related study document: [Administrator Authentication Policy](../administrator-authentication-policy.md).
 
