@@ -19,7 +19,7 @@ Each candidate must be checked against the project gates:
 
 - OAuth2 and OIDC support;
 - Authorization Code Flow with PKCE for browser-based backoffice clients;
-- future service-to-service authentication fit;
+- future service-to-service authentication fit, recorded as an evolution note rather than a first-PoC blocker;
 - administrator-managed members with no public registration requirement;
 - RBAC or an equivalent role/permission model;
 - protected API token validation and operation-level authorization;
@@ -81,8 +81,8 @@ Hybrid patterns should be evaluated as patterns first, not as implementation pla
 The first comparison pass should favor breadth over depth:
 
 1. Run the [Evaluation Framework](./evaluation-framework.md) gate check for each managed and self-hosted candidate.
-2. Mark evidence as Confirmed, Likely, Inferred, Unknown, or Unsupported.
-3. Identify blockers before assigning detailed scores.
+2. Mark each minimal gate as `OK`, `KO`, or `Unknown`.
+3. Identify `KO` and unresolved `Unknown` blockers before deeper comparison.
 4. Record only official-documentation evidence at this stage.
 5. Create targeted PoC plans only for unknowns that materially affect the decision.
 
@@ -97,7 +97,7 @@ Suggested first-pass order:
 
 ## Early disqualification checks
 
-Before doing detailed scoring, check these questions:
+Before doing detailed gate notes, check these questions:
 
 - Can public registration be disabled or avoided?
 - Can administrators create, disable, delete or retain, list, and update members?
@@ -112,7 +112,7 @@ Before doing detailed scoring, check these questions:
 
 ## PoC candidates
 
-These are possible PoCs to plan later. Do not implement them during Phase 1 unless explicitly requested.
+These are possible PoCs to plan later. Do not implement them during Phase 2 unless explicitly requested.
 
 | PoC | Candidate types | Question answered |
 | --- | --- | --- |
@@ -126,7 +126,7 @@ These are possible PoCs to plan later. Do not implement them during Phase 1 unle
 
 ## Candidate evidence notes
 
-These notes are intentionally brief. Full scoring belongs in one evaluation record per candidate.
+These notes are intentionally brief. Full gate and future-evolution details belong in one evaluation record per candidate.
 
 | Candidate | Initial evidence status | Notes |
 | --- | --- | --- |

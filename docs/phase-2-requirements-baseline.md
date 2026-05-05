@@ -16,7 +16,7 @@ Each candidate evaluation should answer:
 - which requirements are unsupported or unclear;
 - which open decisions materially change the evaluation.
 
-Do not average away a blocker. If a candidate cannot support OIDC login, protected API token validation, administrator-managed members, RBAC, administration API needs, or auditability, record that clearly before assigning broad scores.
+Do not average away a blocker. If a candidate cannot support OIDC login, protected API token validation, administrator-managed members, RBAC, administration API needs, or auditability, record that clearly before spending time on broader comparison.
 
 ## Requirement levels
 
@@ -33,7 +33,7 @@ Do not average away a blocker. If a candidate cannot support OIDC login, protect
 | Route | Meaning |
 | --- | --- |
 | Documentation evidence | Confirm from official specifications, official product documentation, or existing local study documents. |
-| Candidate evaluation | Score in a per-candidate evaluation record using [Evaluation Framework](./evaluation-framework.md). |
+| Candidate evaluation | Apply the `OK` / `KO` / `Unknown` gate check in [Evaluation Framework](./evaluation-framework.md). |
 | PoC check | Validate with a minimal non-production PoC when documentation is insufficient. |
 | Stakeholder decision | Requires project, security, operations, legal, or business input. |
 | Not first-PoC scope | Track for future compatibility, but do not implement in the initial PoC. |
@@ -128,8 +128,8 @@ Do not average away a blocker. If a candidate cannot support OIDC login, protect
 
 | ID | Requirement | Level | Rationale | Source | Verification |
 | --- | --- | --- | --- | --- | --- |
-| IAM-EVAL-001 | Candidate evaluation uses the same gates and scoring criteria for all comparable options. | Required | Consistency prevents product bias and false precision. | [Evaluation Framework](./evaluation-framework.md) | Candidate evaluation |
-| IAM-EVAL-002 | Candidate behavior must be marked as Confirmed, Likely, Inferred, Unknown, or Unsupported. | Required | Security-sensitive assumptions must not be treated as facts. | [Evaluation Framework](./evaluation-framework.md) | Candidate evaluation |
+| IAM-EVAL-001 | Candidate evaluation uses the same minimal gates and future-evolution notes for all comparable options. | Required | Consistency prevents product bias and false precision. | [Evaluation Framework](./evaluation-framework.md) | Candidate evaluation |
+| IAM-EVAL-002 | Candidate behavior must be marked as `OK`, `KO`, or `Unknown` for each minimal gate. | Required | Security-sensitive assumptions must not be treated as facts. | [Evaluation Framework](./evaluation-framework.md) | Candidate evaluation |
 | IAM-EVAL-003 | Product behavior claims should be supported by official documentation, specifications, or targeted PoC evidence. | Required | The study must not rely on marketing language or unsupported assumptions. | [Evaluation Framework](./evaluation-framework.md), [Candidate Shortlist](./candidate-shortlist.md) | Candidate evaluation |
 | IAM-EVAL-004 | The candidate shortlist is a starting set, not a final recommendation. | Required | Phase 2 prepares for comparison; it does not select a winner. | [Candidate Shortlist](./candidate-shortlist.md) | Documentation evidence |
 | IAM-POC-001 | The first PoC should validate OIDC login, JWT validation, RBAC enforcement, Admin API behavior, audit events, and access expiry against one demonstration API. | Initial baseline | This is the smallest useful cross-boundary check currently identified. | [Phase 1 working notes](./phase-1-working-notes.md), [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md) | PoC check |
