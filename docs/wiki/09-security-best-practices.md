@@ -62,7 +62,7 @@ Redact tokens and secrets from logs, traces, crash reports, analytics, and suppo
 
 ## Compliance and governance considerations
 
-Even in Phase 1, the wiki should keep future compliance and governance questions visible:
+Even at the concept stage, the wiki should keep future compliance and governance questions visible:
 
 - auditability of privileged changes;
 - password and authenticator policy;

@@ -166,7 +166,7 @@ Storing SCIM tokens in tickets, emails, logs, or source control turns provisioni
 
 ## What this means for this study
 
-The current project does not require company-wide workforce SSO or SCIM in the first minimal Proof of Concept. SCIM is still important conceptual material because it explains how the architecture could later integrate with a workforce IdP or managed identity platform.
+The current project does not require company-wide workforce SSO or SCIM in the initial scope. SCIM is still important conceptual material because it explains how the architecture could later integrate with a workforce IdP or managed identity platform.
 
 For the minimal backoffice IAM Control Plane, the study should answer:
 
@@ -184,7 +184,7 @@ For the minimal backoffice IAM Control Plane, the study should answer:
 - [IAM Responsibility Model](./16-iam-responsibility-model.md)
 - [Member Lifecycle](../member-lifecycle.md)
 - [RBAC](./05-rbac.md)
-- [Administration APIs](./08-admin-api.md)
+- [Admin API](./08-admin-api.md)
 - [Token Lifecycle](./12-token-lifecycle.md)
 - [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md)
 

@@ -110,7 +110,7 @@ For an internal backoffice IAM design:
 - [Authorization Models](./18-authorization-models.md)
 - [Policy Engines and Fine-Grained Authorization](./21-policy-engines-and-fine-grained-authorization.md)
 - [Tokens and JWTs](./04-tokens-and-jwt.md)
-- [Administration APIs](./08-admin-api.md)
+- [Admin API](./08-admin-api.md)
 - [Security Best Practices](./09-security-best-practices.md)
 
 ## References

@@ -86,7 +86,7 @@ For browser and public clients, refresh token rotation and reuse detection are i
 | JWT access token | Local validation, no per-request introspection dependency, can carry selected claims. | Harder immediate revocation, claim leakage risk, key rotation and validation complexity. |
 | Opaque access token | Minimal data exposure, central introspection can reflect current state. | Adds network dependency or cache design, resource server needs introspection trust. |
 
-For this Phase 1 wiki, the goal is to understand the options, not to choose one.
+For this wiki, the goal is to understand the options, not to choose one.
 
 ## Common mistakes
 

@@ -22,7 +22,7 @@ One-time passwords, or OTPs, are short-lived or single-use authentication values
 
 For an internal backoffice IAM control plane, account takeover can lead to member creation, role assignment, permission changes, client changes, audit-log access, and service access changes. The expected user count is below 1,000, but administrator accounts still have high impact.
 
-Phase 1 does not choose a final MFA product, passwordless strategy, or authenticator policy. The goal is to understand the authenticator families well enough to compare managed providers, self-hosted products, minimal-library implementations, and hybrid approaches later.
+This wiki does not choose a final MFA product, passwordless strategy, or authenticator policy. The goal is to understand the authenticator families well enough to compare managed providers, self-hosted products, minimal-library implementations, and hybrid approaches later.
 
 The study should especially separate:
 

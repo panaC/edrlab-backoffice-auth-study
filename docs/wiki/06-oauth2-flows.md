@@ -12,7 +12,7 @@ The relevant flows for this study are:
 | Client Credentials Flow | Service-to-service or machine-to-machine access without a human user in the flow. | Which service identity is represented, and what narrow permissions does it need? |
 | Refresh Token Flow | Getting a new access token after a previous authorization. | Can this client store refresh tokens safely, and how are rotation and revocation handled? |
 
-For the first study and minimal PoC, Client Credentials Flow is educational background and a future extension topic. The initial path focuses on backoffice user login through the BFF, JWT validation, RBAC, and a demonstration API resource server.
+For the current project scope, Client Credentials Flow is educational background and a future extension topic. The initial path focuses on backoffice user login through the BFF, JWT validation, RBAC, and a demonstration API resource server.
 
 Authorization Code Flow without PKCE still exists in older OAuth2 deployments, especially for confidential web clients, but modern security guidance makes PKCE the safer baseline to understand. The Implicit Flow and Resource Owner Password Credentials grant appear in older OAuth2 material, but they should not be default choices for new backoffice applications.
 
@@ -40,7 +40,7 @@ The selected study architecture has one initial caller shape and one future exte
 
 Different callers have different security properties. A browser-only client cannot keep a long-term secret. A server-side BFF or backend service can usually protect credentials better, but still needs secret rotation, auditability, and least privilege. OAuth2 flows let the authorization server issue tokens in a way that matches those constraints.
 
-Choosing a flow is not the same as choosing a product, database, or deployment model. Phase 1 needs the team to understand flow mechanics and failure modes so later evaluations can ask precise questions.
+Choosing a flow is not the same as choosing a product, database, or deployment model. The team needs to understand flow mechanics and failure modes so later evaluations can ask precise questions.
 
 ## Flow selection map
 
@@ -231,7 +231,7 @@ Some OAuth2 grants exist for historical or narrow compatibility reasons. Underst
 | Resource Owner Password Credentials | The client collects the user's password directly, expanding where credentials can leak and bypassing modern authentication steps such as MFA or WebAuthn ceremonies. |
 | Unconstrained refresh token issuance | Long-lived credentials without rotation, reuse detection, revocation, or client-type limits increase the impact of token theft. |
 
-This is not a claim that every legacy system using these patterns is instantly broken. It is a conservative Phase 1 rule for a new internal backoffice study.
+This is not a claim that every legacy system using these patterns is instantly broken. It is a conservative rule for a new internal backoffice study.
 
 ## Backoffice examples
 

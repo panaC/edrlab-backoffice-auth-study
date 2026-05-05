@@ -100,6 +100,114 @@ Read the wiki in this order if you want the domain to build progressively.
 | PIP | Policy Information Point. |
 | PAP | Policy Administration Point. |
 
+## Model Summary
+
+IAM combines identity, tokens, clients, APIs, authorization data, administration, and operations. These terms are easy to blur, so the wiki keeps them separate on purpose.
+
+OAuth2 and OIDC are related but not the same thing. OAuth2 is about delegated authorization and access tokens. OIDC adds an identity layer for login and ID tokens. A system can use both: OIDC to authenticate the user and OAuth2 access tokens to call protected APIs. See [OAuth2](./02-oauth2.md) and [OpenID Connect](./03-openid-connect.md) for the detailed distinction.
+
+## Conceptual Architecture
+
+This diagram is a vocabulary map, not a final deployment design.
+
+```mermaid
+flowchart LR
+    User["User / Member"]
+    Admin["Administrator"]
+    BFF["Backoffice BFF"]
+    IAM["IAM Control Plane: IdP / Authorization Server / Admin Control Plane"]
+    ExternalIdP["External IdP or Workforce SSO"]
+    API["Resource Server / Backend API"]
+    Policy["Authorization Decision"]
+    Data["IAM Data: members, roles, permissions, clients, keys, audit"]
+    Audit["Audit and Review Evidence"]
+
+    User --> BFF
+    BFF -->|"OIDC login and token exchange"| IAM
+    IAM -. "optional federation" .-> ExternalIdP
+    IAM --> Data
+    Admin --> BFF
+    BFF -->|"admin operation"| IAM
+    IAM --> Audit
+    BFF -->|"access token"| API
+    API -->|"validate token and enforce permission"| Policy
+    Policy -. "claims, lookup, policy, or relationship data" .-> IAM
+    API --> Audit
+```
+
+In many systems, the OAuth2 authorization server, OIDC identity provider, and administration control plane are treated as one central IAM component. This study calls that central component the IAM Control Plane. It may still be implemented by one product, multiple products, a managed provider, a self-hosted product, a library-based service, or a hybrid.
+
+The key responsibility boundary is that IAM data is managed by the authorization and administration side. A resource server should not need to own member, role, permission, client, key, or service account records. It validates tokens and enforces access using trusted token claims, issuer metadata and keys, token introspection, local policy, or an explicit authorization lookup depending on the eventual design.
+
+## End-to-End Login and API Flow
+
+A typical internal backoffice login flow looks like this:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant BFF as Backoffice BFF
+    participant IAM as IAM Control Plane / IdP
+    participant API as Resource Server
+    participant Authz as Roles and Permissions
+
+    User->>BFF: Open backoffice
+    BFF->>IAM: Start login with authorization request
+    User->>IAM: Authenticate
+    IAM->>BFF: Return authorization code
+    BFF->>IAM: Exchange code for tokens
+    IAM->>BFF: Return access token and ID token
+    BFF->>BFF: Store tokens or token references server-side
+    BFF->>API: Call API with bearer access token
+    API->>API: Validate issuer, audience, signature, and expiry
+    API->>Authz: Check required role or permission
+    Authz->>API: Allow or deny
+    API->>BFF: Return response or access denied
+```
+
+The important separation is that login is not the same as API authorization. A successful login proves the user authenticated. It does not automatically mean the user can read members, update billing data, create clients, or call an administrator-only endpoint. The resource server still needs to validate the access token and enforce the required permission for the requested operation.
+
+For browser-based backoffice clients, the modern OAuth2 direction is Authorization Code Flow with PKCE rather than the older Implicit Flow. See [OAuth2 Flows](./06-oauth2-flows.md) and [Web Sessions, Cookies, and BFF Pattern](./24-web-sessions-cookies-and-bff.md) for why token exposure and redirect handling matter.
+
+## Administration Flow
+
+Administrators need privileged operations that ordinary members should never receive by accident. The administration API is the management surface for IAM data.
+
+Examples of administration operations include:
+
+- creating, reading, updating, disabling, and deleting members;
+- creating and listing roles;
+- assigning and removing roles from members;
+- managing permissions and clients;
+- managing service accounts or machine clients when service-to-service access is needed;
+- checking whether a member has a required role or permission for a backoffice service.
+
+The administration API must itself be protected like any other resource server, with stronger authorization because mistakes have a larger blast radius. Admin endpoints should be checked server-side, audited, rate limited where relevant, and designed so authorization decisions are explicit rather than implied by frontend UI state.
+
+See [Admin API](./08-admin-api.md) for the dedicated page.
+
+## Service-to-Service Flow
+
+Service-to-service authentication is separate from human browser login. Backend services may need to call other internal services without a browser session. In OAuth2 terms, these services can be clients acting on their own behalf, commonly using Client Credentials Flow.
+
+The service receives an access token representing the service client, then calls a resource server. The resource server validates the token and checks service-level permissions. These permissions should be modeled separately so a service account does not accidentally inherit broad human administrator privileges.
+
+See [Service-to-Service Authentication](./07-service-to-service-authentication.md) for the dedicated page.
+
+## Common Mistakes
+
+Do not treat authentication as authorization. Knowing that `alice@example.com` logged in is different from knowing that Alice can perform `members:delete`.
+
+Do not treat an ID token as an API access token. ID tokens are for the client to learn authentication and identity information about the user. APIs should validate access tokens intended for them.
+
+Do not rely on frontend-only authorization. Hiding a button in the backoffice UI can improve usability, but the resource server must enforce the rule.
+
+Do not confuse scopes, roles, permissions, and claims. Scopes describe delegated access requested by a client. Roles group business access for members. Permissions describe granular capabilities. Claims are token fields that may carry identity, token metadata, roles, permissions, or other assertions.
+
+Do not skip token validation details. A resource server should validate issuer, audience, signature, expiration, and relevant token constraints before trusting token contents.
+
+Do not expose administration APIs as ordinary APIs. They change IAM state and should require explicit administrator authorization, audit logging, and conservative operational controls.
+
 ## How Pages Connect
 
 | If a page mentions | Go to |

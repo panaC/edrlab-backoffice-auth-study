@@ -10,9 +10,9 @@ Service authentication is not a shortcut around authorization. A service token s
 
 ## Current scope note
 
-Service-to-service authentication is a future theoretical extension for this project. It is not part of the first study or minimal PoC scope, which focuses on backoffice user login, JWT validation, simple RBAC, the BFF-to-admin-API path, a demonstration API resource server, and auditability.
+Service-to-service authentication is a future theoretical extension for this project. It is not part of the initial scope, which focuses on backoffice user login, JWT validation, simple RBAC, the BFF-to-admin-API path, a demonstration API resource server, and auditability.
 
-This page remains in the wiki because the concepts are useful when evaluating whether a candidate IAM option can grow beyond the first PoC without redesigning the control plane.
+This page remains in the wiki because the concepts are useful when evaluating whether a candidate IAM option can grow beyond the initial human-user backoffice scope without redesigning the control plane.
 
 ## Why it matters
 

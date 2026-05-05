@@ -105,7 +105,7 @@ Role-removal latency is the time between an administrator removing access and th
 | JWT plus authorization lookup | Access-token validity plus lookup and cache behavior. | Good for high-risk operations, but adds runtime dependency and failure-mode decisions. |
 | Session-only application authorization | Session invalidation and server-side permission lookup. | Can be immediate inside one app, but does not solve independent API token validation. |
 
-The current study baseline allows removed access to expire at access-token expiry for the first version. That should be documented as an accepted staleness window, not confused with immediate revocation. If the business later requires immediate removal for administrator permissions, client management, or destructive operations, the design should add introspection, revocation-aware validation, authorization lookup, session invalidation, or shorter token lifetimes.
+If removed access is allowed to expire at access-token expiry, that should be documented as an accepted staleness window, not confused with immediate revocation. If the business requires immediate removal for administrator permissions, client management, or destructive operations, the design should add introspection, revocation-aware validation, authorization lookup, session invalidation, or shorter token lifetimes.
 
 ## Refresh-token lifecycle
 
@@ -183,7 +183,7 @@ Resource servers should not cache JWKS forever. They also should not accept keys
 | Key rotation process | Prevents outages and limits trust in retired keys. |
 | Audit events | Supports incident review, access review, and operational accountability. |
 
-## Minimal PoC checks
+## Concept checks
 
 | Check | Success condition |
 | --- | --- |

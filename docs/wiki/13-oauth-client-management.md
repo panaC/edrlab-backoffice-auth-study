@@ -14,7 +14,7 @@ OAuth client management is the lifecycle of applications registered with an auth
 
 This page is conceptual learning material. It explains the vocabulary and risks around OAuth2/OIDC client registration without choosing a product, endpoint shape, database model, vendor API, or final architecture.
 
-## Why it exists
+## Why it matters
 
 An authorization server cannot issue tokens safely unless it knows the client that is asking. Client management exists because token issuance depends on registered policy:
 

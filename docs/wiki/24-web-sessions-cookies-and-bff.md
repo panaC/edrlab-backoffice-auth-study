@@ -193,7 +193,7 @@ For the internal backoffice IAM Control Plane study:
 - the BFF should handle OIDC callbacks and keep OAuth tokens server-side;
 - backend APIs should still validate access tokens and enforce permissions;
 - CSRF protection is required for cookie-authenticated state-changing requests;
-- session, token, logout, and disablement behavior must be documented before MVP implementation;
+- session, token, logout, and disablement behavior must be documented before implementation;
 - the BFF is integration context, not the IAM Control Plane itself.
 
 This page is conceptual. The concrete project-specific behavior belongs in [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md).

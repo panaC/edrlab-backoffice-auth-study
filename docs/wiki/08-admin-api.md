@@ -10,7 +10,7 @@ This page is conceptual learning material. It explains common responsibilities, 
 
 ## Current scope note
 
-For the first study and minimal PoC, the administration API is consumed only by the internal backoffice UI through the BFF. Approved automation, service accounts, and machine callers are future extension topics, not initial admin API consumers.
+For the current project scope, the administration API is consumed only by the internal backoffice UI through the BFF. Approved automation, service accounts, and machine callers are future extension topics, not initial admin API consumers.
 
 ## Why it matters
 

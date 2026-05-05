@@ -1,17 +1,17 @@
 # RBAC and Permission Modeling
 
-## Purpose
+## What it is
 
 Role-Based Access Control, or RBAC, authorizes subjects through roles. A role is a named business-level access group, such as `support_agent`, `iam_operator`, `report_viewer`, or `finance_manager`. A permission is a granular capability, such as `members:read`, `members:disable`, `roles:assign`, or `reports:export`.
 
-For this backoffice study, RBAC is the required baseline model for administrator-managed access. The goal is not to design a large enterprise policy platform during Phase 1. The goal is to define a permission vocabulary that internal services can enforce consistently, administrators can review, and future product or build-vs-buy evaluations can test.
+For this backoffice study, RBAC is the required baseline model for administrator-managed access. The goal is not to design a large enterprise policy platform. The goal is to define a permission vocabulary that internal services can enforce consistently, administrators can review, and future product or build-vs-buy evaluations can test.
 
 This page complements:
 
 - [Authentication vs Authorization](./01-authentication-vs-authorization.md), for the boundary between login and access decisions.
 - [Tokens and JWTs](./04-tokens-and-jwt.md), for token claim and token validation trade-offs.
 - [Service-to-Service Authentication](./07-service-to-service-authentication.md), for future machine identities and service permissions.
-- [Administration APIs](./08-admin-api.md), for member, role, permission, and assignment management endpoints.
+- [Admin API](./08-admin-api.md), for member, role, permission, and assignment management endpoints.
 - [Security Best Practices](./09-security-best-practices.md), for least privilege, audit, and token validation guidance.
 - [Initial Permission Model](../initial-permission-model.md), for the project-specific first-pass admin/member matrix.
 
@@ -116,7 +116,7 @@ Avoid encoding temporary conditions in permission names. Names like `support_eu_
 
 ## Permission catalog
 
-For Phase 1, the catalog can be documented as a table. A later implementation may store the same concepts in configuration, database rows, provider-specific role metadata, or code-owned policy declarations.
+For conceptual study, the catalog can be documented as a table. A later implementation may store the same concepts in configuration, database rows, provider-specific role metadata, or code-owned policy declarations.
 
 | Area | Permission | Intended meaning | Does not imply |
 | --- | --- | --- | --- |
@@ -214,7 +214,7 @@ These constraints can still fit a simple RBAC model if they are explicit operati
 
 ## Effective permissions
 
-A subject's effective permissions are the union of permissions from active role assignments, minus any explicit restrictions the system defines. For Phase 1, assume additive RBAC unless a later requirement proves that deny rules or complex policy evaluation are needed.
+A subject's effective permissions are the union of permissions from active role assignments, minus any explicit restrictions the system defines. For the baseline model, assume additive RBAC unless a later requirement proves that deny rules or complex policy evaluation are needed.
 
 Example:
 
@@ -228,7 +228,7 @@ Alice can list members and disable an account. She cannot assign roles because s
 
 ## Token claims, introspection, and lookup
 
-There are several ways a resource server can obtain authorization data. Phase 1 should compare these patterns later rather than assume one now.
+There are several ways a resource server can obtain authorization data. The study should compare these patterns rather than assume one too early.
 
 | Pattern | Useful when | Main risk | Controls to evaluate |
 | --- | --- | --- | --- |
@@ -269,7 +269,7 @@ This endpoint should be treated as a privileged support function for trusted bac
 
 ## Service-to-service permissions
 
-Service-to-service permissions are a future extension for this project, not part of the first study or minimal PoC scope.
+Service-to-service permissions are a future extension for this project, not part of the initial scope.
 
 Service accounts are subjects, but they should not inherit human roles by convenience. A reporting job, provisioning worker, or integration service should receive a role named for its purpose and containing only the permissions it needs.
 

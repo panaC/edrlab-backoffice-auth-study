@@ -118,7 +118,7 @@ The diagram is conceptual. A single vendor product may implement the directory, 
 
 - [IAM Architecture](./15-iam-architecture.md)
 - [IAM Control Plane vs Data Plane](./14-iam-control-plane-vs-data-plane.md)
-- [Administration APIs](./08-admin-api.md)
+- [Admin API](./08-admin-api.md)
 - [RBAC](./05-rbac.md)
 - [OAuth Client Management](./13-oauth-client-management.md)
 - [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md)

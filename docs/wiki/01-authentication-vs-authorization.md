@@ -12,7 +12,7 @@ The distinction matters because authentication usually answers "is this subject 
 
 An internal backoffice system can have sensitive administrative capabilities even when it has fewer than 1,000 users. A successful login cannot be treated as blanket access. Support staff, managers, billing operators, auditors, service clients, and IAM administrators may all authenticate to the same environment while needing different access.
 
-For Phase 1, the important design pressure is conceptual: authentication data, identity claims, roles, permissions, API enforcement, and administrative operations need clear boundaries. Later architecture choices can vary, but the system still needs a reliable way to authenticate subjects and then authorize each protected operation.
+The important design pressure is conceptual: authentication data, identity claims, roles, permissions, API enforcement, and administrative operations need clear boundaries. Architecture choices can vary, but the system still needs a reliable way to authenticate subjects and then authorize each protected operation.
 
 ## How it works
 

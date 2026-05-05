@@ -166,7 +166,7 @@ RBAC and application policy decide what the subject may do with that credential.
 
 The selected architecture has one or more backend API resource servers. Even the first demonstration API should have a clear token audience boundary.
 
-An access token intended for one API should not automatically be valid at every other API. Otherwise a token issued for a low-risk service could be replayed against a high-risk administration endpoint. A later design may handle this with audience claims, resource indicators, per-API scopes, separate clients, token exchange patterns, introspection policy, or a combination. Phase 1 only needs the evaluation criterion: each resource server must be able to tell whether the token was meant for it.
+An access token intended for one API should not automatically be valid at every other API. Otherwise a token issued for a low-risk service could be replayed against a high-risk administration endpoint. A later design may handle this with audience claims, resource indicators, per-API scopes, separate clients, token exchange patterns, introspection policy, or a combination. The evaluation criterion is simple: each resource server must be able to tell whether the token was meant for it.
 
 Example:
 

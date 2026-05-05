@@ -203,7 +203,7 @@ The IAM Control Plane must eventually define:
 - how service-account credentials are rotated if service-to-service becomes in scope;
 - how key compromise is detected, contained, and audited.
 
-For Phase 2, this page provides evaluation vocabulary. Later candidate comparison should verify actual product behavior: JWKS support, key rotation, client-secret rotation, private key JWT, mTLS support, auditability, and operational burden.
+This page provides evaluation vocabulary. Later candidate comparison should verify actual product behavior: JWKS support, key rotation, client-secret rotation, private key JWT, mTLS support, auditability, and operational burden.
 
 ## Related pages
 
