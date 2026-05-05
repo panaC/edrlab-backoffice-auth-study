@@ -13,6 +13,7 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/phase-2-requirements-baseline.md` to convert Phase 1 study material into traceable Phase 2 requirements, verification routes, open decisions, and exit criteria.
 - Added `docs/phase-2-open-question-triage.md` to prioritize Phase 2 open questions by PoC, candidate-evaluation, final-recommendation, and production-design impact.
 - Added `docs/phase-2-service-permission-inventory.md` to define the first representative service, initial role permissions, operation inventory, access-check shape, and first-PoC acceptance checks.
+- Added `docs/phase-2-minimal-poc-plan.md` to define the first non-production PoC scope, assumptions, acceptance checks, negative checks, evidence to collect, and exit criteria.
 
 ### Changed
 
@@ -23,3 +24,4 @@ This repository is a study repository, not a released software package. Changelo
 - Added the Phase 2 requirements baseline to README and documentation index links.
 - Added the Phase 2 open-question triage to README, abstract, requirements baseline, and documentation index links.
 - Added the Phase 2 service and permission inventory to README, abstract, requirements baseline, open-question triage, and documentation index links.
+- Added the Phase 2 minimal PoC plan to README, abstract, docs index, requirements baseline, open-question triage, and service-permission inventory links.

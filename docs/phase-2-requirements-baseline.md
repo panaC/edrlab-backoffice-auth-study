@@ -145,7 +145,7 @@ These decisions are the most useful next targets for Phase 2. They do not need t
 | P2-Q002 | What exact permissions should `member` and `admin` have in the first PoC? | The initial permission catalog is intentionally broader than the minimum PoC. | [Service and permission inventory](./phase-2-service-permission-inventory.md) |
 | P2-Q003 | Is administrator MFA required for production, and should high-risk actions require step-up? | This affects candidate fit, recovery process, and operational burden. | Administrator authentication decision note |
 | P2-Q004 | Which lifecycle states are required in the first PoC and final recommendation? | `active` and `disabled` may be enough initially, but deletion/archive/retention policy affects audit and data model fit. | Lifecycle decision note |
-| P2-Q005 | What is the maximum acceptable stale-access window after role removal or member disablement? | JWT-only validation allows stale permissions until token expiry. | Token lifecycle decision note |
+| P2-Q005 | What is the maximum acceptable stale-access window after role removal or member disablement? | JWT-only validation allows stale permissions until token expiry. | [Minimal PoC plan](./phase-2-minimal-poc-plan.md) |
 | P2-Q006 | Who owns IAM operations after launch? | Self-hosted, managed, and hybrid options have very different ownership costs. | Operational ownership note |
 | P2-Q007 | What audit retention, privacy, and export expectations apply? | Audit requirements can disqualify or complicate candidates. | Audit and retention decision note |
 | P2-Q008 | Does production require break-glass access? | The design must balance lockout risk against bypass risk. | Break-glass decision note |
@@ -167,6 +167,7 @@ Phase 2 should be considered ready to hand off to detailed candidate comparison 
 - [README](../README.md)
 - [Phase 2 Open-Question Triage](./phase-2-open-question-triage.md)
 - [Phase 2 Service and Permission Inventory](./phase-2-service-permission-inventory.md)
+- [Phase 2 Minimal PoC Plan](./phase-2-minimal-poc-plan.md)
 - [Phase 1 working notes](./phase-1-working-notes.md)
 - [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md)
 - [Member Lifecycle](./member-lifecycle.md)

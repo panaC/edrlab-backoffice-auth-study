@@ -32,10 +32,10 @@ That order keeps the study testable without making production-only policy questi
 | --- | --- | --- | --- | --- | --- | --- |
 | P2-Q001 | Which real or representative backoffice service should define the first service-access permissions? | P0 | Working assumption | Product / PoC scope | PoC scope, permission model, access-check requirement | [Service and permission inventory](./phase-2-service-permission-inventory.md) |
 | P2-Q002 | What exact permissions should `member` and `admin` have in the first PoC? | P0 | Working assumption | Authorization model | PoC tests, admin API evaluation, RBAC candidate fit | [Service and permission inventory](./phase-2-service-permission-inventory.md) |
-| P2-Q003 | What is the smallest useful PoC question set? | P0 | Open | PoC scope | PoC planning and effort control | Minimal PoC plan |
+| P2-Q003 | What is the smallest useful PoC question set? | P0 | Working assumption | PoC scope | PoC planning and effort control | [Minimal PoC plan](./phase-2-minimal-poc-plan.md) |
 | P2-Q004 | Which lifecycle states are required for the first PoC? | P0 | Working assumption | Product / security | Member lifecycle tests, disablement behavior | Lifecycle decision note |
-| P2-Q005 | What is the maximum acceptable stale-access window after role removal or member disablement? | P0 | Open | Security / token lifecycle | Token lifetime choice, revocation/introspection need, PoC acceptance criteria | Token lifecycle decision note |
-| P2-Q006 | Should the first PoC use refresh tokens or force re-login when access tokens expire? | P0 | Open | Security / PoC scope | BFF session behavior, token handling tests | BFF session decision note |
+| P2-Q005 | What is the maximum acceptable stale-access window after role removal or member disablement? | P0 | Working assumption | Security / token lifecycle | Token lifetime choice, revocation/introspection need, PoC acceptance criteria | [Minimal PoC plan](./phase-2-minimal-poc-plan.md) |
+| P2-Q006 | Should the first PoC use refresh tokens or force re-login when access tokens expire? | P0 | Working assumption | Security / PoC scope | BFF session behavior, token handling tests | [Minimal PoC plan](./phase-2-minimal-poc-plan.md) |
 | P2-Q007 | Which candidates deserve first evaluation records? | P0 | Open | Evaluation planning | Phase 3 handoff, comparison effort | Candidate evaluation plan |
 | P2-Q008 | Are administrators required to use MFA in production? | P1 | Open | Security | Candidate fit, administrator authentication policy, recovery design | Administrator authentication decision note |
 | P2-Q009 | Should high-risk admin actions require step-up authentication? | P1 | Open | Security / UX | Role assignment, client rotation, audit export, recovery reset requirements | Administrator authentication decision note |
@@ -62,6 +62,7 @@ These assumptions let Phase 2 continue without pretending the questions are full
 | Lifecycle baseline | Use `active` and `disabled` as the minimum PoC states. | Invitation, archive, delete, and recovery behavior may affect candidate selection later. |
 | Token format | Use JWT access tokens for the first study and PoC baseline. | Immediate access removal may require introspection, revocation, or runtime authorization lookup later. |
 | Access removal | Removed access may remain effective until short-lived access-token expiry in the first version. | High-risk admin access may need a shorter lifetime or stronger revocation model. |
+| Refresh tokens | Do not require refresh tokens in the first PoC; force re-login or repeat login after access-token expiry. | Does not prove production refresh-token rotation, revocation, or reuse detection behavior. |
 | Admin API consumer | The backoffice UI through the BFF is the only first-PoC admin API consumer. | Automation and service-account requirements may change the admin permission model later. |
 | Service-to-service | Keep service-to-service authentication as future scope. | Some candidates may look better or worse once machine-client lifecycle is in scope. |
 
@@ -74,8 +75,8 @@ The next useful Phase 2 work should answer the P0 items in this order:
 | 1 | Choose the representative service and operations for the first PoC. | [Phase 2 Service and Permission Inventory](./phase-2-service-permission-inventory.md) |
 | 2 | Define the exact `member` and `admin` permissions used by that service and the admin API. | [Phase 2 Service and Permission Inventory](./phase-2-service-permission-inventory.md) |
 | 3 | Decide the minimum lifecycle states for the PoC. | `docs/phase-2-lifecycle-decisions.md` or a section in the service/permission inventory |
-| 4 | Decide the stale-access window and first token/session behavior. | `docs/phase-2-token-session-decisions.md` |
-| 5 | Write the minimal PoC plan from those decisions. | `docs/phase-2-minimal-poc-plan.md` |
+| 4 | Decide the stale-access window and first token/session behavior. | [Phase 2 Minimal PoC Plan](./phase-2-minimal-poc-plan.md) |
+| 5 | Write the minimal PoC plan from those decisions. | [Phase 2 Minimal PoC Plan](./phase-2-minimal-poc-plan.md) |
 | 6 | Choose the first evaluation batch. | `docs/phase-2-candidate-evaluation-plan.md` |
 
 ## Decision impact map
@@ -93,6 +94,7 @@ The next useful Phase 2 work should answer the P0 items in this order:
 
 - [Phase 2 Requirements Baseline](./phase-2-requirements-baseline.md)
 - [Phase 2 Service and Permission Inventory](./phase-2-service-permission-inventory.md)
+- [Phase 2 Minimal PoC Plan](./phase-2-minimal-poc-plan.md)
 - [Phase 1 working notes](./phase-1-working-notes.md)
 - [Initial Permission Model](./initial-permission-model.md)
 - [Member Lifecycle](./member-lifecycle.md)
