@@ -380,6 +380,7 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 | Authentication and authorization boundary | [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md) |
 | OAuth2 roles, tokens, and scopes | [OAuth2](./wiki/02-oauth2.md) |
 | OIDC login and identity claims | [OpenID Connect](./wiki/03-openid-connect.md) |
+| BFF browser sessions and server-side token handling | [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md) |
 | Token validation and JWT trade-offs | [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) |
 | RBAC modeling | [RBAC](./wiki/05-rbac.md) |
 | Authorization Code with PKCE and Client Credentials | [OAuth2 Flows](./wiki/06-oauth2-flows.md) |

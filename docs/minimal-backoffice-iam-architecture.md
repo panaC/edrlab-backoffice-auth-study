@@ -29,47 +29,11 @@ SSO is not the same thing as an IdP or an IAM control plane. SSO is the user-vis
 
 ## What BFF Means In This Study
 
-BFF means **Backend-for-Frontend**. It is a backend service designed specifically for one frontend, in this case the internal backoffice UI.
+BFF means **Backend-for-Frontend**. In this architecture, it is the browser-facing backend for the internal backoffice UI. Its architecture-level purpose is to let the browser use an opaque session cookie while the BFF handles OIDC login, server-side token handling, Admin API calls, and backend API calls.
 
-In the selected architecture, the BFF exists because browser applications are a weaker place to store OAuth tokens than a trusted backend. The browser gets a secure, HttpOnly session cookie. The BFF keeps OAuth tokens, refresh tokens, CSRF state, and OIDC callback handling on the server side.
+The BFF is a security and ergonomics boundary for the browser-facing backoffice. It is not the IAM authority, does not issue OAuth2/OIDC tokens, does not own members, roles, or permissions, and does not replace backend API authorization checks.
 
-The BFF is responsible for:
-
-- serving the backoffice UI or UI-facing HTTP routes;
-- redirecting users to the IdP for login;
-- handling the OIDC authorization-code callback;
-- creating and validating the browser session;
-- storing token data or token references server-side;
-- calling the IdP Admin API for IAM administration operations requested by the UI;
-- calling backend APIs with access tokens issued by the IdP.
-
-The BFF is not responsible for:
-
-- authenticating users by itself;
-- issuing OAuth2/OIDC tokens;
-- being the source of truth for members, roles, permissions, or service accounts;
-- replacing backend API authorization checks;
-- becoming a second IAM control plane;
-- letting frontend UI checks stand in for server-side authorization.
-
-So, in this project:
-
-```text
-Browser
-  -> talks to the BFF with a session cookie
-
-BFF
-  -> talks to the IdP/control plane with OIDC, OAuth2, and Admin API calls
-  -> talks to backend APIs with access tokens
-
-IdP / Authorization Server / Admin Control Plane
-  -> remains the IAM authority
-
-Backend APIs
-  -> remain responsible for validating tokens and enforcing operation permissions
-```
-
-The BFF is therefore a security and ergonomics boundary for the browser-facing backoffice, not the main subject of this study.
+Detailed BFF session, token storage, CSRF, refresh, and logout behavior belongs in [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md). This architecture note keeps only the system boundary.
 
 ## Starting Assumption: No Existing Enterprise SSO
 
@@ -247,46 +211,14 @@ Backend services should not read the IdP database directly. They should validate
 
 ### BFF Session Store
 
-The BFF session store exists so the browser does not need to store OAuth access tokens or refresh tokens.
+The BFF session store exists so the browser can carry only an opaque session cookie while OAuth tokens or token references stay server-side. At the architecture level, the important boundary is:
 
-Browser cookie:
+- the browser should not store OAuth access tokens or refresh tokens;
+- the BFF session store is BFF-owned state, not IAM source-of-truth data;
+- a multi-replica BFF needs a shared session store;
+- backend APIs should still validate access tokens and required permissions.
 
-```text
-bff_session=<opaque_random_session_id>
-HttpOnly
-Secure
-SameSite=Lax or Strict
-```
-
-Possible session table:
-
-```text
-bff_sessions
-- id
-- session_id_hash
-- user_subject
-- idp_issuer
-- created_at
-- expires_at
-- last_seen_at
-- csrf_secret
-- encrypted_access_token
-- encrypted_refresh_token
-- token_expires_at
-- revoked_at
-```
-
-Minimal storage options:
-
-| Shape | Where it fits | Notes |
-| --- | --- | --- |
-| In-memory map | Local development only. | Lost on restart; does not work across BFF replicas. |
-| SQL table | Simple production baseline. | Good default for a small deployment; easy to back up with the application database. |
-| Redis | Multiple BFF replicas or high session churn. | Good TTL behavior, but adds infrastructure. |
-| Encrypted cookie session | Very small serverless-like deployments. | Avoid storing OAuth tokens in browser cookies; revocation and size limits are harder. |
-| Token vault table | Stronger token isolation. | BFF session stores only a token reference; encrypted tokens live in a separate table or store. |
-
-For a minimal first production-like version, use an opaque HttpOnly cookie plus a server-side SQL session table. If the BFF runs multiple replicas, the session store must be shared, such as SQL or Redis.
+Cookie attributes, session table fields, token storage options, CSRF handling, refresh behavior, and logout semantics are covered in [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md).
 
 ### IdP Database
 
@@ -443,6 +375,7 @@ This shape keeps the browser simple, centralizes IAM authority in the IdP/contro
 - [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)
+- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [RBAC](./wiki/05-rbac.md)
 - [OAuth2 Flows](./wiki/06-oauth2-flows.md)

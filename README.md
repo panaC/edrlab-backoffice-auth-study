@@ -109,6 +109,7 @@ Out of scope:
 
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
 - [Minimal backoffice IAM architecture notes](./docs/minimal-backoffice-iam-architecture.md)
+- [BFF Sessions and Token Handling](./docs/bff-sessions-and-token-handling.md)
 - [Evaluation framework](./docs/evaluation-framework.md)
 - [Candidate shortlist](./docs/candidate-shortlist.md)
 - [IAM documentation wiki](./docs/wiki/README.md)

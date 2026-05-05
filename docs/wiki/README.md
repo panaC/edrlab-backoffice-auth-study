@@ -8,9 +8,37 @@ This page is the entry point. It introduces the big picture, shows how the main 
 
 ## Phase 1 boundary
 
-Phase 1 is documentation-only. The study now assumes the Central IAM Control Plane Architecture: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and one or more backend API resource servers. The first study and minimal PoC can use one demonstration API resource server. The wiki should explain the concepts and trade-offs needed to evaluate that central IAM component, but it should not recommend a final identity provider product, vendor, hosting model, database, deployment topology, or production implementation.
+The wiki itself is documentation-only. Phase 1 may also document a minimal PoC plan, and a PoC may be built later if explicitly requested. The study now assumes the Central IAM Control Plane Architecture: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and one or more backend API resource servers. The first study and minimal PoC can use one demonstration API resource server. The wiki should explain the concepts and trade-offs needed to evaluate that central IAM component, but it should not recommend a final identity provider product, vendor, hosting model, database, deployment topology, or production implementation.
 
 For this study, the future system is assumed to protect internal backoffice services for fewer than 1,000 users. Public account registration is out of scope. Members are created and managed by administrators. RBAC is required. The goal is to keep the eventual system simple, maintainable, understandable, and operable by the internal team.
+
+## Project big picture
+
+This project is not only about adding a login page. The backoffice needs a controlled way to answer six questions every time a person, application, or service touches protected functionality:
+
+- Who is the actor?
+- Which application or service is acting?
+- Which API is being called?
+- Which operation is being requested?
+- Is the actor allowed to do that operation?
+- Who changed access, when, and why?
+
+The selected Central IAM Control Plane Architecture exists to keep those answers consistent across the backoffice. Instead of each backend service inventing its own users, roles, tokens, and administrator rules, one central IAM component owns identity, token issuance, roles, permissions, administration, and audit evidence. Backend services still enforce authorization for their own operations, but they do it from a shared trust model.
+
+The future implementation or PoC can be understood as these responsibilities, not as a final product choice:
+
+| Responsibility | Main concept | Why it exists | Example implementation question |
+| --- | --- | --- | --- |
+| Prove who signed in | Authentication, IdP, OIDC | The system needs a reliable answer to "who is this user?" without every service handling credentials directly. | How does a backoffice member authenticate and receive a verifiable identity result? |
+| Keep browser tokens safer | Backoffice BFF | Browsers are a weaker place to store OAuth tokens and refresh tokens. | Should the browser hold only an HttpOnly session cookie while the BFF stores tokens server-side? |
+| Issue API access tokens | OAuth2 authorization server | APIs need a standard, verifiable credential for requests instead of trusting arbitrary session or header data. | What issuer, audience, lifetime, scopes, roles, or permissions should access tokens contain? |
+| Protect backend APIs | Resource server token validation | A successful login is not enough; each API must verify that the presented token was issued for it and is still valid. | How does each API validate issuer, audience, signature or introspection result, expiry, and required permission? |
+| Decide what users may do | Authorization, RBAC, permissions | Different members need different capabilities, and privileged operations need explicit checks. | Which roles and permissions allow actions such as `members:read`, `members:disable`, or `roles:assign`? |
+| Manage IAM state | Administration API, control plane | Member creation, role assignment, client configuration, and access removal are privileged system changes. | Which admin endpoints exist, who can call them, and how is self-escalation prevented? |
+| Preserve evidence | Audit logs, access reviews | Incidents and reviews require knowing who changed access, what changed, and whether the operation succeeded. | Which admin actions, denied attempts, login events, and access-review records must be retained? |
+| Support later machine access | Service clients, Client Credentials Flow | Future backend automation should not pretend to be a human user or reuse broad administrator roles. | If service-to-service access becomes in scope, how are machine clients created, scoped, rotated, disabled, and audited? |
+
+These concepts exist because identity and authorization fail in different ways. Authentication can succeed while authorization should still deny the operation. A valid token can be unsafe if the API skips issuer or audience validation. A role assignment can be technically valid but operationally dangerous if it allows self-escalation. An admin change can be correct but still unacceptable if it leaves no audit evidence. The study keeps the concepts separate so the eventual system can be simple without being vague about security boundaries.
 
 ## Page map
 
@@ -28,7 +56,10 @@ For this study, the future system is assumed to protect internal backoffice serv
 | [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md) | Covers audit event content, access review workflows, retention, evidence, and operational responsibility boundaries. |
 | [MFA, 2FA, Passwordless, and One-Time Passwords](./11-mfa-2fa-passwordless-and-otp.md) | Explains MFA, 2FA, passwordless authentication, OTP families, SMS, email, passkeys, WebAuthn, enrollment, recovery, and step-up trade-offs. |
 
-Related study document: [Administrator Authentication Policy](../administrator-authentication-policy.md).
+Related study documents:
+
+- [Administrator Authentication Policy](../administrator-authentication-policy.md)
+- [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md)
 
 ## Big-picture model
 
@@ -60,7 +91,7 @@ flowchart LR
     User["User / Member"]
     Admin["Administrator"]
     Client["Backoffice BFF / Client"]
-    AS["Authorization Server / OpenID Provider"]
+    AS["Authorization Server / OpenID Provider / Admin Control Plane"]
     ExternalIdP["External Identity Provider (optional)"]
     API["Backoffice Service / Resource Server"]
     AdminAPI["Administration API"]
@@ -77,6 +108,7 @@ flowchart LR
     Decision -. "JWKS, introspection, metadata, or authorization lookup" .-> AS
 
     Admin --> AdminAPI
+    AdminAPI --> AS
     AdminAPI --> Data
     AS --> Data
 
@@ -106,6 +138,7 @@ sequenceDiagram
     AS->>Client: Return authorization code
     Client->>AS: Exchange code for tokens
     AS->>Client: Return access token and ID token
+    Client->>Client: Store tokens or token references server-side
     Client->>API: Call API with bearer access token
     API->>API: Validate token issuer, audience, signature, and expiry
     API->>Authz: Check required role or permission
@@ -115,7 +148,7 @@ sequenceDiagram
 
 The important separation is that login is not the same as API authorization. A successful login proves the user authenticated. It does not automatically mean the user can read members, update billing data, create clients, or call an administrator-only endpoint. The resource server still needs to validate the access token and enforce the required permission for the requested operation.
 
-The permission check may be based on token claims, local policy configuration, a lookup into IAM data, or a separate authorization service. This README names the responsibility without choosing which runtime pattern should be used later.
+The permission check may be based on token claims, local policy configuration, a lookup into IAM data, or a separate authorization service. This wiki entry page names the responsibility without choosing which runtime pattern should be used later.
 
 For browser-based backoffice clients, the modern OAuth2 direction is Authorization Code Flow with PKCE rather than the older Implicit Flow. See [OAuth2 Flows](./06-oauth2-flows.md) and the OAuth2 security best current practice for why token exposure and redirect handling matter.
 
@@ -155,7 +188,7 @@ Do not rely on frontend-only authorization. Hiding a button in the backoffice UI
 
 Do not confuse scopes, roles, permissions, and claims. Scopes describe delegated access requested by a client. Roles group business access for members. Permissions describe granular capabilities. Claims are token fields that may carry identity, token metadata, roles, permissions, or other assertions depending on the system.
 
-Do not skip token validation details. A resource server should validate issuer, audience, signature, expiration, and relevant token constraints before trusting token contents. Some systems validate self-contained JWTs locally; others use opaque tokens with introspection. The trade-off belongs in the token page, not in the README.
+Do not skip token validation details. A resource server should validate issuer, audience, signature, expiration, and relevant token constraints before trusting token contents. Some systems validate self-contained JWTs locally; others use opaque tokens with introspection. The trade-off belongs in the token page, not in this wiki entry page.
 
 Do not expose administration APIs as ordinary APIs. They change IAM state and should require explicit administrator authorization, audit logging, and conservative operational controls.
 
@@ -165,6 +198,7 @@ Do not expose administration APIs as ordinary APIs. They change IAM state and sh
 - [RFC 6750 - The OAuth 2.0 Authorization Framework: Bearer Token Usage](https://www.rfc-editor.org/rfc/rfc6750)
 - [RFC 7519 - JSON Web Token (JWT)](https://www.rfc-editor.org/rfc/rfc7519)
 - [RFC 7636 - Proof Key for Code Exchange by OAuth Public Clients](https://www.rfc-editor.org/rfc/rfc7636)
+- [RFC 7662 - OAuth 2.0 Token Introspection](https://www.rfc-editor.org/rfc/rfc7662)
 - [RFC 8414 - OAuth 2.0 Authorization Server Metadata](https://www.rfc-editor.org/rfc/rfc8414)
 - [RFC 9700 - Best Current Practice for OAuth 2.0 Security](https://www.rfc-editor.org/rfc/rfc9700)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
