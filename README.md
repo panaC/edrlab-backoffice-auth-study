@@ -99,14 +99,16 @@ Out of scope:
 
 ## Roadmap
 
-1. Document the IAM concepts needed to reason about the authorization server.
-2. Define the business, technical, security, and operational requirements.
-3. Compare self-hosted, managed, minimal-library, and hybrid approaches.
-4. Build a minimal Proof of Concept covering the narrowed study scope.
-5. Produce a final evidence-based technical recommendation.
+1. Phase 1 - Document the IAM concepts needed to reason about the authorization server.
+2. Phase 2 - Define the business, technical, security, and operational requirements.
+3. Phase 3 - Compare self-hosted, managed, minimal-library, and hybrid approaches.
+4. Phase 4 - Build a minimal Proof of Concept covering the narrowed study scope.
+5. Phase 5 - Produce a final evidence-based technical recommendation.
 
 ## Documentation
 
+- [Abstract](./ABSTRACT.md)
+- [Changelog](./CHANGELOG.md)
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
 - [Documentation index](./docs/README.md)
 - [Minimal backoffice IAM architecture notes](./docs/minimal-backoffice-iam-architecture.md)

@@ -12,9 +12,9 @@ This file is only for agent operating instructions, rules, boundaries, and repos
 
 ## Current Operating Phase
 
-The current phase is `Phase 1 - IAM Study Foundation`.
+The current phase is `Phase 2 - Requirements Definition`.
 
-During this phase, default work is research, requirements refinement, IAM concept documentation, lightweight design notes, evaluation criteria, risk analysis, and other Markdown study artifacts.
+During this phase, default work is business, technical, security, and operational requirements definition; requirements traceability; open-question resolution; service and permission inventory refinement; candidate-evaluation preparation; lightweight PoC planning; and other Markdown study artifacts.
 
 Markdown study artifacts may be created or edited under `docs/`. The conceptual IAM wiki remains under `docs/wiki/`.
 
@@ -32,25 +32,26 @@ If instructions conflict:
 4. Follow existing repository conventions.
 5. Follow general best practices.
 
-A user request overrides the Phase 1 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, or asks for a proof of concept.
+A user request overrides the Phase 2 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, or asks for a proof of concept.
 
 ## Non-Negotiable Rules
 
-During Phase 1:
+During Phase 2:
 
 1. Create or edit Markdown study artifacts under `docs/` by default.
 2. Keep conceptual IAM wiki pages under `docs/wiki/`. Keep project-specific study, scope, debate, evaluation, and implementation-oriented documents under top-level `docs/`, not `docs/wiki/`.
 3. `AGENTS.md` may be edited when the user's current task is to refine agent instructions.
 4. `README.md` may be edited when the user's current task is to refine the final-review project brief: goal, requirements, constraints, scope, roadmap, or documentation links.
-5. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
-6. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
-7. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
-8. Every `docs/wiki/` page must include a `References` section.
-9. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
-10. Keep Mermaid diagrams simple and directly related to the explanation.
-11. Cross-reference overlapping topics instead of duplicating large sections.
-12. Check for an existing suitable file before creating a new one.
-13. Before finishing, compare the result with this file and the project requirements in `README.md`.
+5. Root `ABSTRACT.md` and `CHANGELOG.md` may be edited when the user's current task asks for project summary, project history, phase movement, or release-style documentation.
+6. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
+7. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
+8. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
+9. Every `docs/wiki/` page must include a `References` section.
+10. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
+11. Keep Mermaid diagrams simple and directly related to the explanation.
+12. Cross-reference overlapping topics instead of duplicating large sections.
+13. Check for an existing suitable file before creating a new one.
+14. Before finishing, compare the result with this file and the project requirements in `README.md`.
 
 ## Documentation Rules
 
@@ -182,7 +183,7 @@ When describing risks, explain what can go wrong and how to reduce the risk.
 
 ## Proof-Of-Concept Boundary
 
-Phase 1 allows Markdown study artifacts, simple diagrams, short pseudocode, short illustrative examples, requirements notes, evaluation criteria, comparison matrices, risk notes, and proof-of-concept planning.
+Phase 2 allows Markdown study artifacts, simple diagrams, short pseudocode, short illustrative examples, requirements notes, requirements traceability, evaluation criteria, comparison matrices, candidate evaluation records, risk notes, and proof-of-concept planning.
 
 Do not add runnable applications, production authorization server code, dependencies, databases, migrations, Docker files, deployment files, or CI configuration unless explicitly requested.
 
@@ -198,7 +199,7 @@ When modifying the repository:
 - read `README.md` before changing project requirements, scope, roadmap, or documentation links;
 - keep `README.md` final-review-facing; do not use it for tracking work in progress;
 - inspect existing docs before creating files;
-- keep Phase 1 Markdown study artifacts under `docs/`;
+- keep Phase 2 Markdown study artifacts under `docs/`;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
 - use Markdown for study documents;
 - preserve project conventions;

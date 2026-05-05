@@ -1,6 +1,8 @@
 # Documentation
 
-This directory contains Phase 1 study documents for the internal backoffice authorization server project.
+This directory contains study documents for the internal backoffice authorization server project.
+
+Phase 1 established the IAM concept foundation. Phase 2 should use these documents to refine business, technical, security, and operational requirements before later candidate comparison and Proof-of-Concept work.
 
 Use top-level `docs/` files for project-specific scope, requirements, study notes, trade-offs, candidate evaluation, PoC planning, and implementation-oriented notes.
 
