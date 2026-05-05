@@ -1,16 +1,16 @@
 # Minimal Backoffice IAM Architecture Notes
 
-This document consolidates the Phase 1 discussion about SSO, identity providers, IAM control planes, Backend-for-Frontend sessions, and the minimal micro-service architecture for an internal backoffice authorization server.
+This document consolidates the Phase 1 discussion about SSO, identity providers, IAM control planes, Backend-for-Frontend sessions, and the minimal micro-service architecture for an internal backoffice IAM Control Plane.
 
 The study now adopts the **Central IAM Control Plane Architecture** as its target shape:
 
 ```text
 Backoffice BFF (Backend-for-Frontend)
-    -> IdP / Authorization Server / Admin Control Plane
+    -> IAM Control Plane (IdP / Authorization Server / Admin Control Plane)
     -> one or more backend API resource servers
 ```
 
-The focus of this project is the **IdP / Authorization Server / Admin Control Plane** part. The Backoffice BFF, backend API services, workers, and service databases are included to define integration boundaries, but they are not the main implementation subject of the study. The first study and minimal PoC can use one demonstration API resource server.
+The focus of this project is the **IAM Control Plane**: the central IdP / Authorization Server / Admin Control Plane. The Backoffice BFF, backend API services, workers, and service databases are included to define integration boundaries, but they are not the main implementation subject of the study. The first study and minimal PoC can use one demonstration API resource server.
 
 This document does not choose a final product, vendor, database, hosting model, or implementation stack.
 
@@ -22,10 +22,31 @@ This document does not choose a final product, vendor, database, hosting model, 
 | IdP | Identity Provider. The system that authenticates users and provides identity assertions or tokens. | Who authenticated this user? |
 | Authorization Server | OAuth2 server that issues access tokens to clients. In OIDC systems, this is often also the OpenID Provider. | Which tokens can this client receive? |
 | Admin Control Plane | Administrative surface for users, roles, permissions, clients, service accounts, access checks, and audit events. | Who manages IAM state and privileged changes? |
+| IAM Control Plane | Study shorthand for the central IdP / Authorization Server / Admin Control Plane. It authenticates users, issues tokens, owns IAM state, exposes administrator operations, and records privileged IAM changes. | Which central component owns identity, token issuance, access administration, and IAM auditability? |
 | BFF | Backend-for-Frontend. A server-side component tailored to one frontend experience. | How can the browser use the system without storing OAuth tokens directly? |
 | Resource Server | Backend API that receives and validates access tokens before serving protected resources. | Is this API request authorized? |
 
 SSO is not the same thing as an IdP or an IAM control plane. SSO is the user-visible effect. The IdP and control plane are the systems that authenticate users, issue tokens, manage access, and record privileged changes.
+
+## Why Use "IAM Control Plane"
+
+`IAM Control Plane` is an architecture shorthand, not a formal OAuth2 or OpenID Connect role name. OAuth2 defines an authorization server. OpenID Connect defines an OpenID Provider. This study needs a name for the broader central component that combines those protocol responsibilities with member lifecycle, role and permission administration, client management, access-check support, audit events, and operational ownership.
+
+The wording is consistent with common industry architecture language. A control plane is the management and configuration side of a system, while data-plane or runtime components execute requests using that configuration. Kubernetes uses "control plane" for the components that manage overall cluster state. AWS IAM explicitly describes separate IAM control and data planes: IAM resources such as roles and policies are stored and changed through the control plane, while regional data planes perform authentication and authorization for runtime requests.
+
+Cloud IAM products and identity platforms often bundle the same kinds of responsibilities even when they do not use this exact label. Google Cloud IAM centralizes principals, roles, permissions, resources, and IAM policies. Microsoft Entra ID describes a platform for managing user identities and controlling access to apps, data, and resources. Keycloak organizes realms, users, credentials, groups, roles, clients, and administration in one identity server. For this project, `IAM Control Plane` is therefore a precise project term for a common industry shape, not a claim that every vendor names the component the same way.
+
+For the fuller explanation of why this study treats IdP, OAuth2/OIDC authorization server, and admin-control-plane responsibilities as one IAM Control Plane concept, see [IAM Control Plane vs Data Plane](./wiki/14-iam-control-plane-vs-data-plane.md#should-it-include-idp-and-oauth2oidc).
+
+Use the terms this way:
+
+| Term | Use when discussing |
+| --- | --- |
+| IAM Control Plane | The whole central component: identity, token issuance, IAM data ownership, administration APIs, access administration, and auditability. |
+| IdP | User authentication, login, identity assertions, external identity federation, or OIDC identity behavior. |
+| Authorization Server | OAuth2 token issuance, token endpoints, client grants, scopes, audiences, introspection, revocation, and issuer metadata. |
+| Admin Control Plane or Admin API | Privileged management operations for members, roles, permissions, clients, service accounts, access checks, and audit events. |
+| Resource Server | A protected backend API that validates tokens and enforces authorization for its own operations. |
 
 ## What BFF Means In This Study
 
@@ -99,7 +120,7 @@ This shape is not the selected study architecture. It is retained as a rationale
 
 ## Selected Architecture: Central IAM Control Plane
 
-The selected architecture is an authorization server with an IdP, an admin control plane, and one or more backend API services. The minimal architecture separates IAM authority from application business logic.
+The selected architecture uses an IAM Control Plane with IdP, authorization server, and admin control-plane responsibilities, plus one or more backend API services. The minimal architecture separates IAM authority from application business logic.
 
 ```text
 Browser
@@ -110,7 +131,8 @@ Backoffice UI / BFF
   |
   | OIDC login, token exchange, Admin API calls, API calls
   v
-IdP / Authorization Server / Admin Control Plane
+IAM Control Plane
+(IdP / Authorization Server / Admin Control Plane)
   |
   | OAuth2 access tokens
   v
@@ -123,13 +145,13 @@ Backend API Services
 | --- | --- | --- |
 | Browser | Displays UI and sends the BFF session cookie. | No |
 | Backoffice UI / BFF | Serves UI, owns browser session, handles OIDC callback, keeps tokens server-side, calls IdP Admin API and backend APIs. | No |
-| IdP / Authorization Server / Admin Control Plane | Authenticates users, issues tokens, manages members, roles, permissions, clients, service accounts, and audit events. | Yes |
+| IAM Control Plane | Authenticates users, issues tokens, manages members, roles, permissions, clients, service accounts, and audit events. | Yes |
 | Backend API Services | Own business logic and data, validate access tokens, enforce permissions server-side. | No, but they enforce authorization for their own operations |
 | Service Clients / Workers | Future extension: authenticate as machine clients and call backend APIs with service access tokens. | No |
 
-The BFF is not the IAM authority. It is a secure web facade. The IdP/control plane is the IAM authority. Backend APIs trust tokens from the IdP, but still enforce permissions themselves.
+The BFF is not the IAM authority. It is a secure web facade. The IAM Control Plane is the IAM authority. Backend APIs trust tokens from the IAM Control Plane, but still enforce permissions themselves.
 
-## Project Focus: IdP / Authorization Server / Admin Control Plane
+## Project Focus: IAM Control Plane
 
 The central component is the purpose of this study. It should be evaluated and designed as the system that owns:
 
@@ -142,9 +164,9 @@ The central component is the purpose of this study. It should be evaluated and d
 - audit events for privileged IAM changes;
 - issuer metadata, JWKS or introspection, token validation contracts, and key rotation behavior.
 
-It should not own backend business data. Backend API services keep their own databases and enforce permissions for their own operations after validating tokens issued by the IdP/authorization server.
+It should not own backend business data. Backend API services keep their own databases and enforce permissions for their own operations after validating tokens issued by the IAM Control Plane.
 
-The BFF should not become a second IAM authority. It may provide a project-specific UI and call the IdP Admin API, but the IdP/control plane must enforce administrative permissions server-side.
+The BFF should not become a second IAM authority. It may provide a project-specific UI and call the IAM Control Plane Admin API, but the IAM Control Plane must enforce administrative permissions server-side.
 
 ## Minimal Micro-Service Architecture
 
@@ -161,19 +183,20 @@ The BFF should not become a second IAM authority. It may provide a project-speci
 | - serves UI        |        | sessions, CSRF,      |
 | - OIDC callback    |        | token references or  |
 | - server sessions  |        | encrypted tokens     |
-| - calls IdP API    |        +----------------------+
+| - calls IAM API    |        +----------------------+
 | - calls services   |
 +---------+----------+
           |
           | OIDC / OAuth2 / Admin API
           v
 +----------------------------------+        +----------------------------------+
-| IdP / Authorization Server       |------->| IdP Database                     |
-| / Admin Control Plane            |        | members, credentials, sessions,  |
-| - login                          |        | clients, roles, permissions,     |
-| - OIDC provider                  |        | assignments, refresh tokens,     |
-| - OAuth2 token issuance          |        | key metadata, audit logs         |
-| - users, roles, permissions      |        +----------------------------------+
+| IAM Control Plane                |------->| IAM Database                     |
+| IdP / Authorization Server       |        | members, credentials, sessions,  |
+| / Admin Control Plane            |        | clients, roles, permissions,     |
+| - login                          |        | assignments, refresh tokens,     |
+| - OIDC provider                  |        | key metadata, audit logs         |
+| - OAuth2 token issuance          |        +----------------------------------+
+| - users, roles, permissions      |
 | - clients, service accounts      |
 | - admin API                      |
 | - audit                          |
@@ -199,8 +222,8 @@ The BFF should not become a second IAM authority. It may provide a project-speci
 
 | Service | Responsibility | Database |
 | --- | --- | --- |
-| Backoffice BFF | UI delivery, browser sessions, OIDC callback, token handling, calls to IdP Admin API and backend APIs. | BFF session store |
-| IdP / Authorization Server / Control Plane | Login, token issuance, users, roles, permissions, clients, service accounts, audit logs. | IAM database |
+| Backoffice BFF | UI delivery, browser sessions, OIDC callback, token handling, calls to the IAM Control Plane Admin API and backend APIs. | BFF session store |
+| IAM Control Plane | Login, token issuance, users, roles, permissions, clients, service accounts, audit logs. | IAM database |
 | Demonstration Backend API | First PoC resource server, token validation, operation-level authorization. | Demo data only, if needed |
 | Later Backend APIs | Future business APIs, token validation, operation-level authorization. | One database per service, if needed |
 | Workers / Service Clients | Future extension: background jobs or internal automation using Client Credentials Flow. | Own database only if they own durable business state |
@@ -275,13 +298,13 @@ BFF -> Browser: set HttpOnly session cookie
 ```text
 Browser -> BFF: disable member
 BFF -> BFF Session Store: validate session
-BFF -> IdP Admin API: disable member
-IdP -> IdP Database: update member status
-IdP -> Audit Log: record actor, action, target, result, timestamp, request context
+BFF -> IAM Control Plane Admin API: disable member
+IAM Control Plane -> IAM Database: update member status
+IAM Control Plane -> Audit Log: record actor, action, target, result, timestamp, request context
 BFF -> Browser: return result
 ```
 
-The IdP Admin API must enforce admin authorization server-side. The BFF may hide UI actions, but it must not be the only authorization layer.
+The IAM Control Plane Admin API must enforce admin authorization server-side. The BFF may hide UI actions, but it must not be the only authorization layer.
 
 ### Backend API Call From Browser UI
 
@@ -356,16 +379,16 @@ The selected study architecture is the Central IAM Control Plane Architecture. T
 
 ```text
 1 Backoffice BFF
-1 IdP / Authorization Server / Admin Control Plane
+1 IAM Control Plane
 1 demonstration backend API resource server for the first PoC
 1 BFF session store
 1 IdP database
 optional demo API data store only if needed
 ```
 
-The project focus is the IdP / Authorization Server / Admin Control Plane. The BFF, demonstration API, and storage choices define required integration behavior, but the study should avoid drifting into implementing business services or a full backoffice product. Service-to-service authentication remains a future option rather than an initial PoC requirement.
+The project focus is the IAM Control Plane. The BFF, demonstration API, and storage choices define required integration behavior, but the study should avoid drifting into implementing business services or a full backoffice product. Service-to-service authentication remains a future option rather than an initial PoC requirement.
 
-This shape keeps the browser simple, centralizes IAM authority in the IdP/control plane, keeps backend services responsible for their own authorization enforcement, and avoids unnecessary infrastructure until the requirements prove it is needed.
+This shape keeps the browser simple, centralizes IAM authority in the IAM Control Plane, keeps backend services responsible for their own authorization enforcement, and avoids unnecessary infrastructure until the requirements prove it is needed.
 
 ## Related Documents
 
@@ -386,6 +409,11 @@ This shape keeps the browser simple, centralizes IAM authority in the IdP/contro
 - [Service-to-Service Authentication](./wiki/07-service-to-service-authentication.md)
 - [Administration APIs](./wiki/08-admin-api.md)
 - [OAuth Client Management](./wiki/13-oauth-client-management.md)
+- [IAM Control Plane vs Data Plane](./wiki/14-iam-control-plane-vs-data-plane.md)
+- [IAM Architecture](./wiki/15-iam-architecture.md)
+- [IAM Data Model](./wiki/22-iam-data-model.md)
+- [Key Management and Signing Keys](./wiki/23-key-management-and-signing-keys.md)
+- [Web Sessions, Cookies, and BFF Pattern](./wiki/24-web-sessions-cookies-and-bff.md)
 - [Security Best Practices](./wiki/09-security-best-practices.md)
 - [Administrator Authentication Policy](./administrator-authentication-policy.md)
 
@@ -403,3 +431,9 @@ This shape keeps the browser simple, centralizes IAM authority in the IdP/contro
 - [OWASP API Security Top 10](https://owasp.org/API-Security/)
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+- [AWS IAM - Resilience in AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/disaster-recovery-resiliency.html)
+- [AWS IAM - How permissions and policies provide access management](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction_access-management.html)
+- [Google Cloud IAM overview](https://cloud.google.com/iam/docs/overview)
+- [Microsoft Entra ID documentation](https://learn.microsoft.com/en-us/entra/identity/)
+- [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
+- [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/)

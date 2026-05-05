@@ -39,7 +39,7 @@ Common claims include:
 
 Some systems include roles or permissions in access tokens. That can make API checks fast, but it also means role changes may not take effect until tokens expire unless the system supports revocation, introspection, short lifetimes, or another invalidation strategy. See [RBAC](./05-rbac.md) for modeling details.
 
-For the broader lifecycle of issuing, storing, validating, refreshing, revoking, expiring, and rotating tokens, see [Token Lifecycle](./12-token-lifecycle.md).
+For the broader lifecycle of issuing, storing, validating, refreshing, revoking, expiring, and rotating tokens, see [Token Lifecycle](./12-token-lifecycle.md). For JWKS, signing keys, key rotation, client secrets, private key JWT, and mTLS, see [Key Management and Signing Keys](./23-key-management-and-signing-keys.md).
 
 ## Token validation
 

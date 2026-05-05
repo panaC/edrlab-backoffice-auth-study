@@ -167,6 +167,8 @@ Confidential clients may authenticate at the token endpoint. Common methods incl
 
 Client authentication is not the same as user authentication. A confidential client can prove that the server-side application is the registered client, but it does not prove which human user is signed in. User identity comes from the login flow and token subject.
 
+For the dedicated key and secret lifecycle model, see [Key Management and Signing Keys](./23-key-management-and-signing-keys.md).
+
 ## Scopes, audiences, roles, and permissions
 
 Client management should constrain what a client can ask for, but it does not replace application authorization.

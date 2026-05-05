@@ -33,7 +33,7 @@ The purpose of lifecycle design is to make those trade-offs explicit. Some syste
 | Refresh token | Authorization server token endpoint | Longer than access tokens | More sensitive because it can request new access tokens; should be protected, rotated where appropriate, and revocable. |
 | Signing key | Token issuer and resource servers | Operational rotation window | New keys must be published before use; old keys must remain available until issued tokens expire. |
 
-See [Tokens and JWTs](./04-tokens-and-jwt.md) for token structure and validation details, and [OAuth2 Flows](./06-oauth2-flows.md) for how the main OAuth2 flows obtain tokens.
+See [Tokens and JWTs](./04-tokens-and-jwt.md) for token structure and validation details, [OAuth2 Flows](./06-oauth2-flows.md) for how the main OAuth2 flows obtain tokens, and [Key Management and Signing Keys](./23-key-management-and-signing-keys.md) for JWKS, signing keys, client secrets, private key JWT, and mTLS.
 
 ## Lifecycle stages
 
@@ -224,6 +224,8 @@ Do not log bearer tokens, refresh tokens, authorization codes, client secrets, r
 - [OAuth2](./02-oauth2.md)
 - [OpenID Connect](./03-openid-connect.md)
 - [OAuth2 Flows](./06-oauth2-flows.md)
+- [Key Management and Signing Keys](./23-key-management-and-signing-keys.md)
+- [Web Sessions, Cookies, and BFF Pattern](./24-web-sessions-cookies-and-bff.md)
 - [RBAC](./05-rbac.md)
 - [Security Best Practices](./09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md)

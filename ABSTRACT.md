@@ -1,18 +1,18 @@
 # Abstract
 
-This repository contains a technical study for an internal backoffice IAM control plane and authorization server.
+This repository contains a technical study for an internal backoffice IAM Control Plane.
 
-The study evaluates whether the company should adopt a self-hosted open-source identity and authorization product, use a managed identity provider, build a minimal internal authorization server with maintained frameworks or libraries, or combine an identity provider with a custom administration layer.
+The study evaluates whether the company should adopt a self-hosted open-source identity and authorization product, use a managed identity provider, build a minimal internal IAM Control Plane with maintained frameworks or libraries, or combine an identity provider with a custom administration layer.
 
 The selected study architecture is:
 
 ```text
 Backoffice BFF (Backend-for-Frontend)
-    -> IdP / Authorization Server / Admin Control Plane
+    -> IAM Control Plane (IdP / Authorization Server / Admin Control Plane)
     -> one or more backend API resource servers
 ```
 
-The project focus is the central IdP / authorization server / admin control-plane component. The Backoffice BFF and backend API services are integration context used to define token, session, administration, and authorization boundaries.
+The project focus is the central IAM Control Plane. The Backoffice BFF and backend API services are integration context used to define token, session, administration, and authorization boundaries.
 
 The repository is now in Phase 2: requirements definition. Phase 2 should turn the Phase 1 IAM foundation into clearer business, technical, security, and operational requirements, without choosing a final vendor, product, architecture implementation, hosting model, database, or production stack.
 

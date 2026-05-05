@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains study documents for the internal backoffice authorization server project.
+This directory contains study documents for the internal backoffice IAM Control Plane project.
 
 Phase 1 established the IAM concept foundation. Phase 2 should use these documents to refine business, technical, security, and operational requirements before later candidate comparison and Proof-of-Concept work.
 
