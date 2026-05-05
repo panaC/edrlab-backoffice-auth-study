@@ -283,6 +283,7 @@ Do not assume logout immediately invalidates every access token unless the desig
 - [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)
+- [Member Lifecycle](./member-lifecycle.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [OAuth2 Flows](./wiki/06-oauth2-flows.md)
 - [Administration APIs](./wiki/08-admin-api.md)

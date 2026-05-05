@@ -18,6 +18,8 @@ During this phase, default work is research, requirements refinement, IAM concep
 
 Markdown study artifacts may be created or edited under `docs/`. The conceptual IAM wiki remains under `docs/wiki/`.
 
+The wiki is for general IAM concepts, terminology, protocol explanations, security concepts, and references. Do not use `docs/wiki/` for project scope debate, requirements refinement, option analysis, candidate evaluation, PoC planning, implementation notes, phase status, or final recommendations. Put those project-specific study materials in top-level `docs/` files.
+
 Do not make a final vendor, product, architecture, or production implementation recommendation unless the user explicitly asks to move into a decision phase or requests a final recommendation.
 
 ## Instruction Priority
@@ -37,7 +39,7 @@ A user request overrides the Phase 1 boundary only when it explicitly changes ph
 During Phase 1:
 
 1. Create or edit Markdown study artifacts under `docs/` by default.
-2. Keep conceptual IAM wiki pages under `docs/wiki/`.
+2. Keep conceptual IAM wiki pages under `docs/wiki/`. Keep project-specific study, scope, debate, evaluation, and implementation-oriented documents under top-level `docs/`, not `docs/wiki/`.
 3. `AGENTS.md` may be edited when the user's current task is to refine agent instructions.
 4. `README.md` may be edited when the user's current task is to refine the final-review project brief: goal, requirements, constraints, scope, roadmap, or documentation links.
 5. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
@@ -78,7 +80,7 @@ docs/wiki/
 
 Use these names unless the repository already has a clearly better convention.
 
-Additional study documents may be created under `docs/` when useful. Prefer updating existing documents over creating near-duplicates.
+Additional study documents may be created under `docs/` when useful. Prefer updating existing documents over creating near-duplicates. If a document debates project scope, records trade-offs, evaluates options, plans a PoC, or describes implementation-oriented behavior, place it under `docs/` rather than `docs/wiki/`.
 
 When topics overlap, link to the more detailed page instead of duplicating large explanations. Use relative Markdown links.
 

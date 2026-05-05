@@ -1,44 +1,30 @@
 # Internal Backoffice IAM Wiki
 
-This wiki is the Phase 1 documentation for an internal backoffice authorization server study. Its purpose is to build a shared, evidence-backed understanding of identity and access management for the selected Central IAM Control Plane Architecture before any product, vendor, database, hosting, or implementation decision is made.
+This wiki is the general IAM concept reference for the internal backoffice authorization server study. It explains vocabulary, standards, security concepts, and common failure modes so readers can reason about the project with shared terminology.
+
+The wiki is not the place for project scope debate, option analysis, candidate scoring, phase status, PoC planning, or final recommendations. Those belong in the study documents under [docs](../README.md).
 
 The audience is senior engineers who understand backend systems, APIs, distributed systems, databases, and general security concepts, but who may not work with IAM, OAuth2, OpenID Connect, JWTs, token validation, or RBAC every day.
 
-This page is the entry point. It introduces the big picture, shows how the main parts interact, and links to the topic pages that will fill in the details.
+## Wiki boundary
 
-## Phase 1 boundary
+Use the wiki for stable conceptual material:
 
-The wiki itself is documentation-only. Phase 1 may also document a minimal PoC plan, and a PoC may be built later if explicitly requested. The study now assumes the Central IAM Control Plane Architecture: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and one or more backend API resource servers. The first study and minimal PoC can use one demonstration API resource server. The wiki should explain the concepts and trade-offs needed to evaluate that central IAM component, but it should not recommend a final identity provider product, vendor, hosting model, database, deployment topology, or production implementation.
+- definitions and terminology;
+- protocol concepts;
+- security properties and failure modes;
+- simple diagrams that explain IAM behavior;
+- references to specifications and security guidance.
 
-For this study, the future system is assumed to protect internal backoffice services for fewer than 1,000 users. Public account registration is out of scope. Members are created and managed by administrators. RBAC is required. The goal is to keep the eventual system simple, maintainable, understandable, and operable by the internal team.
+Use study documents outside the wiki for project-specific material:
 
-## Project big picture
-
-This project is not only about adding a login page. The backoffice needs a controlled way to answer six questions every time a person, application, or service touches protected functionality:
-
-- Who is the actor?
-- Which application or service is acting?
-- Which API is being called?
-- Which operation is being requested?
-- Is the actor allowed to do that operation?
-- Who changed access, when, and why?
-
-The selected Central IAM Control Plane Architecture exists to keep those answers consistent across the backoffice. Instead of each backend service inventing its own users, roles, tokens, and administrator rules, one central IAM component owns identity, token issuance, roles, permissions, administration, and audit evidence. Backend services still enforce authorization for their own operations, but they do it from a shared trust model.
-
-The future implementation or PoC can be understood as these responsibilities, not as a final product choice:
-
-| Responsibility | Main concept | Why it exists | Example implementation question |
-| --- | --- | --- | --- |
-| Prove who signed in | Authentication, IdP, OIDC | The system needs a reliable answer to "who is this user?" without every service handling credentials directly. | How does a backoffice member authenticate and receive a verifiable identity result? |
-| Keep browser tokens safer | Backoffice BFF | Browsers are a weaker place to store OAuth tokens and refresh tokens. | Should the browser hold only an HttpOnly session cookie while the BFF stores tokens server-side? |
-| Issue API access tokens | OAuth2 authorization server | APIs need a standard, verifiable credential for requests instead of trusting arbitrary session or header data. | What issuer, audience, lifetime, scopes, roles, or permissions should access tokens contain? |
-| Protect backend APIs | Resource server token validation | A successful login is not enough; each API must verify that the presented token was issued for it and is still valid. | How does each API validate issuer, audience, signature or introspection result, expiry, and required permission? |
-| Decide what users may do | Authorization, RBAC, permissions | Different members need different capabilities, and privileged operations need explicit checks. | Which roles and permissions allow actions such as `members:read`, `members:disable`, or `roles:assign`? |
-| Manage IAM state | Administration API, control plane | Member creation, role assignment, client configuration, and access removal are privileged system changes. | Which admin endpoints exist, who can call them, and how is self-escalation prevented? |
-| Preserve evidence | Audit logs, access reviews | Incidents and reviews require knowing who changed access, what changed, and whether the operation succeeded. | Which admin actions, denied attempts, login events, and access-review records must be retained? |
-| Support later machine access | Service clients, Client Credentials Flow | Future backend automation should not pretend to be a human user or reuse broad administrator roles. | If service-to-service access becomes in scope, how are machine clients created, scoped, rotated, disabled, and audited? |
-
-These concepts exist because identity and authorization fail in different ways. Authentication can succeed while authorization should still deny the operation. A valid token can be unsafe if the API skips issuer or audience validation. A role assignment can be technically valid but operationally dangerous if it allows self-escalation. An admin change can be correct but still unacceptable if it leaves no audit evidence. The study keeps the concepts separate so the eventual system can be simple without being vague about security boundaries.
+- selected scope or architecture;
+- requirements refinement;
+- open questions and trade-offs;
+- candidate evaluation;
+- PoC plans;
+- implementation notes;
+- final recommendation work.
 
 ## Page map
 
@@ -60,6 +46,7 @@ Related study documents:
 
 - [Administrator Authentication Policy](../administrator-authentication-policy.md)
 - [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md)
+- [Member Lifecycle](../member-lifecycle.md)
 
 ## Big-picture model
 
@@ -84,7 +71,7 @@ OAuth2 and OIDC are related but not the same thing. OAuth2 is about delegated au
 
 ## Conceptual architecture
 
-The diagram below is a vocabulary map for the selected Central IAM Control Plane Architecture, not a final product or deployment design.
+The diagram below is a vocabulary map for a common OAuth2/OIDC-based backoffice IAM shape, not a product, deployment design, or project scope decision.
 
 ```mermaid
 flowchart LR
@@ -116,7 +103,7 @@ flowchart LR
     Service --> API
 ```
 
-In the selected study shape, the OAuth2 authorization server, OIDC identity provider, and administration control plane are treated as the central IAM component. They may still be implemented by one product, multiple products, a managed provider, a self-hosted product, a library-based service, or a hybrid. Phase 1 does not choose that implementation path.
+In many systems, the OAuth2 authorization server, OIDC identity provider, and administration control plane are treated as one central IAM component. They may still be implemented by one product, multiple products, a managed provider, a self-hosted product, a library-based service, or a hybrid.
 
 The key responsibility boundary is that IAM data is managed by the authorization and administration side. A resource server should not need to be the owner of member, role, permission, client, or service account records. It validates tokens and enforces access using trusted token claims, authorization server metadata and keys, token introspection, local policy, or an explicit authorization lookup depending on the eventual design.
 
@@ -163,16 +150,16 @@ Examples of administration operations include:
 - creating and listing roles;
 - assigning and removing roles from members;
 - managing permissions and clients;
-- managing service accounts or machine clients if service-to-service access becomes in scope later;
+- managing service accounts or machine clients when service-to-service access is needed;
 - checking whether a member has a required role or permission for a backoffice service.
 
 The administration API must itself be protected like any other resource server, with stronger authorization because mistakes have a larger blast radius. Admin endpoints should be checked server-side, audited, rate limited where relevant, and designed so that authorization decisions are explicit rather than implied by frontend UI state.
 
 See [Admin API](./08-admin-api.md) for the dedicated page.
 
-## Future service-to-service flow
+## Service-to-service flow
 
-Service-to-service authentication is a future theoretical extension for this project, not part of the first study or minimal PoC scope. If later needed, backend services may need to call other internal services without a browser session. In OAuth2 terms, these services can be clients acting on their own behalf, commonly using Client Credentials Flow.
+Service-to-service authentication is a separate IAM concept from human browser login. Backend services may need to call other internal services without a browser session. In OAuth2 terms, these services can be clients acting on their own behalf, commonly using Client Credentials Flow.
 
 The service receives an access token representing the service client, then calls a resource server. The resource server validates the token and checks service-level permissions. These permissions should be modeled separately enough that a service account does not accidentally inherit broad human administrator privileges.
 

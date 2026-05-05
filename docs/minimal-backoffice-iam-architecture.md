@@ -375,6 +375,7 @@ This shape keeps the browser simple, centralizes IAM authority in the IdP/contro
 - [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)
+- [Member Lifecycle](./member-lifecycle.md)
 - [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [RBAC](./wiki/05-rbac.md)
