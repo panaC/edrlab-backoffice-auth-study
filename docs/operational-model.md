@@ -2,7 +2,7 @@
 
 This document records the operational topics the internal backoffice IAM study must evaluate before a final recommendation or production implementation.
 
-This is Phase 1 study material. It does not choose a hosting provider, database, logging stack, monitoring tool, backup product, incident-response process, or production runbook.
+This document originated as Phase 1 study material and now supports Phase 2 requirements definition. It does not choose a hosting provider, database, logging stack, monitoring tool, backup product, incident-response process, or production runbook.
 
 ## Purpose
 

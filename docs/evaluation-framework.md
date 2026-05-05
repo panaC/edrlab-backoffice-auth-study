@@ -164,7 +164,6 @@ Use this compact template when evaluating a candidate.
 ## References
 
 - [Requirements Baseline](./requirements-baseline.md)
-- [Candidate Shortlist](./candidate-shortlist.md)
 - [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md)
 - [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
 - [Threat Model](./threat-model.md)

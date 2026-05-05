@@ -30,9 +30,10 @@ Read the wiki in this order if you want the domain to build progressively.
 1. [RBAC](./05-rbac.md)
 2. [Authorization Models](./18-authorization-models.md)
 3. [PDP, PEP, PIP, and PAP](./17-pdp-pep-pip-pap.md)
-4. [Policy Engines and Fine-Grained Authorization](./21-policy-engines-and-fine-grained-authorization.md)
-5. [Admin API](./08-admin-api.md)
-6. [Service-to-Service Authentication](./07-service-to-service-authentication.md)
+4. [Kubernetes API Access Control](./25-kubernetes-api-access-control.md)
+5. [Policy Engines and Fine-Grained Authorization](./21-policy-engines-and-fine-grained-authorization.md)
+6. [Admin API](./08-admin-api.md)
+7. [Service-to-Service Authentication](./07-service-to-service-authentication.md)
 
 ### 4. Learn identity lifecycle and enterprise integration
 
@@ -73,6 +74,7 @@ Read the wiki in this order if you want the domain to build progressively.
 | [22 - IAM Data Model](./22-iam-data-model.md) | What are principals, subjects, users, members, identities, accounts, groups, roles, permissions, clients, service accounts, tenants, and organizations? |
 | [23 - Key Management and Signing Keys](./23-key-management-and-signing-keys.md) | How do JWKS, signing keys, key rotation, client secrets, private key JWT, mTLS, certificates, and secret storage fit IAM? |
 | [24 - Web Sessions, Cookies, and BFF Pattern](./24-web-sessions-cookies-and-bff.md) | How do browser sessions, cookies, CSRF, browser token storage, refresh tokens, and the BFF pattern work? |
+| [25 - Kubernetes API Access Control](./25-kubernetes-api-access-control.md) | How does Kubernetes' access-control pipeline map to IAM authentication, authorization, admission-style guardrails, and audit? |
 
 ## Vocabulary
 
@@ -99,6 +101,7 @@ Read the wiki in this order if you want the domain to build progressively.
 | PEP | Policy Enforcement Point. |
 | PIP | Policy Information Point. |
 | PAP | Policy Administration Point. |
+| Admission control | Post-authorization checks that can reject or modify sensitive mutating requests before state changes are persisted. |
 
 ## Model Summary
 
@@ -222,6 +225,7 @@ Do not expose administration APIs as ordinary APIs. They change IAM state and sh
 | Principals, subjects, members, identities, accounts, tenants | [IAM Data Model](./22-iam-data-model.md) |
 | Roles, permissions, assignments | [RBAC](./05-rbac.md) and [Authorization Models](./18-authorization-models.md) |
 | PEP, PDP, PIP, PAP, policy engine | [PDP, PEP, PIP, and PAP](./17-pdp-pep-pip-pap.md) and [Policy Engines and Fine-Grained Authorization](./21-policy-engines-and-fine-grained-authorization.md) |
+| Kubernetes API access pipeline, admission control, SubjectAccessReview | [Kubernetes API Access Control](./25-kubernetes-api-access-control.md) |
 | Admin operations, IAM mutations, privileged API | [Admin API](./08-admin-api.md) |
 | Service accounts or machine clients | [Service-to-Service Authentication](./07-service-to-service-authentication.md) |
 | SSO, SAML, external IdP, identity broker | [Federation and Enterprise SSO](./19-federation-and-enterprise-sso.md) |

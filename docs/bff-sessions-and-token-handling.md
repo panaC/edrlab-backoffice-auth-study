@@ -2,7 +2,7 @@
 
 This page explains why the selected architecture uses a Backoffice BFF (Backend-for-Frontend), what that BFF should own, how browser sessions relate to OAuth2/OIDC tokens, and which questions a later PoC or implementation must answer.
 
-This is Phase 1 study material. It does not choose a web framework, session store, token vault, identity provider, deployment topology, or production implementation.
+This document originated as Phase 1 study material and now supports Phase 2 requirements definition. It does not choose a web framework, session store, token vault, identity provider, deployment topology, or production implementation.
 
 The architecture-level service and database boundaries are summarized in [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md). This page is the detailed study note for BFF browser sessions, server-side token handling, CSRF, refresh, and logout behavior.
 

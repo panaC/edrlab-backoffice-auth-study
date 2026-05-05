@@ -12,21 +12,24 @@ This repository is a study repository, not a released software package. Changelo
 - Added root `CHANGELOG.md` to track project-level documentation and phase changes.
 - Added `docs/requirements-baseline.md` as the consolidated Phase 2 requirements baseline with stable requirement IDs and evaluation gate traceability.
 - Added `docs/open-questions.md` as the consolidated Phase 2 open-question register with status, owner, blocked-decision, and current-default fields.
-- Added `docs/phase-2-requirements-baseline.md` to convert Phase 1 study material into traceable Phase 2 requirements, verification routes, open decisions, and exit criteria.
-- Added `docs/phase-2-open-question-triage.md` to prioritize Phase 2 open questions by PoC, candidate-evaluation, final-recommendation, and production-design impact.
-- Added `docs/phase-2-service-permission-inventory.md` to define the first representative service, initial role permissions, operation inventory, access-check shape, and first-PoC acceptance checks.
-- Added `docs/phase-2-minimal-poc-plan.md` to define the first non-production PoC scope, assumptions, acceptance checks, negative checks, evidence to collect, and exit criteria.
+- Added `docs/wiki/25-kubernetes-api-access-control.md` to explain Kubernetes' access-control pipeline as a conceptual IAM and API authorization reference model.
 
 ### Changed
 
 - Switched the active operating phase in `AGENTS.md` from Phase 1 - IAM Study Foundation to Phase 2 - Requirements Definition.
 - Updated the roadmap in `README.md` to name the study phases explicitly.
 - Added root `ABSTRACT.md` and `CHANGELOG.md` to the README documentation links.
-- Added the Phase 2 requirements baseline to the abstract key links.
-- Added the Phase 2 requirements baseline to README and documentation index links.
-- Added the Phase 2 open-question triage to README, abstract, requirements baseline, and documentation index links.
-- Added the Phase 2 service and permission inventory to README, abstract, requirements baseline, open-question triage, and documentation index links.
-- Added the Phase 2 minimal PoC plan to README, abstract, docs index, requirements baseline, open-question triage, and service-permission inventory links.
-- Updated README and documentation index links to surface the consolidated Phase 2 requirements baseline and open-question register.
+- Updated README, abstract, requirements baseline, open-question register, and documentation index links to surface the current consolidated Phase 2 artifacts.
+- Updated the abstract status and key links to reflect the current consolidated Phase 2 artifacts.
+- Updated top-level study documents so Phase 1 foundation pages clearly read as Phase 2 requirements inputs.
 - Refined the evaluation framework with requirement-ID traceability, mandatory evidence capture in the evaluation template, stronger BFF/CSRF criteria, and a new OAuth client safety gate.
 - Clarified in `AGENTS.md` that project history must be kept in root `CHANGELOG.md`, with `README.md` reserved for the final-review project brief.
+- Removed project-facing wiki-index links and clarified in `AGENTS.md` that the conceptual wiki index is agent-facing only.
+- Added the conceptual wiki index link back to the root README documentation list by explicit request.
+- Renamed `docs/phase-1-working-notes.md` to `docs/study-notes.md` and updated documentation links to use the phase-neutral study-notes artifact.
+- Removed the page-level references section from the conceptual wiki index; baseline references remain in `AGENTS.md`.
+
+### Removed
+
+- Removed stale `docs/phase-2-working-notes.md`; Phase 2 working documentation now lives in `docs/requirements-baseline.md` and `docs/open-questions.md`.
+- Removed `docs/candidate-shortlist.md`; candidate evaluation remains governed by `docs/evaluation-framework.md` until a new candidate inventory is explicitly requested.

@@ -49,7 +49,7 @@ During Phase 2:
 7. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
 8. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
 9. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
-10. Every `docs/wiki/` page must include a `References` section.
+10. Every conceptual wiki topic page must include a `References` section. The wiki index may omit page-level references because baseline references are maintained in this file.
 11. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
 12. Keep Mermaid diagrams simple and directly related to the explanation.
 13. Cross-reference overlapping topics instead of duplicating large sections.
@@ -65,6 +65,8 @@ Keep the conceptual IAM wiki under:
 ```text
 docs/wiki/
 ```
+
+Use the conceptual wiki index as an agent-facing reading path only. Project-facing documentation should link directly to the specific wiki page that supports the surrounding text instead of linking to the wiki index.
 
 Recommended wiki structure:
 
@@ -230,7 +232,7 @@ Before finishing:
 - confirm no forbidden implementation files or unnecessary dependencies were added;
 - confirm no final recommendation was made unless explicitly requested;
 - confirm meaningful project history has been recorded in `CHANGELOG.md` when the task changes project phase, scope, requirements, documentation structure, evaluation artifacts, or PoC planning;
-- confirm every edited wiki page has a useful `References` section;
+- confirm every edited conceptual wiki topic page has a useful `References` section;
 - confirm citations are real, relevant, and from appropriate sources;
 - confirm overlapping topics are cross-referenced instead of heavily duplicated;
 - run an appropriate lightweight validation, such as `git diff --check`, when files were edited.

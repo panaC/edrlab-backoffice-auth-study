@@ -2,7 +2,7 @@
 
 This page explains the lifecycle of a backoffice member account: how a member is created, activated, updated, disabled, optionally restored, and eventually deleted or archived.
 
-This is Phase 1 conceptual study material. It does not choose a final data model, identity provider, deletion policy, recovery policy, or production implementation.
+This document originated as Phase 1 conceptual study material and now supports Phase 2 requirements definition. It does not choose a final data model, identity provider, deletion policy, recovery policy, or production implementation.
 
 ## Why this exists
 

@@ -2,7 +2,7 @@
 
 This document records the project-specific first-pass permission model for the internal backoffice IAM study. It complements the general [RBAC](./wiki/05-rbac.md) wiki page.
 
-This is Phase 1 study material. It does not choose a final provider, database schema, authorization library, policy engine, or production implementation.
+This document originated as Phase 1 study material and now supports Phase 2 requirements definition. It does not choose a final provider, database schema, authorization library, policy engine, or production implementation.
 
 ## Purpose
 

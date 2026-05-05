@@ -1,6 +1,6 @@
 # Requirements Baseline
 
-This document is the Phase 2 requirements baseline for the internal backoffice IAM Control Plane study. It consolidates requirements from the project brief and existing study documents, excluding `phase-2-working-notes.md` for this pass.
+This document is the Phase 2 requirements baseline for the internal backoffice IAM Control Plane study. It consolidates requirements from the project brief and existing study documents. The [Open Questions](./open-questions.md) register tracks unresolved decisions and temporary defaults for working documentation.
 
 The baseline is product-neutral. It does not choose a vendor, product, database, hosting model, implementation stack, or final architecture beyond the selected Central IAM Control Plane study architecture.
 
@@ -20,9 +20,9 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 | `BR-001` | Must | The study focuses on the IAM Control Plane: IdP, authorization server, and admin control-plane responsibilities. | [README](../README.md), [Minimal architecture](./minimal-backoffice-iam-architecture.md) |
 | `BR-002` | Must | The system serves internal backoffice users, not public customers or public self-service accounts. | [README](../README.md), [Member lifecycle](./member-lifecycle.md) |
 | `BR-003` | Must | Members are created and managed by internal administrators only. | [README](../README.md), [Member lifecycle](./member-lifecycle.md) |
-| `BR-004` | Must | The study must compare self-hosted, managed, minimal-library, and hybrid solution approaches without making a final recommendation in Phase 2. | [README](../README.md), [Candidate shortlist](./candidate-shortlist.md) |
+| `BR-004` | Must | The study must compare self-hosted, managed, minimal-library, and hybrid solution approaches without making a final recommendation in Phase 2. | [README](../README.md), [Evaluation framework](./evaluation-framework.md) |
 | `BR-005` | Must | The expected scale is fewer than 1,000 users, so operational complexity must stay proportionate. | [README](../README.md), [Operational model](./operational-model.md) |
-| `BR-006` | Should | Prefer open-source components where relevant, and prefer SQLite for self-hosted options only where realistic and supported. | [README](../README.md), [Candidate shortlist](./candidate-shortlist.md) |
+| `BR-006` | Should | Prefer open-source components where relevant, and prefer SQLite for self-hosted options only where realistic and supported. | [README](../README.md) |
 | `BR-007` | Out of scope | Public customer identity, public registration, social login, company-wide workforce IAM, and external multi-tenant SaaS identity requirements are not part of the first study. | [README](../README.md) |
 | `BR-008` | Out of scope | A production-ready IAM Control Plane is not an expected Phase 2 outcome. | [README](../README.md) |
 
@@ -42,14 +42,14 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 
 | ID | Priority | Requirement | Source |
 | --- | --- | --- | --- |
-| `AUTH-001` | Must | Backoffice users authenticate through OAuth2/OIDC-compatible login. | [README](../README.md), [Phase 1 working notes](./phase-1-working-notes.md) |
+| `AUTH-001` | Must | Backoffice users authenticate through OAuth2/OIDC-compatible login. | [README](../README.md), [Study notes](./study-notes.md) |
 | `AUTH-002` | Must | Browser-based backoffice login uses Authorization Code Flow with PKCE through the BFF. | [BFF sessions](./bff-sessions-and-token-handling.md), [OAuth2 flows](./wiki/06-oauth2-flows.md) |
 | `AUTH-003` | Must | The BFF validates OIDC callback state and ID-token issuer, audience, nonce, signature, and expiry before creating a browser session. | [BFF sessions](./bff-sessions-and-token-handling.md), [Threat model](./threat-model.md) |
 | `AUTH-004` | Must | Implicit Flow is not used for new browser-based backoffice applications. | [README](../README.md), [BFF sessions](./bff-sessions-and-token-handling.md) |
 | `SESS-001` | Must | The browser receives only an opaque, high-entropy, HttpOnly, Secure, SameSite-aware BFF session cookie. | [BFF sessions](./bff-sessions-and-token-handling.md) |
 | `SESS-002` | Must | OAuth access tokens, refresh tokens, authorization codes, ID tokens, client secrets, passwords, private keys, recovery codes, and raw session IDs are not exposed in browser-readable storage or logs. | [BFF sessions](./bff-sessions-and-token-handling.md), [Threat model](./threat-model.md) |
 | `SESS-003` | Should | BFF sessions should have explicit idle timeout, absolute timeout, refresh behavior, logout behavior, and multi-replica storage behavior before production. | [BFF sessions](./bff-sessions-and-token-handling.md), [Open questions](./open-questions.md) |
-| `TOKEN-001` | Must | The first study and minimal PoC baseline uses JWT access tokens. | [Phase 1 working notes](./phase-1-working-notes.md), [Administrator authentication policy](./administrator-authentication-policy.md) |
+| `TOKEN-001` | Must | The first study and minimal PoC baseline uses JWT access tokens. | [Study notes](./study-notes.md), [Administrator authentication policy](./administrator-authentication-policy.md) |
 | `TOKEN-002` | Must | Resource servers validate issuer, audience, expiry, signature or introspection result, and required permissions for every protected API request. | [README](../README.md), [Threat model](./threat-model.md) |
 | `TOKEN-003` | Should | Access tokens should be short-lived; in the first study baseline, removed access may remain effective only until access-token expiry. | [BFF sessions](./bff-sessions-and-token-handling.md), [Member lifecycle](./member-lifecycle.md) |
 | `TOKEN-004` | Should | Immediate revocation, token introspection, or runtime authorization lookup should be evaluated when the accepted stale-access window is shorter than access-token lifetime. | [BFF sessions](./bff-sessions-and-token-handling.md), [Threat model](./threat-model.md) |
@@ -66,9 +66,9 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 | `RBAC-001` | Must | RBAC is required for backoffice access management. | [README](../README.md), [Initial permission model](./initial-permission-model.md) |
 | `RBAC-002` | Must | Roles can be created, listed, assigned to members, and removed from members. | [README](../README.md), [Initial permission model](./initial-permission-model.md) |
 | `RBAC-003` | Must | The initial role baseline includes `admin` and `member`. | [README](../README.md), [Initial permission model](./initial-permission-model.md) |
-| `RBAC-004` | Should | Sensitive operations use explicit permissions, such as `members:read`, `members:disable`, `roles:assign`, and `authorization:check`, rather than one broad admin flag. | [Initial permission model](./initial-permission-model.md), [Phase 1 working notes](./phase-1-working-notes.md) |
+| `RBAC-004` | Should | Sensitive operations use explicit permissions, such as `members:read`, `members:disable`, `roles:assign`, and `authorization:check`, rather than one broad admin flag. | [Initial permission model](./initial-permission-model.md), [Study notes](./study-notes.md) |
 | `RBAC-005` | Should | Role assignment and role-definition changes prevent self-escalation, over-granting, and disabling or deleting the last usable administrator path. | [Initial permission model](./initial-permission-model.md), [Threat model](./threat-model.md) |
-| `RBAC-006` | Future | Role hierarchies, ABAC, relationship-based authorization, separate policy engines, and resource-level permissions are later study topics unless concrete workflows require them. | [Phase 1 working notes](./phase-1-working-notes.md), [Candidate shortlist](./candidate-shortlist.md) |
+| `RBAC-006` | Future | Role hierarchies, ABAC, relationship-based authorization, separate policy engines, and resource-level permissions are later study topics unless concrete workflows require them. | [Study notes](./study-notes.md), [Authorization models](./wiki/18-authorization-models.md) |
 
 ## Administration API and access-check requirements
 
@@ -78,8 +78,8 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 | `API-002` | Must | Administration is restricted to internal administrators and enforced server-side by the IAM Control Plane, not only by the UI or BFF. | [README](../README.md), [Administrator authentication policy](./administrator-authentication-policy.md) |
 | `API-003` | Must | The minimum administration API supports creating, reading, updating, disabling or deleting members; creating roles; assigning and removing roles; listing roles; listing members; and checking access to a given backoffice service. | [README](../README.md) |
 | `API-004` | Must | The system can answer whether a member has access to a representative backoffice service or operation. | [README](../README.md), [Evaluation framework](./evaluation-framework.md) |
-| `API-005` | Should | Admin mutations have documented validation, idempotency, concurrency behavior, and safe error behavior. | [Phase 1 working notes](./phase-1-working-notes.md), [Initial permission model](./initial-permission-model.md) |
-| `API-006` | Should | The first baseline treats the Backoffice UI through the BFF as the only admin API consumer; machine callers are later service-client scope. | [Phase 1 working notes](./phase-1-working-notes.md), [Administrator authentication policy](./administrator-authentication-policy.md) |
+| `API-005` | Should | Admin mutations have documented validation, idempotency, concurrency behavior, and safe error behavior. | [Study notes](./study-notes.md), [Initial permission model](./initial-permission-model.md) |
+| `API-006` | Should | The first baseline treats the Backoffice UI through the BFF as the only admin API consumer; machine callers are later service-client scope. | [Study notes](./study-notes.md), [Administrator authentication policy](./administrator-authentication-policy.md) |
 | `API-007` | Should | Client management, redirect URI changes, client secret rotation, and client disablement are treated as sensitive admin operations where the chosen candidate exposes them to this project. | [Initial permission model](./initial-permission-model.md), [Threat model](./threat-model.md) |
 
 ## Security, audit, and operational requirements
@@ -93,7 +93,7 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 | `AUD-001` | Must | Privileged administration operations are auditable with actor, action, target, result, timestamp, and safe request context. | [README](../README.md), [Initial permission model](./initial-permission-model.md) |
 | `AUD-002` | Must | Logs and audit records do not expose passwords, bearer tokens, refresh tokens, authorization codes, client secrets, private keys, recovery material, or raw session IDs. | [Initial permission model](./initial-permission-model.md), [Evaluation framework](./evaluation-framework.md) |
 | `AUD-003` | Should | Audit events cover member creation/update/disable/restore, role assignment/removal, role changes, client changes, authorization denials, audit reads/exports, and recovery or authenticator reset. | [Initial permission model](./initial-permission-model.md), [Member lifecycle](./member-lifecycle.md) |
-| `AUD-004` | Should | Access review is possible from the member, role, permission, assignment, client, and audit surfaces. | [Phase 1 working notes](./phase-1-working-notes.md), [Operational model](./operational-model.md) |
+| `AUD-004` | Should | Access review is possible from the member, role, permission, assignment, client, and audit surfaces. | [Study notes](./study-notes.md), [Operational model](./operational-model.md) |
 | `OPS-001` | Must | Operational ownership for the IAM Control Plane is named before production. | [Operational model](./operational-model.md), [Open questions](./open-questions.md) |
 | `OPS-002` | Must | Operational complexity is justified by concrete security, compliance, maintainability, or product needs. | [README](../README.md), [Evaluation framework](./evaluation-framework.md) |
 | `OPS-003` | Should | Backup and restore expectations cover member data, authorization data, client metadata, configuration, signing key metadata, and audit logs. | [Operational model](./operational-model.md) |
@@ -105,10 +105,10 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 
 | ID | Priority | Requirement | Source |
 | --- | --- | --- | --- |
-| `EVAL-001` | Must | Candidate evaluation uses the product-neutral gates in the evaluation framework before detailed comparison. | [Evaluation framework](./evaluation-framework.md), [Candidate shortlist](./candidate-shortlist.md) |
+| `EVAL-001` | Must | Candidate evaluation uses the product-neutral gates in the evaluation framework before detailed comparison. | [Evaluation framework](./evaluation-framework.md) |
 | `EVAL-002` | Must | Gate status values are `OK`, `KO`, or `Unknown`; `Unknown` is not treated as a pass. | [Evaluation framework](./evaluation-framework.md) |
-| `EVAL-003` | Must | Candidate evidence comes from official documentation, standards, reputable security guidance, or targeted PoCs for unresolved security-sensitive behavior. | [Evaluation framework](./evaluation-framework.md), [Candidate shortlist](./candidate-shortlist.md) |
-| `EVAL-004` | Must | Candidate comparison remains neutral in Phase 2 and does not produce a final vendor, product, architecture, hosting, or stack recommendation. | [README](../README.md), [Candidate shortlist](./candidate-shortlist.md) |
+| `EVAL-003` | Must | Candidate evidence comes from official documentation, standards, reputable security guidance, or targeted PoCs for unresolved security-sensitive behavior. | [Evaluation framework](./evaluation-framework.md) |
+| `EVAL-004` | Must | Candidate comparison remains neutral in Phase 2 and does not produce a final vendor, product, architecture, hosting, or stack recommendation. | [README](../README.md), [Evaluation framework](./evaluation-framework.md) |
 | `EVAL-005` | Should | Targeted PoCs answer one or two high-value uncertainties, such as OIDC login through the BFF, resource-server token validation, member disablement and role-removal latency, admin API coverage, audit event quality, secret redaction, or self-hosted operations ambiguity. | [Evaluation framework](./evaluation-framework.md), [BFF sessions](./bff-sessions-and-token-handling.md) |
 | `EVAL-006` | Future | Service-to-service authentication fit is recorded as an evolution note, not a first-PoC blocker unless the project explicitly changes scope. | [README](../README.md), [Evaluation framework](./evaluation-framework.md) |
 
@@ -143,7 +143,6 @@ The baseline is product-neutral. It does not choose a vendor, product, database,
 - [Threat Model](./threat-model.md)
 - [Administrator Authentication Policy](./administrator-authentication-policy.md)
 - [Evaluation Framework](./evaluation-framework.md)
-- [Candidate Shortlist](./candidate-shortlist.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)
 - [OAuth2 Flows](./wiki/06-oauth2-flows.md)

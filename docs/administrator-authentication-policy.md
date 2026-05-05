@@ -6,7 +6,7 @@ Administrator authentication policy defines how privileged backoffice users prov
 
 It is related to, but separate from, authorization. Authentication answers whether the person signed in successfully. Authorization answers whether that signed-in administrator may create members, assign roles, rotate credentials, export audit logs, or perform another privileged operation.
 
-This document is conceptual study material for Phase 1. It does not choose a vendor, authenticator type, MFA product, password policy, final break-glass process, or production implementation.
+This document originated as Phase 1 conceptual study material and now supports Phase 2 requirements definition. It does not choose a vendor, authenticator type, MFA product, password policy, final break-glass process, or production implementation.
 
 ## Current study position
 

@@ -1,6 +1,6 @@
-# Phase 1 Working Notes
+# Study Notes
 
-This work-in-progress document collects Phase 1 requirements, open questions, evaluation notes, and risk notes for later comparison work. The study now selects the Central IAM Control Plane Architecture, but it does not choose a vendor, product, database, hosting model, or implementation approach.
+This study note collects the historical Phase 1 inputs, open questions, evaluation notes, and risk notes that fed the current Phase 2 requirements baseline. The study now selects the Central IAM Control Plane Architecture, but it does not choose a vendor, product, database, hosting model, or implementation approach.
 
 The expected system is an internal backoffice IAM control plane for fewer than 1,000 users. Public registration, customer identity, social login, and broad enterprise IAM complexity are out of scope. Members are created and managed by administrators, RBAC is required, and administration operations must be auditable.
 
@@ -43,7 +43,7 @@ The following inputs are now the baseline for the first study and minimal PoC. T
 | Expected | Strongly implied by the requirements or by conservative IAM practice, but details can be finalized later. |
 | Initial baseline | Current working assumption for the first study and minimal PoC. |
 | Future option | Useful for later evolution, but not required for the first study or minimal PoC. |
-| Study question | Must be answered before a final recommendation, but should not be assumed during Phase 1. |
+| Study question | Must be answered before a final recommendation, but should not be assumed during Phase 2 requirements definition. |
 
 ## OAuth2/OIDC Requirement Rationale and Alternatives
 
@@ -109,7 +109,7 @@ In this context, SSO is a capability a product or provider may deliver, not a co
 - administration APIs and privileged admin authorization;
 - audit events for access and control-plane changes.
 
-For Phase 1, the practical answer is:
+For the initial study baseline, the practical answer is:
 
 - do not plan around integration with a non-existent corporate SSO;
 - evaluate whether a managed or self-hosted IAM product should become the backoffice's primary identity provider and possibly provide SSO across backoffice applications;
@@ -331,7 +331,7 @@ The requirement should still be implemented with restraint. OIDC is the product-
 
 ## Later Evaluation Criteria
 
-Use the detailed [Evaluation Framework](./evaluation-framework.md) for later product-neutral comparison work. The criteria below summarize the main dimensions so these working notes stay useful as a quick requirements map.
+Use the detailed [Evaluation Framework](./evaluation-framework.md) for later product-neutral comparison work. The criteria below summarize the main dimensions so these study notes stay useful as a quick requirements map.
 
 Later comparison work should judge self-hosted, managed, minimal-library, and hybrid options against the same criteria. The criteria below are intentionally product-neutral.
 
@@ -376,7 +376,6 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 | Topic | Supporting wiki page |
 | --- | --- |
 | Product-neutral comparison method | [Evaluation Framework](./evaluation-framework.md) |
-| Candidate options for later evaluation | [Candidate Shortlist](./candidate-shortlist.md) |
 | Authentication and authorization boundary | [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md) |
 | OAuth2 roles, tokens, and scopes | [OAuth2](./wiki/02-oauth2.md) |
 | OIDC login and identity claims | [OpenID Connect](./wiki/03-openid-connect.md) |

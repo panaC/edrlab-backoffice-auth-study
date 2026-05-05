@@ -1,6 +1,6 @@
 # Minimal Backoffice IAM Architecture Notes
 
-This document consolidates the Phase 1 discussion about SSO, identity providers, IAM control planes, Backend-for-Frontend sessions, and the minimal micro-service architecture for an internal backoffice IAM Control Plane.
+This document consolidates the Phase 1 foundation about SSO, identity providers, IAM control planes, Backend-for-Frontend sessions, and the minimal micro-service architecture for an internal backoffice IAM Control Plane. It now serves as a Phase 2 architecture baseline for requirements definition and candidate evaluation preparation.
 
 The study now adopts the **Central IAM Control Plane Architecture** as its target shape:
 
@@ -392,9 +392,8 @@ This shape keeps the browser simple, centralizes IAM authority in the IAM Contro
 
 ## Related Documents
 
-- [Phase 1 working notes](./phase-1-working-notes.md)
+- [Study notes](./study-notes.md)
 - [Evaluation framework](./evaluation-framework.md)
-- [Candidate shortlist](./candidate-shortlist.md)
 - [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)

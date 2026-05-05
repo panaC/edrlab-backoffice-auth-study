@@ -2,7 +2,7 @@
 
 This document records concrete abuse scenarios for the internal backoffice IAM study. It is intentionally practical: what can go wrong, how the system should reduce the risk, and what evidence should exist during review or incident response.
 
-This is Phase 1 study material. It does not choose a final threat modeling method, risk scoring model, security tool, provider, or production control set.
+This document originated as Phase 1 study material and now supports Phase 2 requirements definition. It does not choose a final threat modeling method, risk scoring model, security tool, provider, or production control set.
 
 ## Scope
 
