@@ -11,10 +11,29 @@ The selected architecture is:
 ```text
 Backoffice BFF (Backend-for-Frontend)
     -> IdP / Authorization Server / Admin Control Plane
-    -> multiple backend API resource servers
+    -> one or more backend API resource servers
 ```
 
 The purpose of this study is the **IdP / Authorization Server / Admin Control Plane** component. The Backoffice BFF, meaning Backend-for-Frontend, backend API services, workers, and service databases are integration context. They define the token, session, administration, and authorization boundaries that the central IAM component must support.
+
+## Current Answered Inputs
+
+The following inputs are now the baseline for the first study and minimal PoC. They narrow earlier open questions without selecting a final vendor, product, database, hosting model, or production implementation.
+
+| Area | Baseline input |
+| --- | --- |
+| Project scope | The project remains limited to the internal backoffice. Company-wide workforce IAM and broad SSO are not part of the current scope. |
+| Member source of truth | Members are created manually by administrators. No HR directory, enterprise directory, or public self-registration source is assumed. |
+| Protected API baseline | No real backoffice service inventory is available yet. The first study and PoC can use one demonstration API resource server. |
+| RBAC baseline | Keep the first model simple with `admin` and `member` roles and explicit permissions where needed. |
+| Administrator authentication | Administrator authentication policy is documented separately in [Administrator Authentication Policy](./administrator-authentication-policy.md). |
+| Access removal | For the first version, removed access can expire at access-token expiry rather than requiring immediate revocation. Token lifetimes should stay short. |
+| Token format | Use JWT access tokens for the first study and PoC baseline. |
+| Admin API consumer | The administration API is consumed only by the backoffice UI through the BFF in the initial scope. |
+| Service-to-service access | Service-to-service authentication is a future theoretical extension, not part of the first study or PoC scope. |
+| Auditability | Audit expectations are strong and should cover privileged IAM changes and access-review evidence. |
+| Operations ownership | The owning team and operating model remain to be defined. |
+| PoC scope | The project should plan a minimal PoC across the study scope rather than relying only on documentation. |
 
 ## Requirement Levels
 
@@ -22,6 +41,8 @@ The purpose of this study is the **IdP / Authorization Server / Admin Control Pl
 | --- | --- |
 | Required | Needed to satisfy the current project brief. |
 | Expected | Strongly implied by the requirements or by conservative IAM practice, but details can be finalized later. |
+| Initial baseline | Current working assumption for the first study and minimal PoC. |
+| Future option | Useful for later evolution, but not required for the first study or minimal PoC. |
 | Study question | Must be answered before a final recommendation, but should not be assumed during Phase 1. |
 
 ## OAuth2/OIDC Requirement Rationale and Alternatives
@@ -37,7 +58,7 @@ This distinction matters because a logged-in user is not automatically authorize
 
 ### Why OAuth2/OIDC is a reasonable default
 
-OAuth2/OIDC is useful if the backoffice IAM control plane has multiple trust boundaries: a browser client, protected APIs, an administration API, service-to-service callers, and possibly managed or self-hosted IAM products. In that shape, the protocol gives the project a common vocabulary and integration contract:
+OAuth2/OIDC is useful if the backoffice IAM control plane has multiple trust boundaries: a browser client, protected APIs, an administration API, possible future service-to-service callers, and possibly managed or self-hosted IAM products. In that shape, the protocol gives the project a common vocabulary and integration contract:
 
 | Project need | Why OAuth2/OIDC helps |
 | --- | --- |
@@ -45,7 +66,7 @@ OAuth2/OIDC is useful if the backoffice IAM control plane has multiple trust bou
 | Protected internal APIs | APIs can receive access tokens and validate issuer, audience, lifetime, signature or introspection result, and required permissions. |
 | Multiple resource servers | Each service can enforce access without sharing a web session store or directly handling user credentials. |
 | Administration API | Privileged operations can require explicit permissions and can be audited as control-plane changes. |
-| Service-to-service access | OAuth2 Client Credentials Flow gives machine clients a standard model distinct from human users. |
+| Future service-to-service access | OAuth2 Client Credentials Flow gives machine clients a standard model distinct from human users if this becomes in scope later. |
 | Candidate comparison | Managed providers, self-hosted products, libraries, and hybrid options can be compared against the same protocol expectations. |
 
 The strongest reason to keep OAuth2/OIDC in the requirements layer is not fashion or user count. It is separation of responsibilities. The authorization server or identity provider authenticates users and issues tokens. Clients use tokens. Resource servers validate tokens and enforce permissions. Administration APIs manage IAM state under stricter authorization and audit controls.
@@ -77,14 +98,14 @@ The requirement should therefore not be "use OAuth2 because modern authenticatio
 
 Question: If no enterprise SSO exists today, should the project introduce SSO instead of studying an internal backoffice authorization server?
 
-Answer: no existing SSO removes the easy hybrid option of reusing a corporate identity provider. It does not remove the need for standardized authentication, API authorization, member lifecycle management, RBAC, service authentication, administration controls, or auditability.
+Answer: no existing SSO removes the easy hybrid option of reusing a corporate identity provider. It does not remove the need for standardized authentication, API authorization, member lifecycle management, RBAC, administration controls, auditability, or possible future service authentication.
 
 In this context, SSO is a capability a product or provider may deliver, not a complete replacement for the backoffice IAM control plane. Choosing "SSO" would still mean selecting, subscribing to, or operating an identity provider and deciding where the project owns:
 
 - member creation, disablement, deletion or retention, and recovery;
 - roles, permissions, and service access checks;
 - access tokens for protected APIs;
-- service-to-service credentials and permissions;
+- possible future service-to-service credentials and permissions;
 - administration APIs and privileged admin authorization;
 - audit events for access and control-plane changes.
 
@@ -136,7 +157,7 @@ The trade-off is ownership. The team must own password policy, password storage 
 
 This option becomes less attractive if the scope grows to multiple backoffice applications, multiple independently deployed APIs, third-party or managed IdP integration, machine clients, standardized API tokens, or future SSO across internal tools. In that broader shape, an OIDC/OAuth2-capable IdP or authorization server becomes more justified.
 
-This is not the selected architecture anymore. It remains useful as a scope guard: the Central IAM Control Plane Architecture should be justified by multiple backend APIs, machine clients, central token issuance, and a real admin control-plane need, not by habit.
+This is not the selected architecture anymore. It remains useful as a scope guard: the Central IAM Control Plane Architecture should be justified by a real protected-API boundary, central token issuance, a real admin control-plane need, or future expansion requirements, not by habit.
 
 ### Alternatives to evaluate
 
@@ -145,7 +166,7 @@ The alternatives below are not final recommendations. They are design options to
 | Alternative | Where it may fit | Main limitation |
 | --- | --- | --- |
 | Server-side sessions with application RBAC | A single internal application owns login, session state, roles, permissions, and all protected operations. | Poorer fit for multiple independently deployed APIs, service-to-service callers, and future provider interoperability. |
-| New or existing corporate SSO plus local authorization | A workforce identity provider exists or is introduced for login, MFA, and employee lifecycle. | No enterprise SSO exists today, so this option requires adopting or operating an IdP before it can be reused; the project still needs local roles, permissions, admin API behavior, access checks, service authentication, and audit mapping. |
+| New or existing corporate SSO plus local authorization | A workforce identity provider exists or is introduced for login, MFA, and employee lifecycle. | No enterprise SSO exists today, so this option requires adopting or operating an IdP before it can be reused; the project still needs local roles, permissions, admin API behavior, access checks, future service-authentication fit, and audit mapping. |
 | Reverse-proxy or gateway authentication | Coarse access to internal web applications is enough. | Usually insufficient for per-operation authorization inside a privileged administration API. |
 | API keys or mTLS for services | Machine-to-machine calls are the only problem being solved. | Does not solve human login, delegated user access, role assignment, or member lifecycle. |
 | Custom session or JWT token system | The system is small, fully internal, and the team accepts owning security-sensitive token behavior. | Easy to get validation, key rotation, revocation, expiry, audience handling, and incident response wrong. |
@@ -153,7 +174,7 @@ The alternatives below are not final recommendations. They are design options to
 
 ### Current study position
 
-OAuth2/OIDC should remain in the requirements because the selected Central IAM Control Plane Architecture includes browser login through a Backoffice BFF, protected backend APIs, an administration API, RBAC, service-to-service authentication, managed and self-hosted comparison, and later PoC planning.
+OAuth2/OIDC should remain in the requirements because the selected Central IAM Control Plane Architecture includes browser login through a Backoffice BFF, protected backend APIs, an administration API, RBAC, managed and self-hosted comparison, later PoC planning, and possible future service-to-service evolution.
 
 The earlier single-application alternative remains documented only as a narrower non-selected shape. The current study should focus on how the central IdP/authorization server/control plane satisfies the selected micro-service architecture without drifting into unnecessary enterprise IAM complexity.
 
@@ -232,6 +253,7 @@ The requirement should still be implemented with restraint. OIDC is the product-
 | --- | --- | --- |
 | Required | Administrators can create, read, update, list, disable, and delete members. | Deletion and disabling should remain distinct because disabling preserves recovery and audit options. |
 | Required | Public self-service registration is not supported. | Member onboarding is an internal administrative process. |
+| Initial baseline | Members are created manually by administrators. | No external directory, HR source, or public registration flow is assumed for the first study or PoC. |
 | Required | Members can receive and lose role assignments. | See [RBAC](./wiki/05-rbac.md) for the role and permission model. |
 | Expected | Member records have stable identifiers separate from mutable display attributes. | Email addresses and names can change; audit trails and role assignments need durable references. |
 | Expected | Disabled members cannot authenticate or keep using privileged access. | Token lifetime, session handling, and revocation behavior need later design work. |
@@ -243,10 +265,10 @@ The requirement should still be implemented with restraint. OIDC is the product-
 | --- | --- | --- |
 | Required | Backoffice users authenticate through OAuth2/OIDC-compatible login. | OIDC provides the identity layer on top of OAuth2; see [OpenID Connect](./wiki/03-openid-connect.md). |
 | Required | Browser-based backoffice clients use Authorization Code Flow with PKCE. | Implicit Flow should not be used for new browser applications. |
+| Initial baseline | The project remains limited to backoffice IAM and does not assume company-wide SSO. | A product may support SSO later, but broad workforce IAM is not part of the initial scope. |
 | Expected | Authentication results are represented separately from API authorization decisions. | A successful login does not imply access to admin APIs or backoffice services. |
 | Expected | Login, session, and token behavior can support account disablement and incident response. | The exact balance among short token lifetimes, refresh tokens, session invalidation, and revocation is a later design topic. |
-| Study question | Should this project introduce or rely on a new SSO-capable identity provider for primary authentication? | Current stakeholder input says no enterprise SSO exists today, so reuse of a corporate SSO is not available unless the company first adopts or operates one. |
-| Study question | Are MFA, passwordless login, or step-up authentication required for administrators? | This should be decided from business risk and operational expectations, not assumed from tooling. |
+| Study question | Are MFA, passwordless login, or step-up authentication required for administrators? | See [Administrator Authentication Policy](./administrator-authentication-policy.md). This should be decided from business risk and operational expectations, not assumed from tooling. |
 
 ### OAuth2, Tokens, and API Protection
 
@@ -254,11 +276,12 @@ The requirement should still be implemented with restraint. OIDC is the product-
 | --- | --- | --- |
 | Required | Protected APIs receive and validate access tokens. | Resource servers need issuer, audience, lifetime, signature or introspection, and authorization checks. |
 | Required | Access control works for internal backoffice services. | The authorization model must be enforceable by each protected service. |
-| Required | User-facing and service-to-service access are both supported. | Human users and machine clients should be modeled distinctly. |
+| Initial baseline | The first study and PoC use one demonstration API resource server. | There is no confirmed real service inventory yet. |
+| Future option | Service-to-service access is a later theoretical extension. | Human and machine clients should still be modeled distinctly if this becomes in scope later. |
 | Expected | Access tokens are short-lived unless a later design documents a specific reason otherwise. | Bearer token leakage risk increases with token lifetime. |
 | Expected | Token claims, scopes, roles, and permissions are defined with clear responsibilities. | Avoid making one token field carry every authorization concern. |
-| Study question | Should access tokens be JWTs, opaque tokens with introspection, or a mixed model? | See [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) for trade-offs. |
-| Study question | Where should high-churn authorization state be checked? | Options include token claims, local policy, IAM lookups, introspection, or a dedicated authorization check. |
+| Initial baseline | Use JWT access tokens for the first study and PoC. | See [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) for validation rules and trade-offs. |
+| Initial baseline | Removed access can expire at token expiry in the first version. | Keep access tokens short-lived; immediate revocation and introspection can be evaluated later if risk requires it. |
 
 ### RBAC and Permission Modeling
 
@@ -268,8 +291,8 @@ The requirement should still be implemented with restraint. OIDC is the product-
 | Required | Roles can be created, listed, assigned to members. | These operations are part of the minimum administration API. |
 | Expected | Sensitive operations use explicit permissions. | `members:read`, `members:disable`, and `roles:assign` are easier to reason about than a single broad admin flag. |
 | Expected | Service permissions are separated from human administrator permissions. | Automation should not inherit broad human privileges by convenience. |
-| Study question | What initial role catalog is needed for the backoffice? | The study should identify examples, but final role design belongs closer to implementation. |
-| Study question | Are role hierarchies, resource-level permissions, or ABAC-style rules needed? | Avoid adding these unless concrete workflows require them. |
+| Initial baseline | Start with `admin` and `member` roles. | This is enough for the first study and PoC; final role design can expand only when concrete workflows require it. |
+| Future option | Role hierarchies, resource-level permissions, or ABAC-style rules are not part of the first baseline. | Avoid adding these unless concrete workflows require them. |
 
 ### Administration API
 
@@ -281,17 +304,17 @@ The requirement should still be implemented with restraint. OIDC is the product-
 | Expected | Privileged mutations produce audit events. | Actor, action, target, result, timestamp, and request context are the minimum useful shape. |
 | Expected | Admin endpoints prevent self-escalation and privilege grant beyond the actor's authority. | Role assignment and client creation are especially sensitive. |
 | Expected | Admin mutations have clear validation, idempotency, and concurrency behavior. | Duplicate role assignment and racing updates should be predictable. |
-| Study question | Which consumers need the admin API besides a backoffice admin UI? | Internal automation may need separate client credentials and narrower permissions. |
+| Initial baseline | The backoffice UI through the BFF is the only admin API consumer. | Internal automation can be considered later as a separate service-client scope. |
 
-### Service-to-Service Authentication
+### Future Service-to-Service Authentication
 
 | Level | Requirement | Notes |
 | --- | --- | --- |
-| Required | Applications and services can authenticate without a human browser session. | OAuth2 Client Credentials Flow is the baseline concept to evaluate. |
-| Required | Service access can be restricted by role or permission. | Service accounts should have least-privilege permissions. |
-| Expected | Service credentials can be rotated and disabled. | Rotation must account for rollout windows and auditability. |
-| Expected | Machine clients are auditable as distinct actors. | Audit logs should distinguish automation from human administrators. |
-| Study question | Which client authentication method is appropriate for internal services? | Options may include client secrets, private key JWT, mTLS, or provider-specific mechanisms. |
+| Future option | Applications and services may authenticate without a human browser session in a later phase. | OAuth2 Client Credentials Flow remains the baseline concept to understand, but it is not part of the first study or PoC scope. |
+| Future option | Service access should be restricted by role or permission if service-to-service becomes in scope. | Service accounts should have least-privilege permissions and should not reuse human admin roles. |
+| Future option | Service credentials should be rotatable, disableable, and auditable if added later. | Rotation must account for rollout windows and auditability. |
+| Future option | Machine clients should be auditable as distinct actors if added later. | Audit logs should distinguish automation from human administrators. |
+| Future option | The service client authentication method remains undecided. | Options may include client secrets, private key JWT, mTLS, or provider-specific mechanisms. |
 
 ### Auditability, Governance, and Operations
 
@@ -299,6 +322,7 @@ The requirement should still be implemented with restraint. OIDC is the product-
 | --- | --- | --- |
 | Required | Administration operations are auditable. | Audit data should support incident review and access review. |
 | Required | Operational complexity is justified by security, compliance, maintainability, or product needs. | A powerful IAM product is not automatically the simplest fit. |
+| Initial baseline | Audit expectations are strong for privileged IAM behavior. | The first study should preserve evidence for member, role, permission, admin, and access-review changes. |
 | Expected | Access review is possible from the data model and admin surface. | Engineers should be able to answer who has which role and why. |
 | Expected | Secrets, passwords, refresh tokens, and bearer tokens are never logged. | Redaction should apply to logs, traces, analytics, and support tooling. |
 | Expected | Key and credential rotation can be performed without breaking all services at once. | This is a core operational requirement for token-based systems. |
@@ -313,7 +337,7 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 
 | Criterion | What to evaluate |
 | --- | --- |
-| Requirements coverage | Whether the option supports OAuth2, OIDC, RBAC, admin-only member management, service authentication, admin API needs, and auditability. |
+| Requirements coverage | Whether the option supports OAuth2, OIDC, RBAC, admin-only member management, protected API access, admin API needs, auditability, and future service-authentication fit. |
 | Security posture | Token validation support, secure defaults, MFA options, secret handling, revocation behavior, admin authorization controls, and exposure to common OAuth2/OIDC mistakes. |
 | Operational simplicity | Installation, upgrades, backups, key rotation, monitoring, failure modes, incident response, and day-to-day administration effort. |
 | Data and API fit | Whether members, roles, permissions, service accounts, clients, and audit events map cleanly to the project's needs. |
@@ -337,17 +361,15 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 
 ## Open Questions
 
-- Which SSO-capable IdP behavior belongs in the selected IdP/authorization server/control-plane component, and which company-wide workforce IAM concerns remain out of scope?
-- Which existing identity systems, directories, HR sources, or manual processes should be considered authoritative for internal members?
-- Are administrators required to use MFA, step-up authentication, or hardware-backed authenticators?
-- What are the initial backoffice services and sensitive operations that need permissions?
+- Are administrators required to use MFA, step-up authentication, or hardware-backed authenticators in production?
+- What exact permissions should the initial `admin` and `member` roles grant in the demonstration API?
 - What member lifecycle states are required: invited, active, disabled, deleted, suspended, or archived?
 - What is the retention policy for disabled or deleted members and audit events?
-- Who can create roles, assign roles, create clients, and rotate service credentials?
+- Who can create roles, assign roles, create clients, and, if later in scope, rotate service credentials?
 - Does the backoffice need break-glass administrator access, and how would it be controlled and audited?
-- Which service-to-service callers exist today, and which permissions should each have?
 - What uptime, backup, recovery, and upgrade expectations apply to the IAM control plane?
-- Which unknowns require a minimal PoC, and which can be resolved by documentation and product evaluation?
+- Which team owns IAM operations after launch?
+- What is the smallest useful PoC that validates OIDC login, JWT validation, RBAC, Admin API behavior, audit events, and access expiry?
 
 ## Traceability
 
@@ -361,9 +383,10 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 | Token validation and JWT trade-offs | [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) |
 | RBAC modeling | [RBAC](./wiki/05-rbac.md) |
 | Authorization Code with PKCE and Client Credentials | [OAuth2 Flows](./wiki/06-oauth2-flows.md) |
-| Machine-to-machine access | [Service-to-Service Authentication](./wiki/07-service-to-service-authentication.md) |
+| Future machine-to-machine access | [Service-to-Service Authentication](./wiki/07-service-to-service-authentication.md) |
 | Administration control plane | [Admin API](./wiki/08-admin-api.md) |
 | Conservative security practices | [Security Best Practices](./wiki/09-security-best-practices.md) |
+| Administrator authentication policy | [Administrator Authentication Policy](./administrator-authentication-policy.md) |
 
 ## References
 

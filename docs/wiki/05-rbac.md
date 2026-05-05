@@ -10,7 +10,7 @@ This page complements:
 
 - [Authentication vs Authorization](./01-authentication-vs-authorization.md), for the boundary between login and access decisions.
 - [Tokens and JWTs](./04-tokens-and-jwt.md), for token claim and token validation trade-offs.
-- [Service-to-Service Authentication](./07-service-to-service-authentication.md), for machine identities and service permissions.
+- [Service-to-Service Authentication](./07-service-to-service-authentication.md), for future machine identities and service permissions.
 - [Administration APIs](./08-admin-api.md), for member, role, permission, and assignment management endpoints.
 - [Security Best Practices](./09-security-best-practices.md), for least privilege, audit, and token validation guidance.
 
@@ -265,6 +265,8 @@ Illustrative response:
 This endpoint should be treated as a privileged support function for trusted backoffice services and administration tools. It should not become a way for an untrusted frontend to make final authorization decisions by itself.
 
 ## Service-to-service permissions
+
+Service-to-service permissions are a future extension for this project, not part of the first study or minimal PoC scope.
 
 Service accounts are subjects, but they should not inherit human roles by convenience. A reporting job, provisioning worker, or integration service should receive a role named for its purpose and containing only the permissions it needs.
 

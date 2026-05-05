@@ -8,6 +8,10 @@ In a central IAM control-plane architecture, the administration API is not just 
 
 This page is conceptual learning material. It explains common responsibilities, risks, and design controls without choosing a product, storage model, endpoint shape, deployment pattern, or vendor API.
 
+## Current scope note
+
+For the first study and minimal PoC, the administration API is consumed only by the internal backoffice UI through the BFF. Approved automation, service accounts, and machine callers are future extension topics, not initial admin API consumers.
+
 ## Why it matters
 
 Public self-service registration and ordinary profile editing are different from IAM administration. Administration operations can create identities, disable identities, grant roles, rotate service credentials, change redirect URIs, and alter the permissions that protect backend services.
@@ -37,7 +41,7 @@ These responsibilities may be implemented by one product, several products, or a
 ```mermaid
 flowchart LR
     Admin["Administrator"]
-    Automation["Approved automation"]
+    Automation["Approved automation (future)"]
     BFF["Internal admin UI / Backend-for-Frontend"]
     AdminAPI["Administration API"]
     IAMData["IAM data"]
@@ -72,7 +76,7 @@ The exact resource names vary by product and implementation. A useful conceptual
 | Access checks | Queries that answer whether a subject may perform an operation. | Evaluate member or service access for a declared permission or service capability. |
 | Audit events | Evidence for privileged behavior. | Record mutations, denials, credential events, admin reads where appropriate. |
 
-See [RBAC](./05-rbac.md) for role, permission, and assignment modeling, and [Service-to-Service Authentication](./07-service-to-service-authentication.md) for service accounts and machine callers.
+See [RBAC](./05-rbac.md) for role, permission, and assignment modeling, and [Service-to-Service Authentication](./07-service-to-service-authentication.md) for future service accounts and machine callers.
 
 ## Example operation map
 

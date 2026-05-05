@@ -28,7 +28,7 @@ For fewer than 1,000 users, the process can stay lightweight. The important requ
 
 ## Relationship to other wiki pages
 
-This page depends on the terminology from [RBAC](./05-rbac.md), the privileged control-plane surface in [Admin API](./08-admin-api.md), service identity concepts from [Service-to-Service Authentication](./07-service-to-service-authentication.md), and the conservative controls in [Security Best Practices](./09-security-best-practices.md).
+This page depends on the terminology from [RBAC](./05-rbac.md), the privileged control-plane surface in [Admin API](./08-admin-api.md), future service identity concepts from [Service-to-Service Authentication](./07-service-to-service-authentication.md), and the conservative controls in [Security Best Practices](./09-security-best-practices.md).
 
 Do not duplicate all authorization rules here. Treat this page as the operational and evidence layer around those concepts.
 
@@ -123,7 +123,7 @@ For this project, access review should cover at least:
 - ordinary members assigned to backoffice roles;
 - disabled or deleted members with remaining references;
 - role definitions and the permissions each role grants;
-- service accounts, machine clients, and their owners;
+- future service accounts, machine clients, and their owners if service-to-service access becomes in scope;
 - OAuth2/OIDC clients, redirect URIs, secrets, and allowed flows;
 - break-glass or emergency access paths if they exist;
 - exceptions, temporary grants, and stale assignments.

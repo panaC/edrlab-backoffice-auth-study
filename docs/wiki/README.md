@@ -8,7 +8,7 @@ This page is the entry point. It introduces the big picture, shows how the main 
 
 ## Phase 1 boundary
 
-Phase 1 is documentation-only. The study now assumes the Central IAM Control Plane Architecture: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and multiple backend API resource servers. The wiki should explain the concepts and trade-offs needed to evaluate that central IAM component, but it should not recommend a final identity provider product, vendor, hosting model, database, deployment topology, or production implementation.
+Phase 1 is documentation-only. The study now assumes the Central IAM Control Plane Architecture: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and one or more backend API resource servers. The first study and minimal PoC can use one demonstration API resource server. The wiki should explain the concepts and trade-offs needed to evaluate that central IAM component, but it should not recommend a final identity provider product, vendor, hosting model, database, deployment topology, or production implementation.
 
 For this study, the future system is assumed to protect internal backoffice services for fewer than 1,000 users. Public account registration is out of scope. Members are created and managed by administrators. RBAC is required. The goal is to keep the eventual system simple, maintainable, understandable, and operable by the internal team.
 
@@ -22,10 +22,12 @@ For this study, the future system is assumed to protect internal backoffice serv
 | [Tokens and JWTs](./04-tokens-and-jwt.md) | Covers access tokens, ID tokens, refresh tokens, JWT structure, claims, signatures, expiration, audiences, issuers, and opaque token trade-offs. |
 | [RBAC](./05-rbac.md) | Explains members, users, administrators, roles, permissions, role assignment, permission checks, and how ABAC compares. |
 | [OAuth2 Flows](./06-oauth2-flows.md) | Covers Authorization Code Flow, Authorization Code Flow with PKCE, Client Credentials Flow, and Refresh Token Flow. |
-| [Service-to-Service Authentication](./07-service-to-service-authentication.md) | Covers machine-to-machine authentication, service accounts, client credentials, private key JWT, mTLS, and service permissions. |
+| [Service-to-Service Authentication](./07-service-to-service-authentication.md) | Covers future machine-to-machine authentication concepts, service accounts, client credentials, private key JWT, mTLS, and service permissions. |
 | [Admin API](./08-admin-api.md) | Covers administrator-only APIs for members, roles, permissions, clients, service accounts, audit logs, and privileged operations. |
 | [Security Best Practices](./09-security-best-practices.md) | Summarizes conservative security practices for tokens, secrets, PKCE, validation, least privilege, auditability, rate limiting, and password handling. |
 | [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md) | Covers audit event content, access review workflows, retention, evidence, and operational responsibility boundaries. |
+
+Related study document: [Administrator Authentication Policy](../administrator-authentication-policy.md).
 
 ## Big-picture model
 
@@ -127,16 +129,16 @@ Examples of administration operations include:
 - creating and listing roles;
 - assigning and removing roles from members;
 - managing permissions and clients;
-- managing service accounts or machine clients;
+- managing service accounts or machine clients if service-to-service access becomes in scope later;
 - checking whether a member has a required role or permission for a backoffice service.
 
 The administration API must itself be protected like any other resource server, with stronger authorization because mistakes have a larger blast radius. Admin endpoints should be checked server-side, audited, rate limited where relevant, and designed so that authorization decisions are explicit rather than implied by frontend UI state.
 
 See [Admin API](./08-admin-api.md) for the dedicated page.
 
-## Service-to-service flow
+## Future service-to-service flow
 
-Not every caller is a human user. Backend services may need to call other internal services without a browser session. In OAuth2 terms, these services can be clients acting on their own behalf, commonly using Client Credentials Flow.
+Service-to-service authentication is a future theoretical extension for this project, not part of the first study or minimal PoC scope. If later needed, backend services may need to call other internal services without a browser session. In OAuth2 terms, these services can be clients acting on their own behalf, commonly using Client Credentials Flow.
 
 The service receives an access token representing the service client, then calls a resource server. The resource server validates the token and checks service-level permissions. These permissions should be modeled separately enough that a service account does not accidentally inherit broad human administrator privileges.
 

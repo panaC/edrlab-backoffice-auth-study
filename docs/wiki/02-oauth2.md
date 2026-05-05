@@ -162,7 +162,7 @@ RBAC and application policy decide what the subject may do with that credential.
 
 ## Multiple resource servers
 
-The selected architecture has multiple backend API resource servers. That makes token audience boundaries important.
+The selected architecture has one or more backend API resource servers. Even the first demonstration API should have a clear token audience boundary.
 
 An access token intended for one API should not automatically be valid at every other API. Otherwise a token issued for a low-risk service could be replayed against a high-risk administration endpoint. A later design may handle this with audience claims, resource indicators, per-API scopes, separate clients, token exchange patterns, introspection policy, or a combination. Phase 1 only needs the evaluation criterion: each resource server must be able to tell whether the token was meant for it.
 
@@ -198,7 +198,7 @@ OAuth2 leaves several important questions to the system design:
 | How are privileged changes audited? | Administration API and auditability design. |
 | Are access tokens JWTs or opaque tokens? | Token strategy and resource server validation model. |
 | How quickly do role changes take effect? | Token lifetime, introspection, revocation, cache policy, and authorization lookup design. |
-| How are service clients credentialed? | Service-to-service authentication design. |
+| How are service clients credentialed? | Future service-to-service authentication design. |
 
 This boundary is useful during evaluation. A product that supports OAuth2 endpoints may still be weak for local RBAC administration, audit requirements, service account governance, or multi-API audience separation.
 

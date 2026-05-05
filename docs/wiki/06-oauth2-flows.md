@@ -12,6 +12,8 @@ The relevant flows for this study are:
 | Client Credentials Flow | Service-to-service or machine-to-machine access without a human user in the flow. | Which service identity is represented, and what narrow permissions does it need? |
 | Refresh Token Flow | Getting a new access token after a previous authorization. | Can this client store refresh tokens safely, and how are rotation and revocation handled? |
 
+For the first study and minimal PoC, Client Credentials Flow is educational background and a future extension topic. The initial path focuses on backoffice user login through the BFF, JWT validation, RBAC, and a demonstration API resource server.
+
 Authorization Code Flow without PKCE still exists in older OAuth2 deployments, especially for confidential web clients, but modern security guidance makes PKCE the safer baseline to understand. The Implicit Flow and Resource Owner Password Credentials grant appear in older OAuth2 material, but they should not be default choices for new backoffice applications.
 
 ## Learning goals
@@ -28,12 +30,12 @@ After reading this page, an engineer should be able to explain:
 
 ## Why it matters
 
-The selected study architecture has at least two caller shapes:
+The selected study architecture has one initial caller shape and one future extension shape:
 
 | Caller | Likely flow family | Reason |
 | --- | --- | --- |
 | Backoffice user through a UI/BFF | Authorization Code Flow with PKCE plus OIDC | The user authenticates at the identity provider, while the client receives tokens without handling the user's password. |
-| Backend service or scheduled worker | Client Credentials Flow | The service authenticates as itself and receives a service access token. |
+| Backend service or scheduled worker | Client Credentials Flow | Future extension: the service authenticates as itself and receives a service access token. |
 | Long-lived user session | Refresh Token Flow or server-side session renewal | The system may need new access tokens without making the user repeat the full redirect flow every few minutes. |
 
 Different callers have different security properties. A browser-only client cannot keep a long-term secret. A server-side BFF or backend service can usually protect credentials better, but still needs secret rotation, auditability, and least privilege. OAuth2 flows let the authorization server issue tokens in a way that matches those constraints.
@@ -48,7 +50,7 @@ Use this as a learning map, not a final design decision:
 | --- | --- | --- |
 | Internal user opens the backoffice UI | Authorization Code Flow with PKCE, usually with OIDC | OIDC adds ID tokens and login semantics; OAuth2 access tokens protect APIs. |
 | Backoffice BFF calls a resource server for the user | Authorization Code Flow with PKCE and a server-side session | The BFF can keep tokens out of browser JavaScript if that pattern is selected later. |
-| Backend job calls a reporting API | Client Credentials Flow | The token represents the service client, not a human member. |
+| Backend job calls a reporting API | Client Credentials Flow | Future extension: the token represents the service client, not a human member. |
 | CLI or desktop admin tool calls an API | Authorization Code Flow with PKCE | Treat distributed tools as public clients unless there is a real secure secret store. |
 | Access token expires during a session | Refresh Token Flow or reauthorization | Refresh token handling depends heavily on client type and storage. |
 | Client asks user for username and password directly | Avoid Resource Owner Password Credentials | This increases credential exposure and does not fit modern authentication ceremonies well. |
@@ -190,7 +192,7 @@ Risky uses:
 - using a service token for operations that should record a human approver;
 - treating network location as a substitute for client authentication.
 
-See [Service-to-Service Authentication](./07-service-to-service-authentication.md) for service identity, service accounts, and client authentication options.
+See [Service-to-Service Authentication](./07-service-to-service-authentication.md) for future service identity, service accounts, and client authentication options.
 
 ## Refresh Token Flow
 

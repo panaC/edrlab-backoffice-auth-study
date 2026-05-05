@@ -2,7 +2,7 @@
 
 This document identifies candidate IAM approaches for later evaluation using the [Evaluation Framework](./evaluation-framework.md).
 
-The project now uses the Central IAM Control Plane Architecture as the study scope: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and multiple backend API resource servers. This document does not choose a vendor, product, database, hosting model, or implementation approach. Its purpose is to compare ways to realize the central IdP/authorization server/admin control-plane component.
+The project now uses the Central IAM Control Plane Architecture as the study scope: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and one or more backend API resource servers. The first study and minimal PoC can use one demonstration API resource server. This document does not choose a vendor, product, database, hosting model, or implementation approach. Its purpose is to compare ways to realize the central IdP/authorization server/admin control-plane component.
 
 Evaluation date: 2026-05-04.
 
@@ -19,7 +19,7 @@ Each candidate must be checked against the project gates:
 
 - OAuth2 and OIDC support;
 - Authorization Code Flow with PKCE for browser-based backoffice clients;
-- service-to-service authentication;
+- future service-to-service authentication fit;
 - administrator-managed members with no public registration requirement;
 - RBAC or an equivalent role/permission model;
 - protected API token validation and operation-level authorization;
@@ -120,7 +120,7 @@ These are possible PoCs to plan later. Do not implement them during Phase 1 unle
 | API token validation | All OAuth2/OIDC candidates | Can a representative resource server validate issuer, audience, lifetime, signature or introspection, and permissions cleanly? |
 | Admin API member lifecycle | Managed, self-hosted | Can required member and role operations be automated through documented APIs? |
 | Role removal latency | Managed, self-hosted, hybrid | How long does removed access remain effective through tokens, sessions, caches, or local policy? |
-| Service-to-service token flow | Managed, self-hosted, library | Can a backend service get a narrow token and call a protected API as a distinct auditable actor? |
+| Future service-to-service token flow | Managed, self-hosted, library | If service-to-service access becomes in scope later, can a backend service get a narrow token and call a protected API as a distinct auditable actor? |
 | Audit event export | Managed, self-hosted | Can privileged member, role, client, and service-account changes be reviewed outside the provider UI? |
 | SQLite feasibility check | Self-hosted | Is SQLite production-supported, development-only, or not supported? |
 

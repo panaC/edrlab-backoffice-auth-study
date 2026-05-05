@@ -7,10 +7,10 @@ The study now adopts the **Central IAM Control Plane Architecture** as its targe
 ```text
 Backoffice BFF (Backend-for-Frontend)
     -> IdP / Authorization Server / Admin Control Plane
-    -> multiple backend API resource servers
+    -> one or more backend API resource servers
 ```
 
-The focus of this project is the **IdP / Authorization Server / Admin Control Plane** part. The Backoffice BFF, backend API services, workers, and service databases are included to define integration boundaries, but they are not the main implementation subject of the study.
+The focus of this project is the **IdP / Authorization Server / Admin Control Plane** part. The Backoffice BFF, backend API services, workers, and service databases are included to define integration boundaries, but they are not the main implementation subject of the study. The first study and minimal PoC can use one demonstration API resource server.
 
 This document does not choose a final product, vendor, database, hosting model, or implementation stack.
 
@@ -84,6 +84,8 @@ If the project says "use SSO", it is really saying one of these:
 
 Creating or adopting SSO is therefore an IAM architecture decision, not a shortcut around the IAM control-plane requirements.
 
+The current project scope stays limited to the internal backoffice. Company-wide workforce IAM or broad SSO remains outside the first study and PoC scope.
+
 ## Non-Selected Narrower Shape: One Backoffice Only
 
 If the real scope is only one internal backoffice application, one backend, one database, no independent backend APIs, no company-wide SSO, and no complex service-to-service authorization, the simplest credible option to evaluate is a conventional application-owned model:
@@ -129,11 +131,11 @@ This shape avoids operating a separate authorization server, configuring OAuth2 
 
 The trade-off is ownership. The team must own password policy, password storage through a well-maintained framework, account recovery, optional MFA, session security, CSRF protection, lockout or rate-limiting behavior, account disablement semantics, audit log integrity, and administrator access recovery.
 
-This shape is not the selected study architecture. It is retained as a rationale for why the project would be simpler if it only had one backoffice, and why the selected architecture is justified by multiple backend APIs, machine clients, and a central IAM control-plane requirement.
+This shape is not the selected study architecture. It is retained as a rationale for why the project would be simpler if it only had one backoffice with local sessions, and why a separate IAM control plane should be justified by a real protected-API boundary, administration-control-plane need, or future expansion need rather than by habit.
 
 ## Selected Architecture: Central IAM Control Plane
 
-The selected architecture is an authorization server with an IdP, an admin control plane, and multiple backend API services. The minimal architecture separates IAM authority from application business logic.
+The selected architecture is an authorization server with an IdP, an admin control plane, and one or more backend API services. The minimal architecture separates IAM authority from application business logic.
 
 ```text
 Browser
@@ -159,7 +161,7 @@ Backend API Services
 | Backoffice UI / BFF | Serves UI, owns browser session, handles OIDC callback, keeps tokens server-side, calls IdP Admin API and backend APIs. | No |
 | IdP / Authorization Server / Admin Control Plane | Authenticates users, issues tokens, manages members, roles, permissions, clients, service accounts, and audit events. | Yes |
 | Backend API Services | Own business logic and data, validate access tokens, enforce permissions server-side. | No, but they enforce authorization for their own operations |
-| Service Clients / Workers | Authenticate as machine clients and call backend APIs with service access tokens. | No |
+| Service Clients / Workers | Future extension: authenticate as machine clients and call backend APIs with service access tokens. | No |
 
 The BFF is not the IAM authority. It is a secure web facade. The IdP/control plane is the IAM authority. Backend APIs trust tokens from the IdP, but still enforce permissions themselves.
 
@@ -168,7 +170,7 @@ The BFF is not the IAM authority. It is a secure web facade. The IdP/control pla
 The central component is the purpose of this study. It should be evaluated and designed as the system that owns:
 
 - OIDC login and user authentication behavior;
-- OAuth2 token issuance for browser-backed and machine clients;
+- OAuth2 token issuance for browser-backed clients and, if later in scope, machine clients;
 - members, lifecycle states, credentials or external identities;
 - clients, redirect URIs, service accounts, and client permissions;
 - roles, permissions, and assignments;
@@ -235,9 +237,9 @@ The BFF should not become a second IAM authority. It may provide a project-speci
 | --- | --- | --- |
 | Backoffice BFF | UI delivery, browser sessions, OIDC callback, token handling, calls to IdP Admin API and backend APIs. | BFF session store |
 | IdP / Authorization Server / Control Plane | Login, token issuance, users, roles, permissions, clients, service accounts, audit logs. | IAM database |
-| Backend API A | Business domain A, token validation, operation-level authorization. | Service A database |
-| Backend API B | Business domain B, token validation, operation-level authorization. | Service B database |
-| Workers / Service Clients | Background jobs or internal automation using Client Credentials Flow. | Own database only if they own durable business state |
+| Demonstration Backend API | First PoC resource server, token validation, operation-level authorization. | Demo data only, if needed |
+| Later Backend APIs | Future business APIs, token validation, operation-level authorization. | One database per service, if needed |
+| Workers / Service Clients | Future extension: background jobs or internal automation using Client Credentials Flow. | Own database only if they own durable business state |
 
 Backend services should not read the IdP database directly. They should validate tokens through JWKS, introspection, or a dedicated authorization/check API if needed.
 
@@ -364,7 +366,7 @@ BFF -> Browser: render result
 
 ### Service-to-Service Call
 
-Use Client Credentials Flow or an equivalent strong machine-client mechanism.
+Service-to-service authentication is a future theoretical extension, not part of the first study or minimal PoC scope. If it becomes in scope later, use Client Credentials Flow or an equivalent strong machine-client mechanism.
 
 ```text
 Worker -> IdP: authenticate client and request token
@@ -423,13 +425,13 @@ The selected study architecture is the Central IAM Control Plane Architecture. T
 ```text
 1 Backoffice BFF
 1 IdP / Authorization Server / Admin Control Plane
-2+ Backend API services
+1 demonstration backend API resource server for the first PoC
 1 BFF session store
 1 IdP database
-1 database per backend service
+optional demo API data store only if needed
 ```
 
-The project focus is the IdP / Authorization Server / Admin Control Plane. The BFF, backend APIs, service clients, and databases define required integration behavior, but the study should avoid drifting into implementing business services or a full backoffice product.
+The project focus is the IdP / Authorization Server / Admin Control Plane. The BFF, demonstration API, and storage choices define required integration behavior, but the study should avoid drifting into implementing business services or a full backoffice product. Service-to-service authentication remains a future option rather than an initial PoC requirement.
 
 This shape keeps the browser simple, centralizes IAM authority in the IdP/control plane, keeps backend services responsible for their own authorization enforcement, and avoids unnecessary infrastructure until the requirements prove it is needed.
 
@@ -447,6 +449,7 @@ This shape keeps the browser simple, centralizes IAM authority in the IdP/contro
 - [Service-to-Service Authentication](./wiki/07-service-to-service-authentication.md)
 - [Administration APIs](./wiki/08-admin-api.md)
 - [Security Best Practices](./wiki/09-security-best-practices.md)
+- [Administrator Authentication Policy](./administrator-authentication-policy.md)
 
 ## References
 

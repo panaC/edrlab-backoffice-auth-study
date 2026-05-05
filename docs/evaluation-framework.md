@@ -2,7 +2,7 @@
 
 This document defines a product-neutral framework for later evaluation of self-hosted, managed, minimal-library, and hybrid IAM options for the internal backoffice authorization server study.
 
-The study now uses the Central IAM Control Plane Architecture as its target scope: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and multiple backend API resource servers. This framework evaluates options for the central IdP/authorization server/admin control-plane component. It does not recommend a vendor, product, database, hosting model, or implementation approach.
+The study now uses the Central IAM Control Plane Architecture as its target scope: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and one or more backend API resource servers. The first study and minimal PoC can use one demonstration API resource server. This framework evaluates options for the central IdP/authorization server/admin control-plane component. It does not recommend a vendor, product, database, hosting model, or implementation approach.
 
 ## How to use this framework
 
@@ -16,7 +16,7 @@ For each option:
 - identify which questions require a minimal proof of concept;
 - keep the evaluation product-neutral until the project explicitly chooses a product or implementation path.
 
-Do not average away a requirement failure. A high score in operations or cost does not compensate for inability to support OAuth2/OIDC, administrator-managed users, RBAC, protected APIs, service authentication, or auditability.
+Do not average away a requirement failure. A high score in operations or cost does not compensate for inability to support OAuth2/OIDC, administrator-managed users, RBAC, protected APIs, administration API needs, or auditability. Service-to-service authentication should be recorded as a future-extension fit rather than treated as a first-PoC blocker.
 
 ## Evaluation gates
 
@@ -27,7 +27,7 @@ The gates below come from the project brief. If an option cannot satisfy a gate,
 | OAuth2 support | The option supports OAuth2-compatible authorization and token issuance for protected APIs. |
 | OIDC support | The option supports OpenID Connect login and identity claims for backoffice users. |
 | Modern browser flow | Browser-based backoffice clients can use Authorization Code Flow with PKCE. |
-| Service authentication | Backend services can authenticate as machine clients, commonly through Client Credentials Flow or an equivalent standard mechanism. |
+| Future service authentication | Backend services can authenticate as machine clients, commonly through Client Credentials Flow or an equivalent standard mechanism. Record this for later evolution; it is not a first-PoC blocker. |
 | Admin-managed members | Administrators can create, read, update, list, disable, and delete or retain member accounts according to policy. |
 | No public registration requirement | The system can operate without public self-service registration. |
 | RBAC | Members and service identities can receive roles or equivalent permission groups. |
@@ -70,12 +70,12 @@ The weights are starting points for later comparison. They can be adjusted if bu
 
 | Criterion | Default weight | What to evaluate |
 | --- | ---: | --- |
-| Requirements coverage | 20 | OAuth2, OIDC, RBAC, admin-only member management, REST administration needs, service authentication, and protected API access. |
+| Requirements coverage | 20 | OAuth2, OIDC, RBAC, admin-only member management, REST administration needs, protected API access, and future service-authentication fit. |
 | Security and standards alignment | 20 | Secure OAuth2/OIDC flows, token validation, issuer and audience handling, PKCE, refresh token behavior, secret handling, password handling where applicable, and resistance to common IAM mistakes. |
 | Admin API and data model fit | 15 | Whether members, roles, permissions, service accounts, clients, assignments, access checks, and audit events map cleanly to the project's control-plane needs. |
 | Operational simplicity | 15 | Deployment, upgrades, backups, key rotation, monitoring, failure modes, incident response, and day-to-day administration effort. |
 | Audit and governance | 10 | Audit event quality, access review support, privileged mutation traceability, retention controls, and separation between human and service actors. |
-| Integration fit | 10 | Fit with existing backoffice APIs, existing identity sources, internal service authentication, SDKs, metadata discovery, and migration or export needs. |
+| Integration fit | 10 | Fit with existing backoffice APIs, existing identity sources, future internal service authentication, SDKs, metadata discovery, and migration or export needs. |
 | Maintainability and extensibility | 5 | Understandability for the internal team, configuration complexity, customization surface, and ability to add roles, clients, services, and access checks later. |
 | Cost and lock-in | 5 | License or subscription cost, hosting cost, support cost, migration path, data export, provider coupling, and exit risk. |
 
@@ -90,7 +90,7 @@ Use these prompts to collect comparable evidence.
 | Members | Can administrators create, update, list, disable, delete, and recover or retain members? Are stable identifiers separate from mutable email or display fields? |
 | RBAC | Are roles and permissions first-class concepts? Can permissions be assigned to roles and roles to members or service accounts? Can role changes be reviewed? |
 | Admin API | Are required operations available through documented APIs? Are admin API permissions explicit enough to prevent accidental broad access? |
-| Service accounts | Can machine clients be modeled as distinct actors with narrow permissions, credential rotation, disablement, and audit trail? |
+| Future service accounts | If service-to-service access becomes in scope later, can machine clients be modeled as distinct actors with narrow permissions, credential rotation, disablement, and audit trail? |
 | Access checks | Can a backoffice service determine whether a member or service has access to a protected operation or service? |
 | Audit | Which privileged events are recorded? Do audit events identify actor, action, target, result, timestamp, and request context? |
 
@@ -102,7 +102,7 @@ Check whether the option:
 
 - supports Authorization Code Flow with PKCE for browser-based clients;
 - avoids Implicit Flow for new browser applications;
-- supports Client Credentials Flow or an equivalent standard machine-client pattern;
+- supports Client Credentials Flow or an equivalent standard machine-client pattern if service-to-service access becomes in scope later;
 - provides clear token validation guidance for resource servers;
 - supports issuer, audience, lifetime, and signature or introspection checks;
 - supports key rotation without breaking all resource servers at once;
@@ -236,7 +236,7 @@ Use this template when evaluating a candidate option.
 | OAuth2 support | Unknown |  |  |
 | OIDC support | Unknown |  |  |
 | Modern browser flow | Unknown |  |  |
-| Service authentication | Unknown |  |  |
+| Future service authentication | Unknown |  |  |
 | Admin-managed members | Unknown |  |  |
 | No public registration requirement | Unknown |  |  |
 | RBAC | Unknown |  |  |
