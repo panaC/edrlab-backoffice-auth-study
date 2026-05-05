@@ -31,5 +31,4 @@ The expected output remains a documented, evidence-based technical recommendatio
 - [Requirements question register](./docs/requirements-question-register.md)
 - [Minimal backoffice IAM architecture notes](./docs/architecture-minimal-backoffice-iam.md)
 - [Administrator authentication policy](./docs/security-administrator-authentication-policy.md)
-- [Study notes](./docs/requirements-study-inputs.md)
 - [Evaluation framework](./docs/evaluation-framework.md)

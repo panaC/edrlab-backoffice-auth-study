@@ -392,7 +392,7 @@ This shape keeps the browser simple, centralizes IAM authority in the IAM Contro
 
 ## Related Documents
 
-- [Study notes](./requirements-study-inputs.md)
+- [Requirements Baseline](./requirements-baseline.md)
 - [Evaluation framework](./evaluation-framework.md)
 - [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md)
 - [OAuth2](./wiki/02-oauth2.md)
