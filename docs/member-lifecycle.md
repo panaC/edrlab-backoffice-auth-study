@@ -72,10 +72,11 @@ This diagram is conceptual. A later product or provider may expose different sta
 | Update member | Change mutable profile attributes. | Do not change stable ID; validate email or username uniqueness; audit sensitive changes. |
 | Disable member | Stop new authentication and future effective access. | Admin-only; block self-disable if it would lock out the system; consider session and token effects. |
 | Restore member | Re-enable a disabled member. | Require sufficient admin permission; review roles before restoration; audit reason. |
+| Change email or login identifier | Update mutable identity attributes. | Preserve stable member ID; validate uniqueness and ownership; audit old and new safe metadata. |
 | Delete or archive member | Remove account from active use or retain it as history. | Preserve audit evidence; prevent identifier reuse mistakes; define retention policy. |
 | Assign role | Grant access. | Check admin authority; prevent self-escalation; audit grant. |
 | Remove role | Remove access. | Define whether removal takes effect immediately or at token expiry; audit removal. |
-| Reset authenticator or recovery path | Help a member regain access. | Treat as sensitive; verify admin authority; notify or audit where appropriate. |
+| Reset MFA, authenticator, or recovery path | Help a member regain access. | Treat as sensitive; verify admin authority; prevent self-service escalation; notify or audit where appropriate. |
 
 Lifecycle operations belong behind the [Administration APIs](./wiki/08-admin-api.md). UI checks can improve usability, but the admin API must enforce permissions server-side.
 
@@ -133,6 +134,40 @@ Avoid using mutable attributes as durable identifiers:
 Email and username can still be unique login or display attributes. The warning is that changing an email should not break audit history, orphan role assignments, or accidentally transfer access to another person.
 
 SCIM is not required for this project, but it is a useful reference model because it distinguishes stable resource identifiers from user-facing attributes and includes an `active` attribute for administrative status.
+
+## Account recovery and authenticator reset
+
+Recovery is a lifecycle path, not just a support task. A weak recovery process can bypass a strong login process. For administrators, recovery and MFA reset are especially sensitive because the recovered account can change IAM state.
+
+Useful controls to evaluate:
+
+| Control | Why it matters |
+| --- | --- |
+| Separate permission | `members:recover` or `authenticators:reset` can be narrower than broad member administration. |
+| No unsafe self-reset | Administrators should not reset their own MFA or recovery path if that would bypass stronger controls. |
+| Step-up for reset operators | The administrator performing a reset may need fresh or stronger authentication. |
+| Notification | Notify the affected member and, for administrators, security or IAM owners where appropriate. |
+| Audit event | Record actor, target, method reset, result, timestamp, request ID, and reason without storing recovery secrets. |
+| Temporary state | A recovered member may need to re-enroll authenticators before receiving full access. |
+| Review after admin recovery | Restored administrator access should be reviewed, especially after suspected compromise. |
+
+Recovery codes, backup authenticators, email links, SMS codes, and helpdesk resets have different risk profiles. The study should avoid treating all recovery paths as equivalent.
+
+## Email and identifier changes
+
+Email changes need explicit semantics because email often appears in login, notifications, admin search, and audit displays. The member's stable ID should remain unchanged when email changes.
+
+Minimum questions:
+
+- Is email the login identifier, notification address, or both?
+- Who can change a member email?
+- Does an email change require confirmation by the old address, the new address, an administrator, or a combination?
+- What happens if an email address is reused by another employee later?
+- Do active sessions continue after email change?
+- Should high-risk changes force reauthentication or revoke refresh tokens?
+- Which audit event records the old and new email values, and are they stored safely under retention policy?
+
+For external or federated identity later, the project must also decide how local member records map to OIDC `sub`, provider issuer, and mutable claims such as email.
 
 ## Audit and review
 
@@ -274,4 +309,5 @@ Do not assume that role removal is immediate when using self-contained JWT acces
 - [RFC 7662 - OAuth 2.0 Token Introspection](https://www.rfc-editor.org/rfc/rfc7662)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
+- [OWASP Multifactor Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html)
 - [NIST SP 800-63B - Authentication and Authenticator Management](https://pages.nist.gov/800-63-4/sp800-63b.html)

@@ -76,7 +76,7 @@ The exact resource names vary by product and implementation. A useful conceptual
 | Access checks | Queries that answer whether a subject may perform an operation. | Evaluate member or service access for a declared permission or service capability. |
 | Audit events | Evidence for privileged behavior. | Record mutations, denials, credential events, admin reads where appropriate. |
 
-See [RBAC](./05-rbac.md) for role, permission, and assignment modeling, and [Service-to-Service Authentication](./07-service-to-service-authentication.md) for future service accounts and machine callers.
+See [RBAC](./05-rbac.md) for role, permission, and assignment modeling, [OAuth Client Management](./13-oauth-client-management.md) for client registration and lifecycle concepts, and [Service-to-Service Authentication](./07-service-to-service-authentication.md) for future service accounts and machine callers.
 
 ## Example operation map
 

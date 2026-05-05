@@ -39,7 +39,7 @@ sequenceDiagram
     API->>Job: Return report data or deny
 ```
 
-For the underlying grant, see [OAuth2 Flows](./06-oauth2-flows.md). For access token validation, see [Tokens and JWTs](./04-tokens-and-jwt.md).
+For the underlying grant, see [OAuth2 Flows](./06-oauth2-flows.md). For client registration, credential rotation, and lifecycle concepts, see [OAuth Client Management](./13-oauth-client-management.md). For access token validation, see [Tokens and JWTs](./04-tokens-and-jwt.md).
 
 ## Client authentication options
 

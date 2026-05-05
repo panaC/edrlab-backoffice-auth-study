@@ -125,10 +125,13 @@ Failing to plan administrator recovery can make the system secure in theory but 
 - [OpenID Connect](./wiki/03-openid-connect.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [RBAC](./wiki/05-rbac.md)
+- [Initial Permission Model](./initial-permission-model.md)
 - [Admin API](./wiki/08-admin-api.md)
 - [Security Best Practices](./wiki/09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./wiki/10-auditability-access-reviews-operational-ownership.md)
 - [MFA, 2FA, Passwordless, and One-Time Passwords](./wiki/11-mfa-2fa-passwordless-and-otp.md)
+- [Operational Model](./operational-model.md)
+- [Threat Model](./threat-model.md)
 
 ## Open study questions
 

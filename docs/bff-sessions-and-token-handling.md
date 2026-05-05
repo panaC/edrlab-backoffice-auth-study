@@ -95,6 +95,22 @@ bff_sessions
 
 The BFF should store only a hash of the browser session identifier. If the session store is leaked, hashed session identifiers are less immediately reusable than raw session IDs.
 
+## Session expiry model
+
+The BFF session needs both user-experience semantics and security semantics. The two are related but not identical:
+
+| Expiry concept | Meaning | Why it matters |
+| --- | --- | --- |
+| Idle timeout | Session ends after no user activity for a defined period. | Limits exposure from abandoned browser sessions. |
+| Absolute timeout | Session ends after a maximum age even if the user remains active. | Forces periodic reauthentication and bounds long-running compromise. |
+| Access-token lifetime | Time until an API access token expires. | Bounds stolen-token value and stale role claims. |
+| Refresh-token lifetime | Time until the BFF can no longer renew access without reauthentication. | Defines how long a browser session can continue through server-side token refresh. |
+| Admin freshness | Maximum age of authentication for high-risk operations. | Enables step-up or reauthentication before role assignment, credential reset, audit export, or client rotation. |
+
+A small first version can keep this simple: use a short access-token lifetime, a reasonable BFF idle timeout, an absolute session timeout, and clear behavior when refresh fails. Higher-risk operations can later require a fresh authentication event or stronger factor.
+
+Sliding sessions should not become infinite sessions by accident. If idle timeout is extended on activity, an absolute timeout should still cap the total session age unless a deliberate production policy says otherwise.
+
 ## Login flow
 
 For browser-based backoffice login, the baseline is Authorization Code Flow with PKCE through the BFF.
@@ -286,6 +302,7 @@ Do not assume logout immediately invalidates every access token unless the desig
 - [Member Lifecycle](./member-lifecycle.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [OAuth2 Flows](./wiki/06-oauth2-flows.md)
+- [Token Lifecycle](./wiki/12-token-lifecycle.md)
 - [Administration APIs](./wiki/08-admin-api.md)
 - [Security Best Practices](./wiki/09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./wiki/10-auditability-access-reviews-operational-ownership.md)

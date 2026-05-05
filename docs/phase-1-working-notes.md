@@ -384,9 +384,13 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 | BFF browser sessions and server-side token handling | [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md) |
 | Token validation and JWT trade-offs | [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) |
 | RBAC modeling | [RBAC](./wiki/05-rbac.md) |
+| Initial admin/member permission baseline | [Initial Permission Model](./initial-permission-model.md) |
 | Authorization Code with PKCE and Client Credentials | [OAuth2 Flows](./wiki/06-oauth2-flows.md) |
 | Future machine-to-machine access | [Service-to-Service Authentication](./wiki/07-service-to-service-authentication.md) |
 | Administration control plane | [Admin API](./wiki/08-admin-api.md) |
+| OAuth client registration, credentials, redirect URIs, and lifecycle | [OAuth Client Management](./wiki/13-oauth-client-management.md) |
+| Backups, restore, upgrades, rotation, monitoring, incidents, and break-glass | [Operational Model](./operational-model.md) |
+| Concrete IAM abuse scenarios and mitigations | [Threat Model](./threat-model.md) |
 | Conservative security practices | [Security Best Practices](./wiki/09-security-best-practices.md) |
 | Administrator authentication policy | [Administrator Authentication Policy](./administrator-authentication-policy.md) |
 

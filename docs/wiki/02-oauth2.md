@@ -65,6 +65,8 @@ OAuth2 distinguishes between clients that can protect credentials and clients th
 
 In the selected study architecture, the Backoffice BFF is the natural OAuth2/OIDC client for the browser-facing backoffice. That can keep browser sessions and sensitive tokens server-side if the eventual design chooses that pattern. This page still describes public clients because product evaluation may involve SDKs, admin CLIs, or provider behavior that uses the same terms.
 
+For the dedicated registry, redirect URI, credential, and lifecycle concepts behind clients, see [OAuth Client Management](./13-oauth-client-management.md).
+
 ## How OAuth2 works
 
 At a high level:

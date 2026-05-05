@@ -16,6 +16,9 @@ Study documents:
 - [Minimal backoffice IAM architecture notes](./minimal-backoffice-iam-architecture.md)
 - [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
 - [Member Lifecycle](./member-lifecycle.md)
+- [Initial Permission Model](./initial-permission-model.md)
+- [Operational Model](./operational-model.md)
+- [Threat Model](./threat-model.md)
 - [Administrator Authentication Policy](./administrator-authentication-policy.md)
 
 Evaluation documents:

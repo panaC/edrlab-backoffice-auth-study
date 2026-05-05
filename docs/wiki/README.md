@@ -41,12 +41,17 @@ Use study documents outside the wiki for project-specific material:
 | [Security Best Practices](./09-security-best-practices.md) | Summarizes conservative security practices for tokens, secrets, PKCE, validation, least privilege, auditability, rate limiting, and password handling. |
 | [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md) | Covers audit event content, access review workflows, retention, evidence, and operational responsibility boundaries. |
 | [MFA, 2FA, Passwordless, and One-Time Passwords](./11-mfa-2fa-passwordless-and-otp.md) | Explains MFA, 2FA, passwordless authentication, OTP families, SMS, email, passkeys, WebAuthn, enrollment, recovery, and step-up trade-offs. |
+| [Token Lifecycle](./12-token-lifecycle.md) | Explains issuance, storage, validation, expiry, refresh, revocation, introspection, logout, key rotation, and stale-access windows. |
+| [OAuth Client Management](./13-oauth-client-management.md) | Explains OAuth2/OIDC client registration, redirect URIs, grant constraints, client credentials, lifecycle, audit, and common failure modes. |
 
 Related study documents:
 
 - [Administrator Authentication Policy](../administrator-authentication-policy.md)
 - [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md)
+- [Initial Permission Model](../initial-permission-model.md)
 - [Member Lifecycle](../member-lifecycle.md)
+- [Operational Model](../operational-model.md)
+- [Threat Model](../threat-model.md)
 
 ## Big-picture model
 
