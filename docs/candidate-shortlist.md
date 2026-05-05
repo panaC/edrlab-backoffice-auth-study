@@ -22,9 +22,9 @@ Each candidate must be checked against the project gates:
 - future service-to-service authentication fit, recorded as an evolution note rather than a first-PoC blocker;
 - administrator-managed members with no public registration requirement;
 - RBAC or an equivalent role/permission model;
-- protected API token validation and operation-level authorization;
-- REST administration API fit;
-- auditability;
+- short-lived JWT access-token validation, operation-level authorization, and bounded access-removal behavior;
+- REST administration API fit and guardrails;
+- auditability and secret redaction;
 - operational simplicity for fewer than 1,000 internal users.
 
 ## Managed provider candidates
@@ -103,8 +103,8 @@ Before doing detailed gate notes, check these questions:
 - Can administrators create, disable, delete or retain, list, and update members?
 - Can roles or permissions be managed without giving every administrator full control?
 - Can service clients be modeled separately from human administrators?
-- Can resource servers validate access tokens with issuer, audience, lifetime, and signature or introspection checks?
-- Can role removal, member disablement, and service credential revocation take effect in an acceptable window?
+- Can resource servers validate short-lived JWT access tokens with issuer, audience, lifetime, signature, and required permissions?
+- Can role removal and member disablement take effect in the accepted stale-access window?
 - Can privileged admin operations be audited with actor, action, target, result, timestamp, and request context?
 - Is there a credible operations model for upgrades, backups, key rotation, secret rotation, and incident response?
 - If self-hosted, is SQLite supported for production, unsupported, or only a development convenience?
@@ -117,35 +117,35 @@ These are possible PoCs to plan later. Do not implement them during Phase 2 unle
 | PoC | Candidate types | Question answered |
 | --- | --- | --- |
 | Browser login with Authorization Code and PKCE | Managed, self-hosted, library | Can the provider support the expected backoffice client flow? |
-| API token validation | All OAuth2/OIDC candidates | Can a representative resource server validate issuer, audience, lifetime, signature or introspection, and permissions cleanly? |
+| API token validation | All OAuth2/OIDC candidates | Can a representative resource server validate issuer, audience, lifetime, signature, and permissions cleanly? |
 | Admin API member lifecycle | Managed, self-hosted | Can required member and role operations be automated through documented APIs? |
 | Role removal latency | Managed, self-hosted, hybrid | How long does removed access remain effective through tokens, sessions, caches, or local policy? |
 | Future service-to-service token flow | Managed, self-hosted, library | If service-to-service access becomes in scope later, can a backend service get a narrow token and call a protected API as a distinct auditable actor? |
 | Audit event export | Managed, self-hosted | Can privileged member, role, client, and service-account changes be reviewed outside the provider UI? |
 | SQLite feasibility check | Self-hosted | Is SQLite production-supported, development-only, or not supported? |
 
-## Candidate evidence notes
+## Candidate starting notes
 
-These notes are intentionally brief. Full gate and future-evolution details belong in one evaluation record per candidate.
+These notes are intentionally brief. They are not gate results; full `OK` / `KO` / `Unknown` details belong in one evaluation record per candidate.
 
-| Candidate | Initial evidence status | Notes |
+| Candidate | First gates to verify | Notes |
 | --- | --- | --- |
-| Auth0 by Okta | Likely | Official docs cover OAuth2/OIDC flows, PKCE, Client Credentials, Management API, and Core RBAC for APIs. Needs admin-only lifecycle, audit, and cost review. |
-| Clerk | Likely | Official docs and GitHub materials identify Clerk as a managed authentication and user management platform with Backend API, OAuth/OIDC provider behavior, PKCE for public clients, token introspection, session JWT/JWKS verification, Organizations roles and permissions, and M2M tokens. Needs validation of internal admin-only lifecycle, custom API scope/audience support, audit/export, and vendor lock-in. |
-| Okta | Likely | Official docs cover scoped OAuth access to Okta APIs, admin roles, custom roles, service apps, users, groups, and system log concepts. Needs app-specific permission mapping review. |
-| Microsoft Entra ID | Likely | Official docs cover Microsoft Graph management of users, applications, service principals, and app roles. Needs review of application RBAC fit and operational dependency on the tenant. |
-| Amazon Cognito User Pools | Likely | Official docs cover OIDC IdP behavior, OAuth2 resource servers, custom scopes, M2M authorization, groups, and admin APIs. Needs review of internal-admin ergonomics and audit path. |
-| Keycloak | Likely | Official docs cover Admin REST API resources and supported production databases. Needs operational sizing, audit coverage, and role/permission mapping review. |
-| ZITADEL | Likely | Official docs cover cloud/self-hosting, REST/gRPC APIs, management APIs, service accounts, OIDC/OAuth endpoints, and PostgreSQL. Needs data-model fit and operations review. |
-| Cloud-IAM managed Keycloak | Likely | Official docs describe Cloud-IAM as managed Keycloak with vanilla upstream compatibility, full native Keycloak Admin REST API access, dedicated paid clusters, shared free-tier realm hosting, audit logs, backups, exports, service accounts for Cloud-IAM APIs, SLA tiers, and upgrade processes. Needs plan-level operations, exit, extension, support, and compliance review. |
-| authentik | Likely | Official docs cover OIDC/OAuth2 providers, roles, groups, API reference, PostgreSQL, and Redis. Needs access-check and admin API fit review. |
-| Authelia | Inferred | Official docs confirm an open-source authentication and authorization server, OpenID Certified OIDC provider, Client Credentials support, OAuth2 bearer-token authorization, file and LDAP user backends, access-control rules, MFA, passkeys, and reverse-proxy integrations. Control-plane fit is unclear because admin REST API, member lifecycle, role management, and privileged mutation audit requirements may need external systems or configuration management. |
-| Hanko Cloud | Unknown | Official docs confirm Hanko Cloud as a hosted backend with user management and analytics, Admin API access to user data, audit logs, metrics, session JWTs, SAML SSO, and data export paths. OAuth2 authorization-server behavior, Client Credentials, API scope/audience semantics, and RBAC maturity still require qualification. |
-| Hanko self-hosted | Unknown | Official docs and repository material confirm open source code, self-hosting, Hanko backend, Hanko Elements, JWT issuing, and Docker/local deployment paths. Production operations, self-hosted feature parity, OAuth2 authorization-server behavior, Client Credentials, and RBAC maturity still require qualification. |
-| Ory open-source stack | Inferred | Official docs describe Hydra, Kratos, and Keto/Permissions capabilities, but the combined backoffice control plane would need integration design. |
-| Spring Authorization Server | Likely | Official docs cover OAuth2/OIDC server features and PKCE. It is a framework, so member/admin/RBAC/audit burden remains custom. |
-| OpenIddict | Likely | Official docs cover OAuth2/OIDC server/client/validation stack, standard flows, and PKCE. Admin and identity behavior must be built or integrated. |
-| node-oidc-provider | Likely | Official repository documents OAuth2/OIDC support, certification, PKCE, revocation, introspection, and token format options. Admin and identity behavior remain custom. |
+| Auth0 by Okta | OIDC login, JWT API authorization, admin API guardrails, audit and secret redaction. | Official docs cover OAuth2/OIDC flows, PKCE, Client Credentials, Management API, and Core RBAC for APIs. Validate admin-only lifecycle, bounded access removal, audit, and cost. |
+| Clerk | OIDC provider fit, API audience/scope model, RBAC, admin lifecycle, audit and export. | Official docs and GitHub materials describe managed authentication, user management, Backend API, Organizations roles and permissions, session JWT/JWKS verification, and machine authentication. Validate protected-API fit and admin-only backoffice semantics. |
+| Okta | Application RBAC mapping, admin lifecycle, admin guardrails, tenant operations. | Official docs cover scoped OAuth access to Okta APIs, admin roles, custom roles, service apps, users, groups, and system logs. Validate whether the workforce-oriented model stays simple for app-local IAM. |
+| Microsoft Entra ID | App roles/groups mapping, Graph admin API fit, audit/export, tenant operations. | Official docs cover Microsoft Graph management of users, applications, service principals, and app roles. Validate application permission mapping and dependency on the Microsoft tenant. |
+| Amazon Cognito User Pools | JWT audience/scope model, admin lifecycle, role mapping, audit path. | Official docs cover OIDC IdP behavior, OAuth2 resource servers, custom scopes, M2M authorization, groups, and admin APIs. Validate internal-admin ergonomics and auditability. |
+| Keycloak | Admin API, role/permission mapping, audit events, operations. | Official docs cover Admin REST API resources and supported production databases. Validate operational weight, audit coverage, secret redaction, and production database assumptions. |
+| ZITADEL | Data model, management API, access checks, operations. | Official docs cover cloud/self-hosting, REST/gRPC APIs, management APIs, service accounts, OIDC/OAuth endpoints, and PostgreSQL. Validate member/role mapping and operational fit. |
+| Cloud-IAM managed Keycloak | Managed operations, audit/export, admin API guardrails, exit path. | Official docs describe managed Keycloak compatibility, full native Keycloak Admin REST API access, dedicated paid clusters, audit logs, backups, exports, service accounts, SLA tiers, and upgrade processes. Validate plan-level constraints. |
+| authentik | Control-plane fit, access checks, admin API guardrails, operations. | Official docs cover OIDC/OAuth2 providers, roles, groups, API reference, PostgreSQL, and Redis. Validate whether the model fits an IAM control plane rather than mainly application access management. |
+| Authelia | Admin-managed members, role administration, REST admin API, privileged mutation audit. | Official docs confirm OIDC provider behavior, Client Credentials support, bearer-token authorization, file and LDAP user backends, access-control rules, MFA, passkeys, and reverse-proxy integrations. Validate control-plane fit. |
+| Hanko Cloud | OAuth2/OIDC authorization-server fit, API audience/scope model, RBAC, admin lifecycle. | Official docs confirm hosted backend, user management, Admin API access to user data, audit logs, metrics, session JWTs, SAML SSO, and data export paths. Validate protected-API and RBAC maturity. |
+| Hanko self-hosted | Self-hosted feature parity, OAuth2/OIDC authorization-server fit, RBAC, operations. | Official docs and repository material confirm open source code, self-hosting, Hanko backend, Hanko Elements, JWT issuing, and Docker/local deployment paths. Validate production operations and control-plane fit. |
+| Ory open-source stack | Integration boundary, admin API shape, RBAC/access checks, audit. | Official docs describe Hydra, Kratos, and Keto/Permissions capabilities. Validate whether assembling the stack creates more custom control-plane work than the project wants. |
+| Spring Authorization Server | Custom work boundary, member/admin/RBAC ownership, audit, operations. | Official docs cover OAuth2/OIDC server features and PKCE. It is a framework, so identity storage, admin APIs, RBAC, sessions, and audit remain project-owned. |
+| OpenIddict | Custom work boundary, identity integration, admin API, audit. | Official docs cover OAuth2/OIDC server/client/validation stack, standard flows, and PKCE. Validate stack fit and the amount of surrounding IAM behavior to build. |
+| node-oidc-provider | Custom work boundary, storage adapter, admin API, RBAC, operations. | Official repository documents OAuth2/OIDC support, certification, PKCE, revocation, introspection, and token format options. Admin and identity behavior remain custom. |
 
 ## References
 

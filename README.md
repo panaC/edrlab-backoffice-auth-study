@@ -109,10 +109,7 @@ Out of scope:
 
 - [Abstract](./ABSTRACT.md)
 - [Changelog](./CHANGELOG.md)
-- [Phase 2 requirements baseline](./docs/phase-2-requirements-baseline.md)
-- [Phase 2 open-question triage](./docs/phase-2-open-question-triage.md)
-- [Phase 2 service and permission inventory](./docs/phase-2-service-permission-inventory.md)
-- [Phase 2 minimal PoC plan](./docs/phase-2-minimal-poc-plan.md)
+- [Phase 2 working notes](./docs/phase-2-working-notes.md)
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
 - [Documentation index](./docs/README.md)
 - [Minimal backoffice IAM architecture notes](./docs/minimal-backoffice-iam-architecture.md)
