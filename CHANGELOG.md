@@ -25,3 +25,4 @@ This repository is a study repository, not a released software package. Changelo
 - Added the Phase 2 open-question triage to README, abstract, requirements baseline, and documentation index links.
 - Added the Phase 2 service and permission inventory to README, abstract, requirements baseline, open-question triage, and documentation index links.
 - Added the Phase 2 minimal PoC plan to README, abstract, docs index, requirements baseline, open-question triage, and service-permission inventory links.
+- Clarified in `AGENTS.md` that project history must be kept in root `CHANGELOG.md`, with `README.md` reserved for the final-review project brief.

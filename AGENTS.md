@@ -8,6 +8,8 @@ The root [README.md](./README.md) is a final-review-facing project brief. It mus
 
 Do not use `README.md` as a project tracker. Do not add current status, working notes, open questions, detailed terminology, comparison matrices, option analysis, evaluation scoring, or phase-by-phase progress there. Put working study documents under `docs/`.
 
+Keep the project's historical record in root `CHANGELOG.md`. Use it for dated, project-level history such as phase changes, scope changes, requirement-baseline changes, documentation-structure changes, evaluation-artifact changes, and PoC-planning changes.
+
 This file is only for agent operating instructions, rules, boundaries, and repository hygiene.
 
 ## Current Operating Phase
@@ -43,15 +45,16 @@ During Phase 2:
 3. `AGENTS.md` may be edited when the user's current task is to refine agent instructions.
 4. `README.md` may be edited when the user's current task is to refine the final-review project brief: goal, requirements, constraints, scope, roadmap, or documentation links.
 5. Root `ABSTRACT.md` and `CHANGELOG.md` may be edited when the user's current task asks for project summary, project history, phase movement, or release-style documentation.
-6. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
-7. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
-8. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
-9. Every `docs/wiki/` page must include a `References` section.
-10. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
-11. Keep Mermaid diagrams simple and directly related to the explanation.
-12. Cross-reference overlapping topics instead of duplicating large sections.
-13. Check for an existing suitable file before creating a new one.
-14. Before finishing, compare the result with this file and the project requirements in `README.md`.
+6. Record meaningful project history in `CHANGELOG.md`, not in `README.md` or ad hoc working notes. Keep entries dated, concise, and focused on what changed.
+7. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
+8. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
+9. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
+10. Every `docs/wiki/` page must include a `References` section.
+11. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
+12. Keep Mermaid diagrams simple and directly related to the explanation.
+13. Cross-reference overlapping topics instead of duplicating large sections.
+14. Check for an existing suitable file before creating a new one.
+15. Before finishing, compare the result with this file and the project requirements in `README.md`.
 
 ## Documentation Rules
 
@@ -84,6 +87,16 @@ Use these names unless the repository already has a clearly better convention.
 Additional study documents may be created under `docs/` when useful. Prefer updating existing documents over creating near-duplicates. If a document debates project scope, records trade-offs, evaluates options, plans a PoC, or describes implementation-oriented behavior, place it under `docs/` rather than `docs/wiki/`.
 
 When topics overlap, link to the more detailed page instead of duplicating large explanations. Use relative Markdown links.
+
+## Changelog Rules
+
+Use root `CHANGELOG.md` as the project's historical record.
+
+Record meaningful project-level changes, including phase movement, project-scope changes, requirement-baseline changes, documentation-structure changes, evaluation artifacts, candidate-evaluation milestones, PoC-planning changes, and final-review documentation changes.
+
+Do not use `README.md` for project history, progress tracking, or phase-by-phase status. Keep `README.md` as a concise final-review project brief.
+
+Keep changelog entries dated, concise, and factual. Prefer common headings such as `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security` when they fit.
 
 ## Writing Style
 
@@ -198,6 +211,7 @@ When modifying the repository:
 - read this file first;
 - read `README.md` before changing project requirements, scope, roadmap, or documentation links;
 - keep `README.md` final-review-facing; do not use it for tracking work in progress;
+- keep project history in root `CHANGELOG.md`;
 - inspect existing docs before creating files;
 - keep Phase 2 Markdown study artifacts under `docs/`;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
@@ -215,6 +229,7 @@ Before finishing:
 - confirm project facts align with `README.md`;
 - confirm no forbidden implementation files or unnecessary dependencies were added;
 - confirm no final recommendation was made unless explicitly requested;
+- confirm meaningful project history has been recorded in `CHANGELOG.md` when the task changes project phase, scope, requirements, documentation structure, evaluation artifacts, or PoC planning;
 - confirm every edited wiki page has a useful `References` section;
 - confirm citations are real, relevant, and from appropriate sources;
 - confirm overlapping topics are cross-referenced instead of heavily duplicated;
