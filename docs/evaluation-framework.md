@@ -2,11 +2,11 @@
 
 This document defines a product-neutral framework for later evaluation of self-hosted, managed, minimal-library, and hybrid IAM options for the internal backoffice authorization server study.
 
-It does not recommend a vendor, product, architecture, database, hosting model, or implementation approach. It exists so later comparison work can judge different options with the same requirements, evidence standards, and risk vocabulary.
+The study now uses the Central IAM Control Plane Architecture as its target scope: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and multiple backend API resource servers. This framework evaluates options for the central IdP/authorization server/admin control-plane component. It does not recommend a vendor, product, database, hosting model, or implementation approach.
 
 ## How to use this framework
 
-Use this framework once per candidate option. A candidate might be a managed identity provider, a self-hosted open-source IAM product, a minimal internal service built from existing libraries, or a hybrid where authentication, authorization, and administration responsibilities are split across systems.
+Use this framework once per candidate option. A candidate might be a managed identity provider, a self-hosted open-source IAM product, a minimal internal service built from existing libraries, or a hybrid where authentication, authorization, and administration responsibilities are split across systems while still satisfying the selected Central IAM Control Plane Architecture boundaries.
 
 For each option:
 
@@ -14,7 +14,7 @@ For each option:
 - cite official documentation or specifications for protocol and product behavior;
 - separate confirmed support from inferred support;
 - identify which questions require a minimal proof of concept;
-- keep the evaluation product-neutral until the project explicitly enters a decision phase.
+- keep the evaluation product-neutral until the project explicitly chooses a product or implementation path.
 
 Do not average away a requirement failure. A high score in operations or cost does not compensate for inability to support OAuth2/OIDC, administrator-managed users, RBAC, protected APIs, service authentication, or auditability.
 

@@ -11,6 +11,20 @@ The study must help the company decide whether to:
 
 The expected outcome is not a production-ready authorization server. The expected outcome is a documented, evidence-based technical recommendation supported by comparison documents and minimal Proofs of Concept.
 
+## Selected Study Architecture
+
+The study now uses the **Central IAM Control Plane Architecture**:
+
+```text
+Backoffice BFF (Backend-for-Frontend)
+    -> IdP / Authorization Server / Admin Control Plane
+    -> multiple backend API resource servers
+```
+
+The focus of this project is the **IdP / Authorization Server / Admin Control Plane** component. The Backoffice BFF, meaning Backend-for-Frontend, and backend API services are treated as integration context: they define the token, session, administration, and authorization boundaries that the central IAM component must support.
+
+The study does not choose a final product, vendor, database, hosting model, or implementation stack yet.
+
 ## Business and Technical Requirements
 
 The authorization server must support:
@@ -57,6 +71,8 @@ The administration API should support, at minimum:
 
 In scope for the study:
 
+- the selected micro-service architecture shape with a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/control plane, and multiple backend API resource servers;
+- the responsibilities, API boundaries, token boundaries, and data ownership of the IdP/authorization server/control plane;
 - internal member lifecycle management;
 - administrator-only account creation and access management;
 - OAuth2/OIDC-based authentication and authorization patterns;
@@ -69,6 +85,7 @@ In scope for the study:
 
 Out of scope:
 
+- implementing the Backoffice BFF, backend API services, or service databases except as minimal Proof-of-Concept integration stubs where needed;
 - public customer identity;
 - public self-service registration;
 - social login;
@@ -87,6 +104,7 @@ Out of scope:
 ## Documentation
 
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
+- [Minimal backoffice IAM architecture notes](./docs/minimal-backoffice-iam-architecture.md)
 - [Evaluation framework](./docs/evaluation-framework.md)
 - [Candidate shortlist](./docs/candidate-shortlist.md)
 - [IAM documentation wiki](./docs/wiki/README.md)

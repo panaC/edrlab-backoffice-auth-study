@@ -1,6 +1,6 @@
 # Internal Backoffice IAM Wiki
 
-This wiki is the Phase 1 documentation for an internal backoffice authorization server study. Its purpose is to build a shared, evidence-backed understanding of identity and access management before any product, vendor, architecture, or implementation decision is made.
+This wiki is the Phase 1 documentation for an internal backoffice authorization server study. Its purpose is to build a shared, evidence-backed understanding of identity and access management for the selected Central IAM Control Plane Architecture before any product, vendor, database, hosting, or implementation decision is made.
 
 The audience is senior engineers who understand backend systems, APIs, distributed systems, databases, and general security concepts, but who may not work with IAM, OAuth2, OpenID Connect, JWTs, token validation, or RBAC every day.
 
@@ -8,7 +8,7 @@ This page is the entry point. It introduces the big picture, shows how the main 
 
 ## Phase 1 boundary
 
-Phase 1 is documentation-only. The wiki should explain the concepts and trade-offs needed for a later decision, but it should not recommend a final authorization server design, identity provider, vendor, hosting model, database, deployment topology, or production implementation.
+Phase 1 is documentation-only. The study now assumes the Central IAM Control Plane Architecture: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and multiple backend API resource servers. The wiki should explain the concepts and trade-offs needed to evaluate that central IAM component, but it should not recommend a final identity provider product, vendor, hosting model, database, deployment topology, or production implementation.
 
 For this study, the future system is assumed to protect internal backoffice services for fewer than 1,000 users. Public account registration is out of scope. Members are created and managed by administrators. RBAC is required. The goal is to keep the eventual system simple, maintainable, understandable, and operable by the internal team.
 
@@ -39,6 +39,7 @@ IAM combines identity, tokens, clients, APIs, and authorization data. The terms 
 - A **client** is an OAuth2/OIDC application registered with the authorization server.
 - An **authorization server** issues tokens and runs OAuth2 authorization flows.
 - An **identity provider** authenticates users and provides identity information.
+- A **BFF**, or Backend-for-Frontend, is a server-side component used by the backoffice UI to hold browser sessions, handle OIDC callbacks, keep tokens server-side, and call the central IAM component and backend APIs.
 - A **resource server** is an API or backend service that validates tokens and enforces access control.
 - A **role** is a business-level access group, such as `admin`, `support`, `manager`, or `viewer`.
 - A **permission** is a granular capability, such as `members:read` or `billing:write`.
@@ -49,13 +50,13 @@ OAuth2 and OIDC are related but not the same thing. OAuth2 is about delegated au
 
 ## Conceptual architecture
 
-The diagram below is a vocabulary map, not a final architecture recommendation.
+The diagram below is a vocabulary map for the selected Central IAM Control Plane Architecture, not a final product or deployment design.
 
 ```mermaid
 flowchart LR
     User["User / Member"]
     Admin["Administrator"]
-    Client["Backoffice Client"]
+    Client["Backoffice BFF / Client"]
     AS["Authorization Server / OpenID Provider"]
     ExternalIdP["External Identity Provider (optional)"]
     API["Backoffice Service / Resource Server"]
@@ -80,7 +81,7 @@ flowchart LR
     Service --> API
 ```
 
-In practice, these boxes may be separate systems, modules inside one system, or capabilities provided by existing software. An OAuth2 authorization server and an OIDC identity provider are often one logical component, sometimes called an OpenID Provider, but authentication can also be delegated to another identity provider. Phase 1 does not choose which arrangement is best.
+In the selected study shape, the OAuth2 authorization server, OIDC identity provider, and administration control plane are treated as the central IAM component. They may still be implemented by one product, multiple products, a managed provider, a self-hosted product, a library-based service, or a hybrid. Phase 1 does not choose that implementation path.
 
 The key responsibility boundary is that IAM data is managed by the authorization and administration side. A resource server should not need to be the owner of member, role, permission, client, or service account records. It validates tokens and enforces access using trusted token claims, authorization server metadata and keys, token introspection, local policy, or an explicit authorization lookup depending on the eventual design.
 
@@ -91,7 +92,7 @@ A typical internal backoffice login flow looks like this:
 ```mermaid
 sequenceDiagram
     participant User
-    participant Client as Backoffice Client
+    participant Client as Backoffice BFF
     participant AS as Authorization Server / IdP
     participant API as Resource Server
     participant Authz as Roles and Permissions

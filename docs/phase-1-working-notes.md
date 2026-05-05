@@ -1,8 +1,20 @@
 # Phase 1 Working Notes
 
-This work-in-progress document collects Phase 1 requirements, open questions, evaluation notes, and risk notes for later comparison work. It does not choose a vendor, product, architecture, database, hosting model, or implementation approach.
+This work-in-progress document collects Phase 1 requirements, open questions, evaluation notes, and risk notes for later comparison work. The study now selects the Central IAM Control Plane Architecture, but it does not choose a vendor, product, database, hosting model, or implementation approach.
 
 The expected system is an internal backoffice IAM control plane for fewer than 1,000 users. Public registration, customer identity, social login, and broad enterprise IAM complexity are out of scope. Members are created and managed by administrators, RBAC is required, and administration operations must be auditable.
+
+## Selected Architecture Scope
+
+The selected architecture is:
+
+```text
+Backoffice BFF (Backend-for-Frontend)
+    -> IdP / Authorization Server / Admin Control Plane
+    -> multiple backend API resource servers
+```
+
+The purpose of this study is the **IdP / Authorization Server / Admin Control Plane** component. The Backoffice BFF, meaning Backend-for-Frontend, backend API services, workers, and service databases are integration context. They define the token, session, administration, and authorization boundaries that the central IAM component must support.
 
 ## Requirement Levels
 
@@ -61,6 +73,71 @@ OAuth2/OIDC is also less compelling if every protected resource is behind a sing
 
 The requirement should therefore not be "use OAuth2 because modern authentication uses OAuth2." It should be "use OAuth2/OIDC where the project needs standardized login, token issuance, token validation, API protection, service clients, and provider interoperability."
 
+### Question: why not just use SSO if none exists today?
+
+Question: If no enterprise SSO exists today, should the project introduce SSO instead of studying an internal backoffice authorization server?
+
+Answer: no existing SSO removes the easy hybrid option of reusing a corporate identity provider. It does not remove the need for standardized authentication, API authorization, member lifecycle management, RBAC, service authentication, administration controls, or auditability.
+
+In this context, SSO is a capability a product or provider may deliver, not a complete replacement for the backoffice IAM control plane. Choosing "SSO" would still mean selecting, subscribing to, or operating an identity provider and deciding where the project owns:
+
+- member creation, disablement, deletion or retention, and recovery;
+- roles, permissions, and service access checks;
+- access tokens for protected APIs;
+- service-to-service credentials and permissions;
+- administration APIs and privileged admin authorization;
+- audit events for access and control-plane changes.
+
+For Phase 1, the practical answer is:
+
+- do not plan around integration with a non-existent corporate SSO;
+- evaluate whether a managed or self-hosted IAM product should become the backoffice's primary identity provider and possibly provide SSO across backoffice applications;
+- keep the initial scope as a backoffice IAM control plane, not company-wide workforce IAM, unless stakeholders explicitly expand the scope;
+- avoid building username/password, MFA, session, and token behavior from scratch if a maintained product or provider can satisfy the requirements more simply and securely;
+- treat future company-wide SSO as a possible expansion path, not as a current assumption.
+
+So the answer to "why don't we use SSO?" is: there is no existing enterprise SSO to reuse, and creating one is itself an IAM product and operations decision. The study should compare managed, self-hosted, library-based, and hybrid options against the project requirements, while recognizing that some options may also provide SSO across multiple internal applications.
+
+### Non-selected narrower option: one backoffice only
+
+Question: If the real scope were a single internal backoffice, what would be the simplest credible solution?
+
+Answer: if there is only one backoffice application, one backend, one database, no independent resource servers, no company-wide SSO, and no complex service-to-service authorization need, the simplest option to evaluate is a conventional application-owned authentication and authorization model:
+
+```text
+Backoffice UI + Backend
+        |
+        | HttpOnly server-side session cookie
+        |
+Database
+  - members
+  - roles
+  - permissions
+  - role_assignments
+  - sessions
+  - audit_logs
+```
+
+In that model:
+
+- administrators create and manage members;
+- users authenticate directly with the backoffice;
+- the backend creates and validates server-side sessions;
+- every protected operation checks permissions server-side;
+- role and permission assignments live in the application database;
+- privileged changes write audit events;
+- the browser does not need to manage access tokens or JWTs.
+
+For example, `POST /members/{id}/disable` should check that the caller is authenticated, active, authorized with a permission such as `members:disable`, blocked from unsafe self-escalation or self-disablement where policy requires it, and recorded in the audit log with actor, action, target, result, timestamp, and request context.
+
+This option is simpler because it avoids operating a separate authorization server, configuring OAuth2 clients, managing redirect URIs, issuing browser access tokens, validating token audiences across services, and handling cross-application SSO.
+
+The trade-off is ownership. The team must own password policy, password storage through a well-maintained framework, account recovery, optional MFA, session security, CSRF protection, lockout or rate-limiting behavior, account disablement semantics, audit log integrity, and administrator access recovery. Those responsibilities should not be underestimated.
+
+This option becomes less attractive if the scope grows to multiple backoffice applications, multiple independently deployed APIs, third-party or managed IdP integration, machine clients, standardized API tokens, or future SSO across internal tools. In that broader shape, an OIDC/OAuth2-capable IdP or authorization server becomes more justified.
+
+This is not the selected architecture anymore. It remains useful as a scope guard: the Central IAM Control Plane Architecture should be justified by multiple backend APIs, machine clients, central token issuance, and a real admin control-plane need, not by habit.
+
 ### Alternatives to evaluate
 
 The alternatives below are not final recommendations. They are design options to challenge against the same requirements.
@@ -68,7 +145,7 @@ The alternatives below are not final recommendations. They are design options to
 | Alternative | Where it may fit | Main limitation |
 | --- | --- | --- |
 | Server-side sessions with application RBAC | A single internal application owns login, session state, roles, permissions, and all protected operations. | Poorer fit for multiple independently deployed APIs, service-to-service callers, and future provider interoperability. |
-| Existing corporate SSO plus local authorization | The company already has a workforce identity provider for login, MFA, and employee lifecycle. | The project still needs local roles, permissions, admin API behavior, access checks, service authentication, and audit mapping. |
+| New or existing corporate SSO plus local authorization | A workforce identity provider exists or is introduced for login, MFA, and employee lifecycle. | No enterprise SSO exists today, so this option requires adopting or operating an IdP before it can be reused; the project still needs local roles, permissions, admin API behavior, access checks, service authentication, and audit mapping. |
 | Reverse-proxy or gateway authentication | Coarse access to internal web applications is enough. | Usually insufficient for per-operation authorization inside a privileged administration API. |
 | API keys or mTLS for services | Machine-to-machine calls are the only problem being solved. | Does not solve human login, delegated user access, role assignment, or member lifecycle. |
 | Custom session or JWT token system | The system is small, fully internal, and the team accepts owning security-sensitive token behavior. | Easy to get validation, key rotation, revocation, expiry, audience handling, and incident response wrong. |
@@ -76,9 +153,9 @@ The alternatives below are not final recommendations. They are design options to
 
 ### Current study position
 
-OAuth2/OIDC should remain in the requirements as a strong baseline because the project scope includes browser login, protected APIs, an administration API, RBAC, service-to-service authentication, managed and self-hosted comparison, and later PoC planning.
+OAuth2/OIDC should remain in the requirements because the selected Central IAM Control Plane Architecture includes browser login through a Backoffice BFF, protected backend APIs, an administration API, RBAC, service-to-service authentication, managed and self-hosted comparison, and later PoC planning.
 
-However, the requirement should stay challengeable. Later evaluation should confirm that OAuth2/OIDC is justified by actual system boundaries and operational needs, not merely by convention. If the project narrows to a single internal application with no independent APIs or machine clients, a simpler session-based model may deserve serious consideration.
+The earlier single-application alternative remains documented only as a narrower non-selected shape. The current study should focus on how the central IdP/authorization server/control plane satisfies the selected micro-service architecture without drifting into unnecessary enterprise IAM complexity.
 
 ## OIDC Requirement Rationale and Alternatives
 
@@ -136,16 +213,16 @@ SAML can also satisfy enterprise SSO requirements. It may be a better fit where 
 | Alternative | Where it may fit | Main limitation |
 | --- | --- | --- |
 | Local login with server-side sessions | A small internal monolith owns all authentication and authorization. | The team owns password policy, MFA decisions, account recovery, session security, and offboarding behavior. |
-| Corporate SSO through SAML | The company already has a SAML-based workforce identity platform. | Does not provide the same API-oriented token model as OIDC/OAuth2. |
+| New or existing SAML-based SSO | A SAML-based workforce identity platform exists or is introduced. | No enterprise SSO exists today, so this requires adopting or operating one; SAML also does not provide the same API-oriented token model as OIDC/OAuth2. |
 | Gateway-authenticated identity headers | A trusted reverse proxy or access gateway authenticates users before requests reach the app. | Header spoofing, bypass paths, audit attribution, and operation-level authorization must be controlled carefully. |
-| Existing workforce IdP with OIDC | The company already has an OIDC-capable identity provider. | This still uses OIDC, but the project may not need to operate its own OpenID Provider. |
+| New or existing workforce IdP with OIDC | An OIDC-capable identity provider exists or is introduced. | This still uses OIDC; if introduced for this project, operating or subscribing to the provider becomes part of the scope. |
 | Application-specific session bridge over external login | The app exchanges external identity for its own session cookie. | The bridge must define identity linking, session expiry, logout, disablement behavior, and auditability. |
 
 ### Current study position
 
-OIDC should remain a requirement for the study because the project scope includes standardized backoffice login, comparison of managed and self-hosted IAM options, possible corporate identity integration, and a need to keep authentication separate from API authorization.
+OIDC should remain a requirement because the selected Central IAM Control Plane Architecture needs standardized backoffice login through the BFF, comparison of managed and self-hosted IAM options, possible future SSO expansion, and a clean separation between user authentication and API authorization.
 
-The requirement should be challenged if later scoping proves the system is only a single internal app with no provider interoperability need. In that narrower case, OIDC may be an integration cost rather than a requirement. Until then, OIDC is the clearest product-neutral way to describe the user-authentication layer without prematurely choosing a vendor or custom login implementation.
+The requirement should still be implemented with restraint. OIDC is the product-neutral login contract for the selected architecture; it is not a reason to add company-wide workforce IAM features that the backoffice does not need.
 
 ## Requirements Inventory
 
@@ -168,7 +245,7 @@ The requirement should be challenged if later scoping proves the system is only 
 | Required | Browser-based backoffice clients use Authorization Code Flow with PKCE. | Implicit Flow should not be used for new browser applications. |
 | Expected | Authentication results are represented separately from API authorization decisions. | A successful login does not imply access to admin APIs or backoffice services. |
 | Expected | Login, session, and token behavior can support account disablement and incident response. | The exact balance among short token lifetimes, refresh tokens, session invalidation, and revocation is a later design topic. |
-| Study question | Is an existing corporate identity provider available and preferred for primary authentication? | This affects managed, self-hosted, and hybrid options. |
+| Study question | Should this project introduce or rely on a new SSO-capable identity provider for primary authentication? | Current stakeholder input says no enterprise SSO exists today, so reuse of a corporate SSO is not available unless the company first adopts or operates one. |
 | Study question | Are MFA, passwordless login, or step-up authentication required for administrators? | This should be decided from business risk and operational expectations, not assumed from tooling. |
 
 ### OAuth2, Tokens, and API Protection
@@ -260,7 +337,8 @@ Later comparison work should judge self-hosted, managed, minimal-library, and hy
 
 ## Open Questions
 
-- Which existing identity systems, directories, or HR sources should be considered authoritative for internal members?
+- Which SSO-capable IdP behavior belongs in the selected IdP/authorization server/control-plane component, and which company-wide workforce IAM concerns remain out of scope?
+- Which existing identity systems, directories, HR sources, or manual processes should be considered authoritative for internal members?
 - Are administrators required to use MFA, step-up authentication, or hardware-backed authenticators?
 - What are the initial backoffice services and sensitive operations that need permissions?
 - What member lifecycle states are required: invited, active, disabled, deleted, suspended, or archived?

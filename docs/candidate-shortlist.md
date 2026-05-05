@@ -2,7 +2,7 @@
 
 This document identifies candidate IAM approaches for later evaluation using the [Evaluation Framework](./evaluation-framework.md).
 
-It is not a recommendation. It does not choose a vendor, product, architecture, database, hosting model, or implementation approach. The purpose is to define a balanced first pass of options to study with the same gates, evidence levels, and proof-of-concept discipline.
+The project now uses the Central IAM Control Plane Architecture as the study scope: a Backoffice BFF (Backend-for-Frontend), a central IdP/authorization server/admin control plane, and multiple backend API resource servers. This document does not choose a vendor, product, database, hosting model, or implementation approach. Its purpose is to compare ways to realize the central IdP/authorization server/admin control-plane component.
 
 Evaluation date: 2026-05-04.
 
@@ -71,7 +71,7 @@ Hybrid patterns should be evaluated as patterns first, not as implementation pla
 
 | Pattern | Why evaluate | Main risk |
 | --- | --- | --- |
-| Existing corporate IdP for authentication plus custom backoffice authorization/admin API | Keeps primary login and MFA with an existing trusted IdP while letting the backoffice own application roles, permissions, access checks, and audit events. | Identity linking, stale authorization state, duplicated admin surfaces, and custom control-plane code. |
+| New or existing IdP for authentication plus custom backoffice authorization/admin API | Introduces or reuses a trusted IdP for primary login and MFA while letting the backoffice own application roles, permissions, access checks, and audit events. | If no IdP exists today, adoption or operation becomes part of the scope; identity linking, stale authorization state, duplicated admin surfaces, and custom control-plane code remain risks. |
 | Managed or self-hosted OIDC provider plus local policy service | Uses standard login and tokens from an IdP, while a local service decides high-churn permissions and backoffice-specific access. | Runtime dependency on policy lookups and potential confusion about which system owns roles. |
 | Product IAM for users and clients plus custom administration facade | Uses the provider's admin APIs through a narrower internal REST API shaped around the project's member, role, and service-access requirements. | The facade can hide provider complexity, but it can also become a second IAM system if it stores too much independent state. |
 | Ory Hydra plus existing or custom member system | Uses Hydra for protocol correctness while the project controls login, consent, identity, and administration behavior. | Requires building or integrating substantial identity and admin workflows around the OAuth2/OIDC server. |
