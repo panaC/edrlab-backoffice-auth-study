@@ -10,6 +10,8 @@ This repository is a study repository, not a released software package. Changelo
 
 - Added root `ABSTRACT.md` to summarize the study purpose, architecture, current phase, and key links.
 - Added root `CHANGELOG.md` to track project-level documentation and phase changes.
+- Added `docs/requirements-baseline.md` as the consolidated Phase 2 requirements baseline with stable requirement IDs and evaluation gate traceability.
+- Added `docs/open-questions.md` as the consolidated Phase 2 open-question register with status, owner, blocked-decision, and current-default fields.
 - Added `docs/phase-2-requirements-baseline.md` to convert Phase 1 study material into traceable Phase 2 requirements, verification routes, open decisions, and exit criteria.
 - Added `docs/phase-2-open-question-triage.md` to prioritize Phase 2 open questions by PoC, candidate-evaluation, final-recommendation, and production-design impact.
 - Added `docs/phase-2-service-permission-inventory.md` to define the first representative service, initial role permissions, operation inventory, access-check shape, and first-PoC acceptance checks.
@@ -25,4 +27,6 @@ This repository is a study repository, not a released software package. Changelo
 - Added the Phase 2 open-question triage to README, abstract, requirements baseline, and documentation index links.
 - Added the Phase 2 service and permission inventory to README, abstract, requirements baseline, open-question triage, and documentation index links.
 - Added the Phase 2 minimal PoC plan to README, abstract, docs index, requirements baseline, open-question triage, and service-permission inventory links.
+- Updated README and documentation index links to surface the consolidated Phase 2 requirements baseline and open-question register.
+- Refined the evaluation framework with requirement-ID traceability, mandatory evidence capture in the evaluation template, stronger BFF/CSRF criteria, and a new OAuth client safety gate.
 - Clarified in `AGENTS.md` that project history must be kept in root `CHANGELOG.md`, with `README.md` reserved for the final-review project brief.

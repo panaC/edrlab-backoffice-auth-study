@@ -111,6 +111,8 @@ Out of scope:
 
 - [Abstract](./ABSTRACT.md)
 - [Changelog](./CHANGELOG.md)
+- [Requirements baseline](./docs/requirements-baseline.md)
+- [Open questions](./docs/open-questions.md)
 - [Phase 2 working notes](./docs/phase-2-working-notes.md)
 - [Phase 1 working notes](./docs/phase-1-working-notes.md)
 - [Documentation index](./docs/README.md)

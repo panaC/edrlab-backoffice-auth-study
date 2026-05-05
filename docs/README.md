@@ -10,12 +10,15 @@ Use [docs/wiki](./wiki/README.md) for general IAM concepts, terminology, protoco
 
 Start here:
 
-- [Phase 2 working notes](./phase-2-working-notes.md)
+- [Requirements baseline](./requirements-baseline.md)
+- [Open questions](./open-questions.md)
 - [Phase 1 working notes](./phase-1-working-notes.md)
 - [IAM documentation wiki](./wiki/README.md)
 
 Study documents:
 
+- [Requirements Baseline](./requirements-baseline.md)
+- [Open Questions](./open-questions.md)
 - [Phase 2 Working Notes](./phase-2-working-notes.md)
 - [Minimal backoffice IAM architecture notes](./minimal-backoffice-iam-architecture.md)
 - [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
