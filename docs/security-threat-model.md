@@ -236,10 +236,10 @@ These require more detail when the final stack or provider is known:
 ## Related documents
 
 - [Security Best Practices](./wiki/09-security-best-practices.md)
-- [Initial Permission Model](./initial-permission-model.md)
+- [Initial Permission Model](./requirements-initial-permission-model.md)
 - [Operational Model](./operational-model.md)
-- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
-- [Member Lifecycle](./member-lifecycle.md)
+- [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md)
+- [Member Lifecycle](./requirements-member-lifecycle.md)
 - [Token Lifecycle](./wiki/12-token-lifecycle.md)
 - [OAuth Client Management](./wiki/13-oauth-client-management.md)
 - [Admin API](./wiki/08-admin-api.md)

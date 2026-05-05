@@ -189,10 +189,10 @@ Before production, the team should be able to show:
 - [Auditability, Access Reviews, and Operational Ownership](./wiki/10-auditability-access-reviews-operational-ownership.md)
 - [Token Lifecycle](./wiki/12-token-lifecycle.md)
 - [OAuth Client Management](./wiki/13-oauth-client-management.md)
-- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
-- [Member Lifecycle](./member-lifecycle.md)
-- [Initial Permission Model](./initial-permission-model.md)
-- [Threat Model](./threat-model.md)
+- [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md)
+- [Member Lifecycle](./requirements-member-lifecycle.md)
+- [Initial Permission Model](./requirements-initial-permission-model.md)
+- [Threat Model](./security-threat-model.md)
 
 ## References
 

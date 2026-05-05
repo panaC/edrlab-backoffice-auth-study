@@ -6,7 +6,7 @@ A web session is server-side or provider-side state that lets a browser user rem
 
 In an OAuth2/OIDC backoffice architecture, a BFF can handle login, callbacks, token exchange, token storage, refresh, logout, and API calls on behalf of the browser. The browser receives an application session cookie instead of directly storing OAuth access tokens or refresh tokens.
 
-This page explains the conceptual browser security model. The project-specific BFF notes remain in [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md).
+This page explains the conceptual browser security model. The project-specific BFF notes remain in [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md).
 
 ## Why it matters
 
@@ -196,7 +196,7 @@ For the internal backoffice IAM Control Plane study:
 - session, token, logout, and disablement behavior must be documented before implementation;
 - the BFF is integration context, not the IAM Control Plane itself.
 
-This page is conceptual. The concrete project-specific behavior belongs in [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md).
+This page is conceptual. The concrete project-specific behavior belongs in [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md).
 
 ## Related pages
 
@@ -207,7 +207,7 @@ This page is conceptual. The concrete project-specific behavior belongs in [BFF 
 - [Key Management and Signing Keys](./23-key-management-and-signing-keys.md)
 - [Security Best Practices](./09-security-best-practices.md)
 - [Authentication vs Authorization](./01-authentication-vs-authorization.md)
-- [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md)
+- [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md)
 
 ## References
 

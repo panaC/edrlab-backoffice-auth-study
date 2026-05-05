@@ -54,7 +54,7 @@ BFF means **Backend-for-Frontend**. In this architecture, it is the browser-faci
 
 The BFF is a security and ergonomics boundary for the browser-facing backoffice. It is not the IAM authority, does not issue OAuth2/OIDC tokens, does not own members, roles, or permissions, and does not replace backend API authorization checks.
 
-Detailed BFF session, token storage, CSRF, refresh, and logout behavior belongs in [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md). This architecture note keeps only the system boundary.
+Detailed BFF session, token storage, CSRF, refresh, and logout behavior belongs in [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md). This architecture note keeps only the system boundary.
 
 ## Starting Assumption: No Existing Enterprise SSO
 
@@ -241,7 +241,7 @@ The BFF session store exists so the browser can carry only an opaque session coo
 - a multi-replica BFF needs a shared session store;
 - backend APIs should still validate access tokens and required permissions.
 
-Cookie attributes, session table fields, token storage options, CSRF handling, refresh behavior, and logout semantics are covered in [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md).
+Cookie attributes, session table fields, token storage options, CSRF handling, refresh behavior, and logout semantics are covered in [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md).
 
 ### IdP Database
 
@@ -392,16 +392,16 @@ This shape keeps the browser simple, centralizes IAM authority in the IAM Contro
 
 ## Related Documents
 
-- [Study notes](./study-notes.md)
+- [Study notes](./requirements-study-inputs.md)
 - [Evaluation framework](./evaluation-framework.md)
 - [Authentication vs Authorization](./wiki/01-authentication-vs-authorization.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)
-- [Member Lifecycle](./member-lifecycle.md)
-- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
-- [Initial Permission Model](./initial-permission-model.md)
+- [Member Lifecycle](./requirements-member-lifecycle.md)
+- [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md)
+- [Initial Permission Model](./requirements-initial-permission-model.md)
 - [Operational Model](./operational-model.md)
-- [Threat Model](./threat-model.md)
+- [Threat Model](./security-threat-model.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [RBAC](./wiki/05-rbac.md)
 - [OAuth2 Flows](./wiki/06-oauth2-flows.md)
@@ -414,7 +414,7 @@ This shape keeps the browser simple, centralizes IAM authority in the IAM Contro
 - [Key Management and Signing Keys](./wiki/23-key-management-and-signing-keys.md)
 - [Web Sessions, Cookies, and BFF Pattern](./wiki/24-web-sessions-cookies-and-bff.md)
 - [Security Best Practices](./wiki/09-security-best-practices.md)
-- [Administrator Authentication Policy](./administrator-authentication-policy.md)
+- [Administrator Authentication Policy](./security-administrator-authentication-policy.md)
 
 ## References
 

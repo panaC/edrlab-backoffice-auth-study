@@ -16,7 +16,7 @@ The project focus is the central IAM Control Plane. The Backoffice BFF and backe
 
 The repository is in Phase 2: requirements definition.
 
-As of 2026-05-05, the Phase 2 baseline is established through a consolidated requirements baseline, open-question register, architecture notes, security and operational study documents, and an evaluation framework. The next work is to resolve or accept defaults for high-impact open questions, refine candidate-evaluation evidence, and plan focused non-production PoCs where documentation alone cannot answer a material requirement.
+As of 2026-05-05, the Phase 2 baseline is established through a consolidated requirements baseline, requirements question register, architecture notes, security and operational study documents, and an evaluation framework. The next work is to resolve or accept defaults for high-impact questions, refine candidate-evaluation evidence, and plan focused non-production PoCs where documentation alone cannot answer a material requirement.
 
 Phase 2 remains product-neutral. It should refine business, technical, security, and operational requirements without choosing a final vendor, product, architecture implementation, hosting model, database, or production stack.
 
@@ -28,8 +28,8 @@ The expected output remains a documented, evidence-based technical recommendatio
 - [Agent instructions](./AGENTS.md)
 - [Documentation index](./docs/README.md)
 - [Requirements baseline](./docs/requirements-baseline.md)
-- [Open questions](./docs/open-questions.md)
-- [Minimal backoffice IAM architecture notes](./docs/minimal-backoffice-iam-architecture.md)
-- [Administrator authentication policy](./docs/administrator-authentication-policy.md)
-- [Study notes](./docs/study-notes.md)
+- [Requirements question register](./docs/requirements-question-register.md)
+- [Minimal backoffice IAM architecture notes](./docs/architecture-minimal-backoffice-iam.md)
+- [Administrator authentication policy](./docs/security-administrator-authentication-policy.md)
+- [Study notes](./docs/requirements-study-inputs.md)
 - [Evaluation framework](./docs/evaluation-framework.md)

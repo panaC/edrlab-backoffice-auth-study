@@ -182,7 +182,7 @@ For the minimal backoffice IAM Control Plane, the study should answer:
 
 - [Federation and Enterprise SSO](./19-federation-and-enterprise-sso.md)
 - [IAM Responsibility Model](./16-iam-responsibility-model.md)
-- [Member Lifecycle](../member-lifecycle.md)
+- [Member Lifecycle](../requirements-member-lifecycle.md)
 - [RBAC](./05-rbac.md)
 - [Admin API](./08-admin-api.md)
 - [Token Lifecycle](./12-token-lifecycle.md)

@@ -32,7 +32,7 @@ The study should especially separate:
 - strong daily authentication from emergency recovery;
 - factor support from the operational burden of enrollment, reset, audit, and lost-device handling.
 
-For administrator-specific policy questions, see [Administrator Authentication Policy](../administrator-authentication-policy.md). For the login protocol layer, see [OpenID Connect](./03-openid-connect.md). For token validation and API authorization, see [Tokens and JWTs](./04-tokens-and-jwt.md) and [Admin API](./08-admin-api.md).
+For administrator-specific policy questions, see [Administrator Authentication Policy](../security-administrator-authentication-policy.md). For the login protocol layer, see [OpenID Connect](./03-openid-connect.md). For token validation and API authorization, see [Tokens and JWTs](./04-tokens-and-jwt.md) and [Admin API](./08-admin-api.md).
 
 ## Core terms
 

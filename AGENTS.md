@@ -60,6 +60,79 @@ During Phase 2:
 
 Use Markdown for study artifacts.
 
+## File Naming Rules
+
+Name study files by their durable artifact family, not by their temporary work status.
+
+For any new or renamed project-specific Markdown study file under top-level `docs/`, the filename must use lowercase `kebab-case` and must start with one of these approved family prefixes:
+
+```text
+requirements-*.md
+architecture-*.md
+security-*.md
+operational-*.md
+evaluation-*.md
+candidate-*.md
+poc-plan-*.md
+poc-results-*.md
+decision-*.md
+```
+
+Use the prefix that describes the artifact's role:
+
+| Prefix | Use for |
+| --- | --- |
+| `requirements-` | Requirements baselines, lifecycle requirements, permission requirements, open requirement refinements. |
+| `architecture-` | Architecture notes, responsibility boundaries, runtime shapes, integration boundaries. |
+| `security-` | Threat models, authentication policy, security controls, abuse cases, risk notes. |
+| `operational-` | Ownership, backup, restore, monitoring, incident response, runbooks, operational readiness. |
+| `evaluation-` | Evaluation frameworks, scoring models, evidence templates, comparison criteria. |
+| `candidate-` | Product, vendor, library, or approach-specific candidate records. |
+| `poc-plan-` | Proof-of-Concept plans and learning goals. |
+| `poc-results-` | Proof-of-Concept findings, evidence, and limitations. |
+| `decision-` | Decision records and accepted project decisions. |
+
+The only allowed top-level `docs/` filename exception is `README.md`, because it is the documentation index. Do not create new unprefixed project-specific files.
+
+Avoid status names such as `draft`, `final`, `new`, `old`, or `temp`; version suffixes such as `v2`, `v3`, or `really-final`; and vague names such as `notes.md`, `misc.md`, or `iam-update.md`. Use dates only for explicit snapshots, archives, or historical exports.
+
+When a task explicitly touches a non-conforming top-level study artifact's name, placement, or documentation-structure role, rename it into the strict family convention and update all links in the same change.
+
+## Architecture Decision Analysis Notes
+
+Use architecture decision analysis notes when the project needs to reason about an architectural choice before recording a final decision. These files are study artifacts, not accepted decision records.
+
+Name them with the `architecture-` prefix and a `decision-analysis` suffix:
+
+```text
+docs/architecture-<topic>-decision-analysis.md
+```
+
+Examples:
+
+```text
+docs/architecture-central-iam-control-plane-decision-analysis.md
+docs/architecture-bff-boundary-decision-analysis.md
+docs/architecture-token-strategy-decision-analysis.md
+```
+
+Use `decision-*.md` only for accepted decisions. Do not use `decision-*.md` for exploratory analysis, option comparison, unresolved trade-offs, or Phase 2 working positions.
+
+Architecture decision analysis notes should include:
+
+- the decision context and problem statement;
+- the current project baseline;
+- the decision to make;
+- options considered;
+- evaluation criteria;
+- option-by-option analysis;
+- trade-offs, risks, and unknowns;
+- evidence still needed, including candidate evaluation or PoC evidence where relevant;
+- current working position, explicitly marked as not final when the project remains in Phase 2;
+- open questions and related documents.
+
+During Phase 2, an architecture decision analysis note may document a current working position, but it must not make a final vendor, product, architecture, hosting, or production implementation recommendation unless the user explicitly asks to move into a decision phase or requests a final recommendation.
+
 Keep the conceptual IAM wiki under:
 
 ```text

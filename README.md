@@ -27,31 +27,18 @@ The study does not choose a final product, vendor, database, hosting model, or i
 
 ## Business and Technical Requirements
 
-The IAM Control Plane must support:
+The detailed, ID-based requirements source is the [Requirements baseline](./docs/requirements-baseline.md). At project-brief level, the IAM Control Plane must support:
 
-- OAuth2 authentication and authorization flows;
-- OpenID Connect for user identity;
-- authentication of internal backoffice users;
-- Role-Based Access Control (RBAC);
-- member and user management;
-- administration by internal administrators only;
-- a REST administration API for managing users, roles, permissions, and service access;
-- access control for internal backoffice services.
+- OAuth2/OIDC-compatible login for internal backoffice users;
+- administrator-managed member lifecycle with no public registration;
+- Role-Based Access Control (RBAC) with explicit permissions where needed;
+- a REST administration API for members, roles, permissions, service access checks, and audit-supporting operations;
+- backend API protection through token validation and server-side permission checks;
+- auditability for privileged administration operations.
 
 Service-to-service authentication is a future extension topic, not part of the first study or minimal Proof of Concept scope.
 
-The administration API should support, at minimum:
-
-- creating a member;
-- reading member details;
-- updating member details;
-- disabling or deleting a member;
-- creating roles;
-- assigning roles to members;
-- removing roles from members;
-- listing roles;
-- listing members;
-- checking whether a member has access to a given backoffice service.
+The minimum administration API capability set is tracked by `API-003` in the requirements baseline. Access-check behavior is tracked by `API-004`.
 
 ## Project Constraints
 
@@ -111,41 +98,10 @@ Out of scope:
 
 - [Abstract](./ABSTRACT.md)
 - [Changelog](./CHANGELOG.md)
-- [Requirements baseline](./docs/requirements-baseline.md)
-- [Open questions](./docs/open-questions.md)
-- [Study notes](./docs/study-notes.md)
 - [Documentation index](./docs/README.md)
-- [IAM documentation wiki](./docs/wiki/README.md)
-- [Minimal backoffice IAM architecture notes](./docs/minimal-backoffice-iam-architecture.md)
-- [BFF Sessions and Token Handling](./docs/bff-sessions-and-token-handling.md)
-- [Member Lifecycle](./docs/member-lifecycle.md)
-- [Initial Permission Model](./docs/initial-permission-model.md)
-- [Operational Model](./docs/operational-model.md)
-- [Threat Model](./docs/threat-model.md)
+- [Requirements baseline](./docs/requirements-baseline.md)
+- [Requirements question register](./docs/requirements-question-register.md)
+- [Minimal backoffice IAM architecture notes](./docs/architecture-minimal-backoffice-iam.md)
+- [Threat Model](./docs/security-threat-model.md)
 - [Evaluation framework](./docs/evaluation-framework.md)
-- [Authentication vs Authorization](./docs/wiki/01-authentication-vs-authorization.md)
-- [OAuth2](./docs/wiki/02-oauth2.md)
-- [OpenID Connect](./docs/wiki/03-openid-connect.md)
-- [Tokens and JWTs](./docs/wiki/04-tokens-and-jwt.md)
-- [RBAC](./docs/wiki/05-rbac.md)
-- [OAuth2 Flows](./docs/wiki/06-oauth2-flows.md)
-- [Service-to-Service Authentication](./docs/wiki/07-service-to-service-authentication.md)
-- [Administration APIs](./docs/wiki/08-admin-api.md)
-- [Security Best Practices](./docs/wiki/09-security-best-practices.md)
-- [Auditability, Access Reviews, and Operational Ownership](./docs/wiki/10-auditability-access-reviews-operational-ownership.md)
-- [MFA, 2FA, Passwordless, and One-Time Passwords](./docs/wiki/11-mfa-2fa-passwordless-and-otp.md)
-- [Token Lifecycle](./docs/wiki/12-token-lifecycle.md)
-- [OAuth Client Management](./docs/wiki/13-oauth-client-management.md)
-- [IAM Control Plane vs Data Plane](./docs/wiki/14-iam-control-plane-vs-data-plane.md)
-- [IAM Architecture](./docs/wiki/15-iam-architecture.md)
-- [IAM Responsibility Model](./docs/wiki/16-iam-responsibility-model.md)
-- [PDP, PEP, PIP, and PAP](./docs/wiki/17-pdp-pep-pip-pap.md)
-- [Authorization Models](./docs/wiki/18-authorization-models.md)
-- [Federation and Enterprise SSO](./docs/wiki/19-federation-and-enterprise-sso.md)
-- [Identity Provisioning and SCIM](./docs/wiki/20-identity-provisioning-and-scim.md)
-- [Policy Engines and Fine-Grained Authorization](./docs/wiki/21-policy-engines-and-fine-grained-authorization.md)
-- [IAM Data Model](./docs/wiki/22-iam-data-model.md)
-- [Key Management and Signing Keys](./docs/wiki/23-key-management-and-signing-keys.md)
-- [Web Sessions, Cookies, and BFF Pattern](./docs/wiki/24-web-sessions-cookies-and-bff.md)
-- [Kubernetes API Access Control](./docs/wiki/25-kubernetes-api-access-control.md)
-- [Administrator Authentication Policy](./docs/administrator-authentication-policy.md)
+- [IAM documentation wiki](./docs/wiki/README.md)

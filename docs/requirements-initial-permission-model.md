@@ -163,10 +163,10 @@ A later PoC or implementation should prove denied paths, not only happy paths:
 
 - [RBAC](./wiki/05-rbac.md)
 - [Admin API](./wiki/08-admin-api.md)
-- [Member Lifecycle](./member-lifecycle.md)
+- [Member Lifecycle](./requirements-member-lifecycle.md)
 - [OAuth Client Management](./wiki/13-oauth-client-management.md)
 - [Token Lifecycle](./wiki/12-token-lifecycle.md)
-- [Threat Model](./threat-model.md)
+- [Threat Model](./security-threat-model.md)
 - [Operational Model](./operational-model.md)
 
 ## References

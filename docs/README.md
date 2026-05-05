@@ -11,23 +11,30 @@ Use top-level `docs/wiki/` pages for general IAM concepts, terminology, protocol
 Start here:
 
 - [Requirements baseline](./requirements-baseline.md)
-- [Open questions](./open-questions.md)
-- [Study notes](./study-notes.md)
+- [Requirements question register](./requirements-question-register.md)
+- [Study notes](./requirements-study-inputs.md)
+- [Central IAM Control Plane Decision Analysis](./architecture-central-iam-control-plane-decision-analysis.md)
 
-The active Phase 2 working documentation lives in the requirements baseline and open-question register.
+The active Phase 2 working documentation lives in the requirements baseline and requirements question register.
 
 Study documents:
 
 - [Requirements Baseline](./requirements-baseline.md)
-- [Open Questions](./open-questions.md)
-- [Study Notes](./study-notes.md)
-- [Minimal backoffice IAM architecture notes](./minimal-backoffice-iam-architecture.md)
-- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
-- [Member Lifecycle](./member-lifecycle.md)
-- [Initial Permission Model](./initial-permission-model.md)
+- [Requirements Question Register](./requirements-question-register.md)
+- [Study Notes](./requirements-study-inputs.md)
+- [Minimal backoffice IAM architecture notes](./architecture-minimal-backoffice-iam.md)
+- [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md)
+- [Member Lifecycle](./requirements-member-lifecycle.md)
+- [Initial Permission Model](./requirements-initial-permission-model.md)
 - [Operational Model](./operational-model.md)
-- [Threat Model](./threat-model.md)
-- [Administrator Authentication Policy](./administrator-authentication-policy.md)
+- [Threat Model](./security-threat-model.md)
+- [Administrator Authentication Policy](./security-administrator-authentication-policy.md)
+
+Architecture decision analysis:
+
+- [Central IAM Control Plane Decision Analysis](./architecture-central-iam-control-plane-decision-analysis.md)
+- [OAuth2 and OIDC Protocol Boundary Decision Analysis](./architecture-oauth-oidc-protocol-decision-analysis.md)
+- [Token and API Access Strategy Decision Analysis](./architecture-token-and-api-access-decision-analysis.md)
 
 Evaluation documents:
 

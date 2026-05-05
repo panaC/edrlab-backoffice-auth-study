@@ -164,7 +164,7 @@ Use this compact template when evaluating a candidate.
 ## References
 
 - [Requirements Baseline](./requirements-baseline.md)
-- [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md)
-- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
-- [Threat Model](./threat-model.md)
-- [Initial Permission Model](./initial-permission-model.md)
+- [Minimal Backoffice IAM Architecture Notes](./architecture-minimal-backoffice-iam.md)
+- [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md)
+- [Threat Model](./security-threat-model.md)
+- [Initial Permission Model](./requirements-initial-permission-model.md)

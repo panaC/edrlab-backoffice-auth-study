@@ -13,7 +13,7 @@ This page complements:
 - [Service-to-Service Authentication](./07-service-to-service-authentication.md), for future machine identities and service permissions.
 - [Admin API](./08-admin-api.md), for member, role, permission, and assignment management endpoints.
 - [Security Best Practices](./09-security-best-practices.md), for least privilege, audit, and token validation guidance.
-- [Initial Permission Model](../initial-permission-model.md), for the project-specific first-pass admin/member matrix.
+- [Initial Permission Model](../requirements-initial-permission-model.md), for the project-specific first-pass admin/member matrix.
 
 ## Core terms
 
@@ -141,7 +141,7 @@ For conceptual study, the catalog can be documented as a table. A later implemen
 
 This table is illustrative. It is a modeling aid, not a final role set or product recommendation.
 
-For the project-specific initial admin/member matrix, see [Initial Permission Model](../initial-permission-model.md). This wiki page stays general; the linked study document records the narrower first-pass permission baseline for the selected backoffice scope.
+For the project-specific initial admin/member matrix, see [Initial Permission Model](../requirements-initial-permission-model.md). This wiki page stays general; the linked study document records the narrower first-pass permission baseline for the selected backoffice scope.
 
 ## Role design
 

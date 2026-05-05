@@ -122,7 +122,7 @@ A refresh-token lifecycle should define:
 - whether refresh failure ends the local session;
 - which refresh events are audited.
 
-For a BFF architecture, refresh tokens should remain server-side. The browser should not store them in `localStorage`, `sessionStorage`, readable cookies, URLs, or frontend logs. See [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md) for the browser and session boundary.
+For a BFF architecture, refresh tokens should remain server-side. The browser should not store them in `localStorage`, `sessionStorage`, readable cookies, URLs, or frontend logs. See [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md) for the browser and session boundary.
 
 ## Revocation, introspection, and local JWT validation
 
@@ -229,8 +229,8 @@ Do not log bearer tokens, refresh tokens, authorization codes, client secrets, r
 - [RBAC](./05-rbac.md)
 - [Security Best Practices](./09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./10-auditability-access-reviews-operational-ownership.md)
-- [BFF Sessions and Token Handling](../bff-sessions-and-token-handling.md)
-- [Member Lifecycle](../member-lifecycle.md)
+- [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md)
+- [Member Lifecycle](../requirements-member-lifecycle.md)
 
 ## References
 

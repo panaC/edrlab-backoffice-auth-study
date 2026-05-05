@@ -4,7 +4,7 @@ This page explains why the selected architecture uses a Backoffice BFF (Backend-
 
 This document originated as Phase 1 study material and now supports Phase 2 requirements definition. It does not choose a web framework, session store, token vault, identity provider, deployment topology, or production implementation.
 
-The architecture-level service and database boundaries are summarized in [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md). This page is the detailed study note for BFF browser sessions, server-side token handling, CSRF, refresh, and logout behavior.
+The architecture-level service and database boundaries are summarized in [Minimal Backoffice IAM Architecture Notes](./architecture-minimal-backoffice-iam.md). This page is the detailed study note for BFF browser sessions, server-side token handling, CSRF, refresh, and logout behavior.
 
 ## Why this exists
 
@@ -296,10 +296,10 @@ Do not assume logout immediately invalidates every access token unless the desig
 
 ## Related documents
 
-- [Minimal Backoffice IAM Architecture Notes](./minimal-backoffice-iam-architecture.md)
+- [Minimal Backoffice IAM Architecture Notes](./architecture-minimal-backoffice-iam.md)
 - [OAuth2](./wiki/02-oauth2.md)
 - [OpenID Connect](./wiki/03-openid-connect.md)
-- [Member Lifecycle](./member-lifecycle.md)
+- [Member Lifecycle](./requirements-member-lifecycle.md)
 - [Tokens and JWTs](./wiki/04-tokens-and-jwt.md)
 - [OAuth2 Flows](./wiki/06-oauth2-flows.md)
 - [Token Lifecycle](./wiki/12-token-lifecycle.md)

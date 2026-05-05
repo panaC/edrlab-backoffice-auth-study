@@ -92,7 +92,7 @@ Changing a lifecycle state is not the same thing as invalidating every possible 
 
 The current study baseline allows removed access to expire at access-token expiry for the first version. That trade-off requires short-lived access tokens and clear audit evidence. Higher-risk operations may justify immediate session invalidation, token revocation, token introspection, or a runtime authorization lookup.
 
-See [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md) and [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) for the token-specific trade-offs.
+See [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md) and [Tokens and JWTs](./wiki/04-tokens-and-jwt.md) for the token-specific trade-offs.
 
 ## Role and permission behavior
 
@@ -298,7 +298,7 @@ Do not assume that role removal is immediate when using self-contained JWT acces
 - [Security Best Practices](./wiki/09-security-best-practices.md)
 - [Auditability, Access Reviews, and Operational Ownership](./wiki/10-auditability-access-reviews-operational-ownership.md)
 - [MFA, 2FA, Passwordless, and One-Time Passwords](./wiki/11-mfa-2fa-passwordless-and-otp.md)
-- [BFF Sessions and Token Handling](./bff-sessions-and-token-handling.md)
+- [BFF Sessions and Token Handling](./security-bff-sessions-and-token-handling.md)
 
 ## References
 
