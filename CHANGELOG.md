@@ -35,6 +35,7 @@ This repository is a study repository, not a released software package. Changelo
 - Updated README, abstract, requirements baseline, requirements question register, and documentation index links to surface the current consolidated Phase 2 artifacts.
 - Reduced duplicated requirement and documentation detail in `README.md`; `docs/requirements-baseline.md` remains the detailed ID-based requirements source.
 - Split architecture reasoning out of `docs/requirements-study-inputs.md` into dedicated architecture decision analysis notes, then merged the remaining study-input index into `docs/README.md`.
+- Simplified `docs/README.md` into a concise documentation index and removed duplicated baseline and traceability summaries.
 - Updated the abstract status and key links to reflect the current consolidated Phase 2 artifacts.
 - Updated top-level study documents so Phase 1 foundation pages clearly read as Phase 2 requirements inputs.
 - Refined the evaluation framework with requirement-ID traceability, mandatory evidence capture in the evaluation template, stronger BFF/CSRF criteria, and a new OAuth client safety gate.
