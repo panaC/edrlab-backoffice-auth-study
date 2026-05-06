@@ -21,6 +21,13 @@ This directory contains the project-facing study documents for the internal back
 | [`decisions/`](./decisions/) | Decision records | ADR-style records for real project or architecture decisions. ADR guidance recommends keeping decision records short, factual, statused, and tied to context and consequences ([Microsoft ADR guidance](https://learn.microsoft.com/en-ie/azure/well-architected/architect-role/architecture-decision-record), [ADR GitHub organization](https://adr.github.io/)). |
 | [`wiki/`](./wiki/) | Conceptual IAM reference | General IAM concepts, protocol explanations, security concepts, terminology, and source-backed reference pages ([Project governance](../PROJECT-GOVERNANCE.md#phase-1---conceptual-iam-foundation)). |
 
+## Current Study Documents
+
+| Document | Purpose |
+| --- | --- |
+| [Project requirements](./requirements/project-requirements.md) | Phase 2 requirements derived from the immutable feature specification and current stakeholder scoping answers. |
+| [Architecture options](./architecture/options.md) | Phase 2 architecture option framing for monolithic, modular monolithic, split control-plane, microservices, and hybrid shapes. |
+
 ## Reading Path
 
 1. Start with the root [README](../README.md) for the immutable feature specification and current roadmap.
