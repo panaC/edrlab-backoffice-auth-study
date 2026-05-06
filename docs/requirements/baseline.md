@@ -61,7 +61,7 @@ Baseline requirements will use `RB-001`, `RB-002`, and following identifiers. Ea
 | RB-013 | Let admins disable an `active` member, restore a `disabled` member to `active`, and archive a `disabled` member. An `archived` member cannot be restored in the baseline. | [FS-004](../../README.md#minimum-feature-requirements), [FS-005](../../README.md#minimum-feature-requirements), [FS-006](../../README.md#minimum-feature-requirements), user-provided requirement, 2026-05-06 |
 | RB-014 | Retain member records instead of hard-deleting them in the initial policy. | [FS-004](../../README.md#minimum-feature-requirements) |
 | RB-015 | Block new protected-service access for non-active members. | [FS-005](../../README.md#minimum-feature-requirements) |
-| RB-016 | Define how already-issued access stops after disablement, archival, or role-access removal. Compare JWT expiration delay with opaque-token introspection or authorization lookup behavior. | [FS-005](../../README.md#minimum-feature-requirements), [RFC 7519](https://www.rfc-editor.org/rfc/rfc7519), [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662), user-provided requirement, 2026-05-06 |
+| RB-016 | Define how already-issued access stops after disablement, archival, or role-access removal. | [FS-005](../../README.md#minimum-feature-requirements), [FS-007](../../README.md#minimum-feature-requirements), user-provided requirement, 2026-05-06 |
 
 ### Administration and Role Management
 
@@ -156,7 +156,7 @@ Baseline requirements will use `RB-001`, `RB-002`, and following identifiers. Ea
 
 ## Open Questions
 
-- Should protected services use JWT access tokens, opaque access tokens with introspection or authorization lookup, or a hybrid pattern?
+- Should protected services use JWT access tokens ([RFC 7519](https://www.rfc-editor.org/rfc/rfc7519)), opaque access tokens with introspection or authorization lookup ([RFC 7662](https://www.rfc-editor.org/rfc/rfc7662)), or a hybrid pattern?
 
 ## References
 

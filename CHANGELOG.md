@@ -23,6 +23,7 @@ This repository is a study repository, not a released software package. Changelo
 - Clarified member lifecycle transitions in `RB-013`: admins may disable `active` members, restore `disabled` members to `active`, and archive `disabled` members; `archived` members are non-restorable in the baseline.
 - Added `RB-048` to require Phase 2 threat modeling and security requirement refinement before candidate evaluation.
 - Removed the duplicate out-of-scope section from the requirements baseline so scope exclusions stay centralized in the root `README.md`.
+- Simplified `RB-016` to require defining how already-issued access stops without embedding JWT-versus-opaque-token comparison in the requirement text.
 
 ### Added
 
