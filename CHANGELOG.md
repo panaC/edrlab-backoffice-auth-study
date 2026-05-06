@@ -8,5 +8,7 @@ This repository is a study repository, not a released software package. Changelo
 
 ### Changed
 
+- Replaced prefix-based study document naming with a folder-based documentation structure and added `docs/README.md` plus `docs/decisions/README.md`.
+- Clarified that the project study metadata block does not apply to conceptual wiki pages.
 - Updated `FS-003` in `README.md` to narrow the mutable attribute examples to email and name.
 - Updated `FS-013` in `README.md` to keep recovery, authenticator reset, administrator recovery, audit access, and future break-glass responsibility under super-admin responsibility.

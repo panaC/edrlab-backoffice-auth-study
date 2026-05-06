@@ -111,4 +111,5 @@ These topics are not settled by the immutable feature specification and must be 
 - [Project governance](./PROJECT-GOVERNANCE.md)
 - [Changelog](./CHANGELOG.md)
 - [Agent instructions](./AGENTS.md)
+- [Project study documentation map](./docs/README.md)
 - [Conceptual IAM wiki](./docs/wiki/README.md)

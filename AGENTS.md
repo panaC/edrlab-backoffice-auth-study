@@ -53,21 +53,36 @@ A user request overrides the Phase 2 boundary only when it explicitly changes ph
 
 ## Documentation Rules
 
-Project study documents under top-level `docs/` must use lowercase `kebab-case`, `.md`, and an approved prefix:
+Project study documents must be organized by reader task and project artifact type, not by filename prefixes. Use these folders under `docs/`:
 
 ```text
-requirements-
-architecture-
-security-
-operational-
-evaluation-
-candidate-
-poc-plan-
-poc-results-
-decision-
+docs/
+  README.md
+  requirements/
+  risks/
+  architecture/
+  evaluation/
+  poc/
+  decisions/
+  wiki/
 ```
 
-Examples: `requirements-auth.md`, `architecture-api.md`, `security-session-policy.md`, `decision-use-postgresql.md`.
+Use lowercase `kebab-case.md` filenames inside those folders. Do not repeat the folder category as a filename prefix unless it materially improves clarity. Examples: `docs/requirements/project-requirements.md`, `docs/risks/security-risk-register.md`, `docs/architecture/context.md`, `docs/evaluation/criteria.md`, `docs/poc/plans.md`, and `docs/decisions/0001-example.md`.
+
+Use `docs/README.md` as the documentation map. It should explain where each artifact type belongs, list current study documents, and point readers to the right entry point. Create topic folders only when they hold a real document or useful index; do not add placeholder analysis documents.
+
+Decision records belong under `docs/decisions/` and should be numbered ADR-style only when a real project, architecture, vendor, product, or production-impacting decision is being proposed or accepted. Do not use decision records for open analysis, comparison tables, or working notes.
+
+Non-index project study documents outside `docs/decisions/` should start with a compact metadata block:
+
+```text
+Status: Draft | Review | Accepted | Superseded
+Phase: Phase 2 - Requirements and Risk Framing
+Scope: Requirements | Risks | Architecture | Evaluation | PoC
+Last reviewed: YYYY-MM-DD
+```
+
+Conceptual wiki pages under `docs/wiki/` are not required to use this metadata block. Decision records under `docs/decisions/` should use the ADR template from `docs/decisions/README.md`.
 
 Keep the conceptual IAM wiki under `docs/wiki/`. It is for general IAM concepts, terminology, protocol explanations, security concepts, and references. Use the wiki index as an agent-facing reading path only; project-facing documents should link directly to specific supporting wiki pages.
 
