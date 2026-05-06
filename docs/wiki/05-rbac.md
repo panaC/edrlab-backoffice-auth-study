@@ -4,7 +4,7 @@
 
 Role-Based Access Control, or RBAC, authorizes subjects through roles. A role is a named business-level access group, such as `support_agent`, `iam_operator`, `report_viewer`, or `finance_manager`. A permission is a granular capability, such as `members:read`, `members:disable`, `roles:assign`, or `reports:export`.
 
-For this backoffice study, RBAC is the required baseline model for administrator-managed access. The goal is not to design a large enterprise policy platform. The goal is to define a permission vocabulary that internal services can enforce consistently, administrators can review, and future product or build-vs-buy evaluations can test.
+For internal backoffice access-control work, RBAC is a common baseline model for administrator-managed access. The goal is not always to design a large enterprise policy platform. The practical goal is to define an access vocabulary that internal services can enforce consistently, administrators can review, and future product or build-vs-buy evaluations can test.
 
 This page complements:
 
@@ -13,7 +13,6 @@ This page complements:
 - [Service-to-Service Authentication](./07-service-to-service-authentication.md), for future machine identities and service permissions.
 - [Admin API](./08-admin-api.md), for member, role, permission, and assignment management endpoints.
 - [Security Best Practices](./09-security-best-practices.md), for least privilege, audit, and token validation guidance.
-- [Initial Permission Model](../requirements-initial-permission-model.md), for the project-specific first-pass admin/member matrix.
 
 ## Core terms
 
@@ -141,7 +140,7 @@ For conceptual study, the catalog can be documented as a table. A later implemen
 
 This table is illustrative. It is a modeling aid, not a final role set or product recommendation.
 
-For the project-specific initial admin/member matrix, see [Initial Permission Model](../requirements-initial-permission-model.md). This wiki page stays general; the linked study document records the narrower first-pass permission baseline for the selected backoffice scope.
+Project-specific role matrices should be recorded outside the conceptual wiki. This page stays general and should be referenced rather than duplicated by later study documents.
 
 ## Role design
 
@@ -269,7 +268,7 @@ This endpoint should be treated as a privileged support function for trusted bac
 
 ## Service-to-service permissions
 
-Service-to-service permissions are a future extension for this project, not part of the initial scope.
+Service-to-service permissions are often introduced after human-user access is understood, because service identities need their own ownership, rotation, audit, and least-privilege model.
 
 Service accounts are subjects, but they should not inherit human roles by convenience. A reporting job, provisioning worker, or integration service should receive a role named for its purpose and containing only the permissions it needs.
 

@@ -38,7 +38,7 @@ The important point is not the label. The important point is to keep the respons
 | IdP | Precise for user authentication and identity assertions. | Too narrow for this study because it does not naturally include admin APIs, OAuth2 client management, permission catalog, or audit requirements. |
 | Authorization server | Precise for OAuth2/OIDC token issuance. | Too protocol-focused; does not naturally include member lifecycle, roles, admin APIs, or operational ownership. |
 
-For this repository, use **IAM Control Plane** for the central component under study, and **IAM architecture** for the overall design that includes BFF, protected APIs, enforcement, audit, and operations.
+Use **IAM Control Plane** when discussing a possible central component that owns identity and access-management responsibilities. Use **IAM architecture** for the overall design that includes clients, protected APIs, enforcement, audit, and operations.
 
 ## Domain map
 
@@ -385,12 +385,12 @@ Before evaluating a product or library, answer these:
 11. What fails if the IdP, token service, admin API, or policy engine is down?
 12. How can the system be migrated away from the chosen provider or implementation?
 
-## What this means for this study
+## Terminology guidance
 
-For this repository:
+For study documents:
 
 - use **IAM architecture** for the overall system design;
-- use **IAM Control Plane** for the central component under study;
+- use **IAM Control Plane** only when discussing a possible central identity and access-management component;
 - keep **IdP** for authentication and identity-provider behavior;
 - keep **Authorization Server** for OAuth2/OIDC token issuance behavior;
 - keep **Admin Control Plane** or **Admin API** for privileged IAM management;

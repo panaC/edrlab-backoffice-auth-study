@@ -4,15 +4,15 @@
 
 OAuth2 flows, also called grant types, define how a client obtains tokens from an authorization server. A flow is not just a login screen pattern. It determines which parties interact, which artifacts move through the browser, whether a client authenticates, and what kind of token the authorization server may issue.
 
-The relevant flows for this study are:
+The relevant flows for internal backoffice studies are:
 
-| Flow | Main use | First project question |
+| Flow | Main use | First design question |
 | --- | --- | --- |
 | Authorization Code Flow with PKCE | User-facing backoffice access through the authorization server. | Is this a browser-facing or public-client path, and how is the authorization code protected? |
 | Client Credentials Flow | Service-to-service or machine-to-machine access without a human user in the flow. | Which service identity is represented, and what narrow permissions does it need? |
 | Refresh Token Flow | Getting a new access token after a previous authorization. | Can this client store refresh tokens safely, and how are rotation and revocation handled? |
 
-For the current project scope, Client Credentials Flow is educational background and a future extension topic. The initial path focuses on backoffice user login through the BFF, JWT validation, RBAC, and a demonstration API resource server.
+For many internal backoffice studies, Client Credentials Flow is educational background and a future extension topic. Initial requirements often focus first on internal user access, role-based service access, auditability, and protected backend services without selecting a final architecture.
 
 Authorization Code Flow without PKCE still exists in older OAuth2 deployments, especially for confidential web clients, but modern security guidance makes PKCE the safer baseline to understand. The Implicit Flow and Resource Owner Password Credentials grant appear in older OAuth2 material, but they should not be default choices for new backoffice applications.
 
@@ -30,15 +30,15 @@ After reading this page, an engineer should be able to explain:
 
 ## Why it matters
 
-The selected study architecture has one initial caller shape and one future extension shape:
+Internal backoffice systems commonly involve human callers first and service callers later:
 
 | Caller | Likely flow family | Reason |
 | --- | --- | --- |
-| Backoffice user through a UI/BFF | Authorization Code Flow with PKCE plus OIDC | The user authenticates at the identity provider, while the client receives tokens without handling the user's password. |
+| Backoffice user through a UI or server-side web application | Authorization Code Flow with PKCE plus OIDC | The user authenticates at the identity provider, while the client receives tokens without handling the user's password. |
 | Backend service or scheduled worker | Client Credentials Flow | Future extension: the service authenticates as itself and receives a service access token. |
 | Long-lived user session | Refresh Token Flow or server-side session renewal | The system may need new access tokens without making the user repeat the full redirect flow every few minutes. |
 
-Different callers have different security properties. A browser-only client cannot keep a long-term secret. A server-side BFF or backend service can usually protect credentials better, but still needs secret rotation, auditability, and least privilege. OAuth2 flows let the authorization server issue tokens in a way that matches those constraints.
+Different callers have different security properties. A browser-only client cannot keep a long-term secret. A server-side web application or backend service can usually protect credentials better, but still needs secret rotation, auditability, and least privilege. OAuth2 flows let the authorization server issue tokens in a way that matches those constraints.
 
 Choosing a flow is not the same as choosing a product, database, or deployment model. The team needs to understand flow mechanics and failure modes so later evaluations can ask precise questions.
 
@@ -49,7 +49,7 @@ Use this as a learning map, not a final design decision:
 | Scenario | Flow to understand first | Notes |
 | --- | --- | --- |
 | Internal user opens the backoffice UI | Authorization Code Flow with PKCE, usually with OIDC | OIDC adds ID tokens and login semantics; OAuth2 access tokens protect APIs. |
-| Backoffice BFF calls a resource server for the user | Authorization Code Flow with PKCE and a server-side session | The BFF can keep tokens out of browser JavaScript if that pattern is selected later. |
+| Server-side backoffice application calls a resource server for the user | Authorization Code Flow with PKCE and a server-side session | This pattern can keep tokens out of browser JavaScript if it is selected later. |
 | Backend job calls a reporting API | Client Credentials Flow | Future extension: the token represents the service client, not a human member. |
 | CLI or desktop admin tool calls an API | Authorization Code Flow with PKCE | Treat distributed tools as public clients unless there is a real secure secret store. |
 | Access token expires during a session | Refresh Token Flow or reauthorization | Refresh token handling depends heavily on client type and storage. |
@@ -63,7 +63,7 @@ Authorization Code Flow separates the browser redirect from the token exchange. 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Client as Backoffice Client / BFF
+    participant Client as Backoffice Client
     participant AS as Authorization Server
 
     User->>Client: Open backoffice
@@ -123,7 +123,7 @@ This is an illustrative request shape, not production code:
 ```text
 GET /authorize?
   response_type=code
-  &client_id=backoffice-bff
+  &client_id=backoffice-web-client
   &redirect_uri=https%3A%2F%2Fbackoffice.example.test%2Foauth%2Fcallback
   &scope=openid%20profile%20members%3Aread
   &state=<transaction-state>
@@ -132,7 +132,7 @@ GET /authorize?
   &code_challenge_method=S256
 ```
 
-For a server-side BFF, PKCE is still useful defense-in-depth and aligns with modern OAuth2 guidance. Client authentication and PKCE solve different problems: client authentication proves a confidential client at the token endpoint, while PKCE binds a specific authorization request to the code redemption.
+For a server-side backoffice client, PKCE is still useful defense-in-depth and aligns with modern OAuth2 guidance. Client authentication and PKCE solve different problems: client authentication proves a confidential client at the token endpoint, while PKCE binds a specific authorization request to the code redemption.
 
 ## OIDC login through the code flow
 
@@ -141,18 +141,18 @@ OpenID Connect uses OAuth2 flows and adds identity semantics. An OIDC login norm
 ```mermaid
 sequenceDiagram
     participant User
-    participant BFF as Backoffice BFF
+    participant App as Backoffice App
     participant OP as OpenID Provider
     participant API as Resource Server
 
-    User->>BFF: Open backoffice
-    BFF->>OP: Authorization request with openid, state, nonce, PKCE
+    User->>App: Open backoffice
+    App->>OP: Authorization request with openid, state, nonce, PKCE
     User->>OP: Authenticate
-    OP->>BFF: Authorization code
-    BFF->>OP: Token request with code and verifier
-    OP->>BFF: ID token, access token, optional refresh token
-    BFF->>BFF: Validate ID token and create session
-    BFF->>API: API request with access token
+    OP->>App: Authorization code
+    App->>OP: Token request with code and verifier
+    OP->>App: ID token, access token, optional refresh token
+    App->>App: Validate ID token and create session
+    App->>API: API request with access token
     API->>API: Validate access token and permission
 ```
 
@@ -235,11 +235,11 @@ This is not a claim that every legacy system using these patterns is instantly b
 
 ## Backoffice examples
 
-An administrator opens the backoffice UI. The BFF starts Authorization Code Flow with PKCE and OIDC parameters. After the user authenticates, the BFF exchanges the code for tokens, validates the ID token, creates a server-side session, and calls the members API with an access token. The members API validates the access token and checks `members:read`, `members:create`, or `roles:assign` depending on the operation.
+An administrator opens the backoffice UI. In one possible design, a server-side backoffice application starts Authorization Code Flow with PKCE and OIDC parameters. After the user authenticates, the application exchanges the code for tokens, validates the ID token, creates a server-side session, and calls the members API with an access token. The members API validates the access token and checks `members:read`, `members:create`, or `roles:assign` depending on the operation.
 
 A billing sync worker runs nightly. It uses Client Credentials Flow to authenticate as `billing-sync-worker`. The authorization server issues a token with an audience for the billing API and only the scopes or permissions needed for synchronization. The billing API records the service identity in audit logs.
 
-A long-running browser session needs a fresh access token. If the eventual design allows refresh tokens for the BFF, the BFF can refresh tokens server-side. If refresh tokens are not allowed for that client, the user may need a new authorization redirect after the access token expires or after the server-side session policy requires it.
+A long-running browser session needs a fresh access token. If the eventual design allows refresh tokens for a server-side backoffice client, the client can refresh tokens server-side. If refresh tokens are not allowed for that client, the user may need a new authorization redirect after the access token expires or after the server-side session policy requires it.
 
 ## Common mistakes
 

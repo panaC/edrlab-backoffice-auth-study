@@ -8,9 +8,9 @@ In a central IAM control-plane architecture, the administration API is not just 
 
 This page is conceptual learning material. It explains common responsibilities, risks, and design controls without choosing a product, storage model, endpoint shape, deployment pattern, or vendor API.
 
-## Current scope note
+## Scope boundary
 
-For the current project scope, the administration API is consumed only by the internal backoffice UI through the BFF. Approved automation, service accounts, and machine callers are future extension topics, not initial admin API consumers.
+A minimal backoffice scope may restrict administration API consumers to the internal administration UI at first. Approved automation, service accounts, and machine callers can be treated as later extension topics when their ownership and audit model are clear.
 
 ## Why it matters
 

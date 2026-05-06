@@ -2,7 +2,7 @@
 
 ## What it is
 
-Security best practices for this study are conservative controls that reduce common IAM, OAuth2, token, API, and administration risks. They are minimum expectations for the selected Central IAM Control Plane Architecture, not a final product or implementation design.
+Security best practices for this study are conservative controls that reduce common identity, authentication, authorization, token, API, and administration risks. They are evaluation guidance for internal backoffice access-control designs, not a final product or implementation design.
 
 The most important principle is that identity systems are control planes. A weakness in authentication, token validation, role assignment, client management, or admin APIs can affect every protected backoffice service.
 

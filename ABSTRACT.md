@@ -1,34 +1,19 @@
 # Abstract
 
-This repository contains a technical study for an internal backoffice IAM Control Plane.
+This repository contains a study for a company's internal backoffice access-control capability.
 
-The study evaluates whether the company should adopt a self-hosted open-source identity and authorization product, use a managed identity provider, build a minimal internal IAM Control Plane with maintained frameworks or libraries, or combine an identity provider with a custom administration layer.
+The study objective is to define, compare, and eventually recommend the simplest secure way for the company to authenticate internal backoffice users, manage their access, and protect company-controlled backend services.
 
-The selected study architecture is:
+The root `README.md` contains the immutable initial feature specification. That specification is intentionally company-needs focused and does not choose a final product, vendor, architecture, hosting model, database, framework, token strategy, or implementation stack.
 
-```text
-Backoffice BFF (Backend-for-Frontend)
-    -> IAM Control Plane (IdP / Authorization Server / Admin Control Plane)
-    -> one or more backend API resource servers
-```
+The repository is in Phase 2: Requirements and Risk Framing. Phase 2 should debate requirements, risks, candidate approaches, threat models, evaluation criteria, and Proof-of-Concept plans against the immutable feature specification without making a final solution recommendation.
 
-The project focus is the central IAM Control Plane. The Backoffice BFF and backend API services are integration context used to define token, session, administration, and authorization boundaries.
-
-The repository is in Phase 2: requirements definition.
-
-As of 2026-05-05, the Phase 2 baseline is established through a consolidated requirements baseline, requirements question register, architecture notes, security and operational study documents, and an evaluation framework. The next work is to resolve or accept defaults for high-impact questions, refine candidate-evaluation evidence, and plan focused non-production PoCs where documentation alone cannot answer a material requirement.
-
-Phase 2 remains product-neutral. It should refine business, technical, security, and operational requirements without choosing a final vendor, product, architecture implementation, hosting model, database, or production stack.
-
-The expected output remains a documented, evidence-based technical recommendation supported by comparison documents and minimal, non-production Proofs of Concept.
+The expected output remains a documented, evidence-based technical recommendation supported by comparison documents and minimal, non-production Proofs of Concept where needed.
 
 ## Key Links
 
-- [Project brief](./README.md)
+- [Project brief and immutable feature specification](./README.md)
+- [Project governance](./PROJECT-GOVERNANCE.md)
 - [Agent instructions](./AGENTS.md)
-- [Documentation index](./docs/README.md)
-- [Requirements baseline](./docs/requirements-baseline.md)
-- [Requirements question register](./docs/requirements-question-register.md)
-- [Minimal backoffice IAM architecture notes](./docs/architecture-minimal-backoffice-iam.md)
-- [Administrator authentication policy](./docs/security-administrator-authentication-policy.md)
-- [Evaluation framework](./docs/evaluation-framework.md)
+- [Changelog](./CHANGELOG.md)
+- [Conceptual IAM wiki](./docs/wiki/README.md)

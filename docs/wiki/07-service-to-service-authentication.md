@@ -8,11 +8,11 @@ The common OAuth2 flow for this is Client Credentials Flow. The service authenti
 
 Service authentication is not a shortcut around authorization. A service token still needs a defined subject, audience, lifetime, and permissions.
 
-## Current scope note
+## Scope boundary
 
-Service-to-service authentication is a future theoretical extension for this project. It is not part of the initial scope, which focuses on backoffice user login, JWT validation, simple RBAC, the BFF-to-admin-API path, a demonstration API resource server, and auditability.
+In a minimal internal backoffice access-control baseline, service-to-service authentication is often a future extension. Teams usually define human user access, role-based service access, protected backend services, and auditability before giving machine callers their own identities.
 
-This page remains in the wiki because the concepts are useful when evaluating whether a candidate IAM option can grow beyond the initial human-user backoffice scope without redesigning the control plane.
+This page remains in the wiki because the concepts are useful when evaluating whether a candidate IAM option can grow beyond a human-user backoffice scope without redesigning the control plane.
 
 ## Why it matters
 

@@ -32,7 +32,7 @@ The study should especially separate:
 - strong daily authentication from emergency recovery;
 - factor support from the operational burden of enrollment, reset, audit, and lost-device handling.
 
-For administrator-specific policy questions, see [Administrator Authentication Policy](../security-administrator-authentication-policy.md). For the login protocol layer, see [OpenID Connect](./03-openid-connect.md). For token validation and API authorization, see [Tokens and JWTs](./04-tokens-and-jwt.md) and [Admin API](./08-admin-api.md).
+For the login protocol layer, see [OpenID Connect](./03-openid-connect.md). For token validation and API authorization, see [Tokens and JWTs](./04-tokens-and-jwt.md) and [Admin API](./08-admin-api.md).
 
 ## Core terms
 
@@ -71,26 +71,26 @@ SMS, voice, and email codes are not equivalent to authenticator-app OTPs or WebA
 
 ## MFA in an OIDC backoffice
 
-In the selected architecture, the identity provider or authorization server performs the authentication ceremony. The Backoffice BFF and APIs should not try to reimplement MFA code handling unless the later architecture explicitly requires owning authentication locally.
+In many OIDC backoffice designs, the identity provider or authorization server performs the authentication ceremony. Backoffice applications and APIs should not try to reimplement MFA code handling unless the later architecture explicitly requires owning authentication locally.
 
 A simplified login with MFA looks like this:
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant BFF as Backoffice BFF
+    participant App as Backoffice App
     participant OP as OIDC Provider
     participant Auth as Authenticator
     participant API as Resource Server
 
-    User->>BFF: Open backoffice
-    BFF->>OP: Start OIDC login
+    User->>App: Open backoffice
+    App->>OP: Start OIDC login
     OP->>User: Request primary authentication
     OP->>Auth: Challenge or verify second factor
     Auth->>OP: Proof, code, or approval
-    OP->>BFF: Authorization code
-    BFF->>OP: Exchange code for tokens
-    BFF->>API: API request with access token
+    OP->>App: Authorization code
+    App->>OP: Exchange code for tokens
+    App->>API: API request with access token
     API->>API: Validate token and required permission
 ```
 
@@ -101,7 +101,7 @@ If the backoffice later needs step-up authentication, the design should define:
 - which operations require stronger or fresh authentication;
 - what `acr` or policy value means "strong enough";
 - how recently the authentication must have occurred;
-- how the BFF requests step-up from the provider;
+- how the backoffice application requests step-up from the provider;
 - how failed or unavailable step-up is handled;
 - how the step-up event is audited.
 
@@ -197,7 +197,7 @@ Do not use email-delivered codes as strong MFA for administrator access without 
 
 Do not treat MFA as authorization. MFA can raise confidence in the login event. RBAC and permission checks still decide whether the subject may perform an operation.
 
-Do not let frontend state decide whether MFA occurred. The provider, BFF, and server-side authorization path need trustworthy session or token evidence.
+Do not let frontend state decide whether MFA occurred. The provider and server-side authorization path need trustworthy session or token evidence.
 
 Do not make recovery easier than login. Attackers often target reset and recovery flows because those flows bypass the normal authenticator.
 

@@ -1,28 +1,26 @@
 # AGENTS.md - Agent Instructions
 
-## Source Of Truth
+## Read First
 
-Read this file before modifying the repository.
+Read this file before modifying the repository. Then use:
 
-The root [README.md](./README.md) is a final-review-facing project brief. It must stay straight and concise: project goal, business and technical requirements, constraints, scope, roadmap, and documentation links.
-
-Do not use `README.md` as a project tracker. Do not add current status, working notes, open questions, detailed terminology, comparison matrices, option analysis, evaluation scoring, or phase-by-phase progress there. Put working study documents under `docs/`.
-
-Keep the project's historical record in root `CHANGELOG.md`. Use it for dated, project-level history such as phase changes, scope changes, requirement-baseline changes, documentation-structure changes, evaluation-artifact changes, and PoC-planning changes.
-
-This file is only for agent operating instructions, rules, boundaries, and repository hygiene.
+- [README.md](./README.md) for the project brief and immutable feature specification;
+- [PROJECT-GOVERNANCE.md](./PROJECT-GOVERNANCE.md) for study phases and phase boundaries;
+- [CHANGELOG.md](./CHANGELOG.md) for project history.
 
 ## Current Operating Phase
 
-The current phase is `Phase 2 - Requirements Definition`.
+The current phase is `Phase 2 - Requirements and Risk Framing`.
 
-During this phase, default work is business, technical, security, and operational requirements definition; requirements traceability; open-question resolution; service and permission inventory refinement; candidate-evaluation preparation; lightweight PoC planning; and other Markdown study artifacts.
+Default Phase 2 work: business, technical, security, and operational requirements definition against the immutable feature specification; requirements traceability; open-question resolution; service and permission inventory refinement; candidate-evaluation preparation; lightweight PoC planning; and Markdown study artifacts.
 
-Markdown study artifacts may be created or edited under `docs/`. The conceptual IAM wiki remains under `docs/wiki/`.
+Phase 2 boundaries:
 
-The wiki is for general IAM concepts, terminology, protocol explanations, security concepts, and references. Do not use `docs/wiki/` for project scope debate, requirements refinement, option analysis, candidate evaluation, PoC planning, implementation notes, phase status, or final recommendations. Put those project-specific study materials in top-level `docs/` files.
-
-Do not make a final vendor, product, architecture, or production implementation recommendation unless the user explicitly asks to move into a decision phase or requests a final recommendation.
+- create or edit Markdown study artifacts under top-level `docs/` by default;
+- keep conceptual IAM wiki pages under `docs/wiki/`;
+- keep project-specific scope debate, requirements refinement, option analysis, candidate evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
+- do not make a final vendor, product, architecture, or production implementation recommendation unless the user explicitly requests a decision or final recommendation;
+- do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a Proof of Concept.
 
 ## Instruction Priority
 
@@ -30,135 +28,90 @@ If instructions conflict:
 
 1. Follow the user's explicit request for the current task.
 2. Follow this `AGENTS.md`.
-3. Follow `README.md` for project goal, requirements, constraints, scope, roadmap, and documentation links.
-4. Follow existing repository conventions.
-5. Follow general best practices.
+3. Follow `PROJECT-GOVERNANCE.md` for phase conduct and boundaries.
+4. Follow `README.md` for project goal, immutable feature specification, constraints, scope, roadmap, and documentation links.
+5. Follow existing repository conventions.
+6. Follow general best practices.
 
-A user request overrides the Phase 2 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, or asks for a proof of concept.
+A user request overrides the Phase 2 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, asks for a later-phase artifact, requests a final recommendation, or asks for a Proof of Concept.
 
 ## Non-Negotiable Rules
 
-During Phase 2:
-
-1. Create or edit Markdown study artifacts under `docs/` by default.
-2. Keep conceptual IAM wiki pages under `docs/wiki/`. Keep project-specific study, scope, debate, evaluation, and implementation-oriented documents under top-level `docs/`, not `docs/wiki/`.
-3. `AGENTS.md` may be edited when the user's current task is to refine agent instructions.
-4. `README.md` may be edited when the user's current task is to refine the final-review project brief: goal, requirements, constraints, scope, roadmap, or documentation links.
-5. Root `ABSTRACT.md` and `CHANGELOG.md` may be edited when the user's current task asks for project summary, project history, phase movement, or release-style documentation.
-6. Record meaningful project history in `CHANGELOG.md`, not in `README.md` or ad hoc working notes. Keep entries dated, concise, and focused on what changed.
-7. Do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a proof of concept.
-8. Do not make final vendor, product, architecture, or production recommendations unless the user explicitly asks for a final decision or changes the project phase.
-9. Do not invent citations, RFC numbers, standards, specification names, URLs, or product behavior.
-10. Every conceptual wiki topic page must include a `References` section. The wiki index may omit page-level references because baseline references are maintained in this file.
-11. Prefer official specifications, standards bodies, and reputable security guidance over blogs or marketing pages.
-12. Keep Mermaid diagrams simple and directly related to the explanation.
-13. Cross-reference overlapping topics instead of duplicating large sections.
-14. Check for an existing suitable file before creating a new one.
-15. Before finishing, compare the result with this file and the project requirements in `README.md`.
+- Check for an existing suitable file before creating a new one.
+- Keep README final-review-facing. Do not use it for project tracking, working notes, open questions, terminology dumps, comparison matrices, option analysis, evaluation scoring, or phase-by-phase progress.
+- `README.md` may be edited for project brief changes. Its immutable feature specification may be edited only when explicitly requested.
+- `AGENTS.md` may be edited when the user asks to refine agent instructions.
+- Root `ABSTRACT.md` and `CHANGELOG.md` may be edited for project summary, project history, phase movement, or release-style documentation.
+- Record meaningful project history in `CHANGELOG.md`, not in `README.md` or ad hoc notes.
+- Do not make final vendor, product, architecture, or production recommendations unless explicitly requested.
+- Do not invent citations, RFC numbers, standards, specification names, URLs, product behavior, or business facts.
+- A debate, requirement interpretation, risk analysis, candidate comparison, or recommendation is not valid unless its material claims are sourced or explicitly marked as assumptions/open questions.
+- Every Markdown documentation page under `docs/` or `docs/wiki/` must include source links in the content near the claims they support. Non-index pages must also include a `References` section. A bottom `References` section is required, but not sufficient by itself.
+- Official specifications, standards bodies, official security guidance, and official product documentation are preferred for normative, security, protocol, and product-behavior claims. Reputable technical articles, practitioner write-ups, tutorials, vendor explainers, and marketing pages may be used as secondary or contextual sources when appropriate, but their source type and limits must be clear.
+- Keep Mermaid diagrams simple and directly related to the explanation.
+- Cross-reference overlapping topics instead of duplicating large sections.
 
 ## Documentation Rules
 
-All project study documents under `docs/` must:
-
-- use lowercase `kebab-case`
-- use `.md`
-- start with an approved prefix
-
-Allowed prefixes:
-
-- `requirements-`
-- `architecture-`
-- `security-`
-- `operational-`
-- `evaluation-`
-- `candidate-`
-- `poc-plan-`
-- `poc-results-`
-- `decision-`
-
-Examples:
+Project study documents under top-level `docs/` must use lowercase `kebab-case`, `.md`, and an approved prefix:
 
 ```text
-requirements-auth.md
-architecture-api.md
-security-session-policy.md
-decision-use-postgresql.md
+requirements-
+architecture-
+security-
+operational-
+evaluation-
+candidate-
+poc-plan-
+poc-results-
+decision-
 ```
 
-Keep the conceptual IAM wiki under:
+Examples: `requirements-auth.md`, `architecture-api.md`, `security-session-policy.md`, `decision-use-postgresql.md`.
 
-```text
-docs/wiki/
-```
+Keep the conceptual IAM wiki under `docs/wiki/`. It is for general IAM concepts, terminology, protocol explanations, security concepts, and references. Use the wiki index as an agent-facing reading path only; project-facing documents should link directly to specific supporting wiki pages.
 
-Use the conceptual wiki index as an agent-facing reading path only. Project-facing documentation should link directly to the specific wiki page that supports the surrounding text instead of linking to the wiki index.
+Prefer updating existing documents over creating near-duplicates. If a document debates project scope, records trade-offs, evaluates options, plans a PoC, or describes implementation-oriented behavior, place it under top-level `docs/`, not `docs/wiki/`.
 
-Recommended wiki structure:
+All study and wiki pages must cite sources inline in the relevant content, including tables where practical. Pure navigation indexes may satisfy this with links to the pages they summarize, but any explanatory claim still needs a supporting source. Page-level `References` sections should collect the sources used, not replace inline citations. If a claim comes from the immutable feature specification, cite or link to `README.md`; if it comes from the user, record it as a stated assumption or user-provided requirement.
 
-```text
-docs/wiki/
-|-- README.md
-|-- 01-authentication-vs-authorization.md
-|-- 02-oauth2.md
-|-- 03-openid-connect.md
-|-- 04-tokens-and-jwt.md
-|-- 05-rbac.md
-|-- 06-oauth2-flows.md
-|-- 07-service-to-service-authentication.md
-|-- 08-admin-api.md
-`-- 09-security-best-practices.md
-```
-
-Use these names unless the repository already has a clearly better convention.
-
-Additional study documents may be created under `docs/` when useful. Prefer updating existing documents over creating near-duplicates. If a document debates project scope, records trade-offs, evaluates options, plans a PoC, or describes implementation-oriented behavior, place it under `docs/` rather than `docs/wiki/`.
-
-When topics overlap, link to the more detailed page instead of duplicating large explanations. Use relative Markdown links.
-
-## Changelog Rules
-
-Use root `CHANGELOG.md` as the project's historical record.
-
-Record meaningful project-level changes, including phase movement, project-scope changes, requirement-baseline changes, documentation-structure changes, evaluation artifacts, candidate-evaluation milestones, PoC-planning changes, and final-review documentation changes.
-
-Do not use `README.md` for project history, progress tracking, or phase-by-phase status. Keep `README.md` as a concise final-review project brief.
-
-Keep changelog entries dated, concise, and factual. Prefer common headings such as `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security` when they fit.
+Use one `#` page title. If a Markdown document has more than two top-level sections (`##`), add a short table of contents or chapter list near the top. Keep the chapter list factual and compact.
 
 ## Writing Style
 
 Write for senior software engineers who know backend systems, APIs, databases, distributed systems, security basics, and architecture, but may not know IAM-specific standards.
 
-Be precise, practical, evidence-based, technically rigorous, explicit about assumptions and trade-offs, and focused on real system behavior.
+Work pragmatically, with a targeted, action-oriented style. Read existing context first, identify the most direct useful action, then execute it or answer briefly.
 
-Use clear definitions, short sections, practical examples, tables where useful, Mermaid diagrams, common mistakes, security notes, and references.
+Be precise, practical, evidence-based, technically rigorous, explicit about assumptions and trade-offs, and focused on real system behavior. Use clear definitions, short sections, practical examples, tables where they clarify a decision, simple Mermaid diagrams when useful, common mistakes, security notes, and references.
 
-Avoid marketing language, unsupported claims, vendor bias, unexplained acronyms, beginner-level oversimplification, and claims that one architecture is always correct.
+Prefer short, concrete, human sentences. Avoid long introductions, decorative Markdown, endless option lists, unnecessary tables, generic theory, unsupported claims, vendor bias, unexplained acronyms, beginner-level oversimplification, absolute architecture claims, filler, and repeated explanations.
 
-Avoid filler and repeated explanations.
+Do not turn a small task into a full analysis. If a decision is needed, give one or two options at most and name the recommended action. If something is uncertain, state the assumption and move forward carefully.
 
 ## Citation Rules
 
-Every wiki page should include useful citations.
+Citation is part of the reasoning, not decoration. Put links next to the claims they support, especially in requirement reasoning, threat/risk analysis, comparison matrices, candidate evaluations, PoC plans/results, and recommendation drafts.
 
-Prioritize:
+Use a bottom `References` section as a source index, but do not rely on it alone. A reader should be able to tell which source supports which claim without guessing.
 
-1. official specifications;
-2. standards bodies;
-3. official security guidance;
-4. official product documentation;
-5. reputable technical sources.
+Source requirements:
 
-Preferred sources include IETF RFCs, OpenID Foundation specifications, OAuth Working Group documents, OWASP guidance, NIST guidance, and official documentation from identity providers such as Keycloak, Auth0, Okta, Microsoft Entra ID, AWS, or similar vendors.
+- cite only sources that support the relevant statement;
+- verify RFC numbers, specification names, URLs, and product behavior before including them;
+- prefer stable URLs and primary sources for normative claims;
+- omit sources that cannot be verified;
+- cite `README.md` for immutable project needs and clearly label user-provided assumptions when no external source can exist;
+- when using tutorials, blogs, vendor explainers, marketing pages, pricing pages, or practitioner write-ups, treat them as secondary/contextual evidence and avoid using them as the sole support for security, protocol, compliance, or normative claims;
+- when sources disagree, name the disagreement and avoid forcing a conclusion.
 
-Rules:
+Preferred source order for strong claims:
 
-- Verify RFC numbers, specification names, and URLs before including them.
-- Cite only sources that support the relevant statement.
-- Do not add references as decoration.
-- If a source cannot be verified, omit it.
-- Prefer stable official URLs.
-- Avoid relying mainly on blogs, informal tutorials, or marketing pages.
+1. official specifications and standards;
+2. official security guidance;
+3. official product documentation;
+4. reputable technical references and practitioner evidence;
+5. vendor explainers, marketing, pricing, and tutorial material for context or vendor-positioning claims.
 
 Baseline references:
 
@@ -177,37 +130,9 @@ Baseline references:
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - [NIST SP 800-63-4 - Digital Identity Guidelines](https://pages.nist.gov/800-63-4/)
 
-## Diagram Rules
-
-Use Mermaid diagrams when helpful.
-
-Keep diagrams simple and directly related to the explanation. Avoid decorative diagrams.
-
-Example:
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Client as Backoffice UI
-    participant AS as Authorization Server
-    participant API as Resource Server
-
-    User->>Client: Open backoffice
-    Client->>AS: Redirect to login
-    User->>AS: Authenticate
-    AS->>Client: Return authorization code
-    Client->>AS: Exchange code for tokens
-    AS->>Client: Access token + ID token
-    Client->>API: Request with access token
-    API->>API: Validate token and permissions
-    API->>Client: Return protected data
-```
-
 ## Security Rules
 
-Security guidance must be conservative and evidence-based.
-
-Do not recommend:
+Security guidance must be conservative and evidence-based. Do not recommend:
 
 - plain-text password storage;
 - custom cryptography;
@@ -215,19 +140,17 @@ Do not recommend:
 - skipping issuer validation;
 - skipping audience validation;
 - long-lived access tokens without justification;
-- exposing admin APIs without strong authorization;
-- relying only on frontend authorization checks;
+- exposed admin APIs without strong authorization;
+- frontend-only authorization checks;
 - Implicit Flow for new browser-based applications.
 
 When describing risks, explain what can go wrong and how to reduce the risk.
 
 ## Proof-Of-Concept Boundary
 
-Phase 2 allows Markdown study artifacts, simple diagrams, short pseudocode, short illustrative examples, requirements notes, requirements traceability, evaluation criteria, comparison matrices, candidate evaluation records, risk notes, and proof-of-concept planning.
+In Phase 2, prefer PoC planning, evaluation criteria, short pseudocode, and short illustrative examples. Full candidate evaluation belongs to later phases unless the user explicitly asks for that artifact now.
 
-Do not add runnable applications, production authorization server code, dependencies, databases, migrations, Docker files, deployment files, or CI configuration unless explicitly requested.
-
-If the user asks for a proof of concept, keep it scoped to the requested learning goal and document assumptions, limits, and non-production status.
+If the user asks for a Proof of Concept, keep it scoped to the learning goal, document assumptions and limits, mark it non-production, and avoid production infrastructure.
 
 Code examples must be short, illustrative, and clearly non-production.
 
@@ -235,29 +158,23 @@ Code examples must be short, illustrative, and clearly non-production.
 
 When modifying the repository:
 
-- read this file first;
-- read `README.md` before changing project requirements, scope, roadmap, or documentation links;
-- keep `README.md` final-review-facing; do not use it for tracking work in progress;
-- keep project history in root `CHANGELOG.md`;
-- inspect existing docs before creating files;
-- keep Phase 2 Markdown study artifacts under `docs/`;
-- keep conceptual IAM wiki pages under `docs/wiki/`;
-- use Markdown for study documents;
-- preserve project conventions;
-- prefer small, focused changes;
+- preserve project conventions and make small, focused changes;
 - avoid generated files;
-- use targeted edits instead of replacing whole files unless the current content is clearly wrong or incomplete.
+- use targeted edits instead of replacing whole files unless the current content is clearly wrong, incomplete, or the user asks for a restructuring;
+- do not revert existing user changes unless explicitly requested.
 
 ## Completion Checks
 
-Before finishing:
+Before finishing, verify the result rather than restating the workflow:
 
 - confirm the work follows the current user request;
-- confirm project facts align with `README.md`;
+- confirm facts align with `README.md`, `PROJECT-GOVERNANCE.md`, and this file;
+- confirm the immutable feature specification was not changed unless explicitly requested;
 - confirm no forbidden implementation files or unnecessary dependencies were added;
 - confirm no final recommendation was made unless explicitly requested;
-- confirm meaningful project history has been recorded in `CHANGELOG.md` when the task changes project phase, scope, requirements, documentation structure, evaluation artifacts, or PoC planning;
-- confirm every edited conceptual wiki topic page has a useful `References` section;
-- confirm citations are real, relevant, and from appropriate sources;
+- confirm meaningful project history was recorded in `CHANGELOG.md` when required;
+- confirm edited `docs/` or `docs/wiki/` pages follow the citation rules: inline citations near claims and useful `References` sections for non-index pages;
+- confirm citations are real, relevant, appropriate, and not merely decorative;
+- confirm unsourced claims are either removed, sourced, or marked as assumptions/open questions;
 - confirm overlapping topics are cross-referenced instead of heavily duplicated;
-- run an appropriate lightweight validation, such as `git diff --check`, when files were edited.
+- run `git diff --check` or another suitable lightweight validation when files were edited.

@@ -1,107 +1,114 @@
-# Internal Backoffice IAM Control Plane Study
+# Internal Backoffice Access Control Study
 
-This repository contains a technical study for implementing an **IAM Control Plane** for a company's internal backoffice. In this study, IAM Control Plane means the central **IdP / Authorization Server / Admin Control Plane** component.
+This repository contains a study for a company's internal backoffice access-control capability.
 
-The study must help the company decide whether to:
+The study objective is unchanged: define, compare, and eventually recommend the simplest secure way for the company to authenticate internal backoffice users, manage their access, and protect company-controlled backend services.
 
-- adopt a self-hosted open-source identity and authorization solution;
-- use a managed identity provider;
-- build a minimal internal IAM Control Plane using existing frameworks or libraries;
-- combine existing identity components with a custom administration layer.
+The expected outcome is not a production-ready system. The expected outcome is a documented, evidence-based recommendation supported by requirements analysis, comparison documents, and minimal non-production Proofs of Concept where needed.
 
-The expected outcome is not a production-ready IAM Control Plane. The expected outcome is a documented, evidence-based technical recommendation supported by comparison documents and minimal Proofs of Concept.
+No final product, vendor, architecture, hosting model, database, framework, token strategy, or implementation stack is selected in this specification. Those choices must be debated progressively during Phase 2 and later decision phases.
 
-## Selected Study Architecture
+## Immutable Feature Specification
 
-The study now uses the **Central IAM Control Plane Architecture**:
+This section is the initial immutable feature specification for the study. It records company needs, not a solution design. It may be changed only by an explicit stakeholder request to change the feature specification itself.
 
-```text
-Backoffice BFF (Backend-for-Frontend)
-    -> IAM Control Plane (IdP / Authorization Server / Admin Control Plane)
-    -> one or more backend API resource servers
-```
+Phase 2 study documents may refine interpretations, risks, evaluation criteria, and implementation options, but they must not silently change these feature requirements.
 
-The focus of this project is the **IAM Control Plane** component. The Backoffice BFF, meaning Backend-for-Frontend, and backend API services are treated as integration context: they define the token, session, administration, and authorization boundaries that the IAM Control Plane must support. The first study and minimal Proof of Concept can use one demonstration API resource server.
+## Company Goal
 
-The study does not choose a final product, vendor, database, hosting model, or implementation stack yet.
+The company needs a simple, secure, auditable way to manage access for internal backoffice users.
 
-## Business and Technical Requirements
+The system serves internal company users only. It does not serve public customers, public self-service accounts, social login users, or external consumer identity flows.
 
-The detailed, ID-based requirements source is the [Requirements baseline](./docs/requirements-baseline.md). At project-brief level, the IAM Control Plane must support:
+Protected access is centered on company-controlled backend services. Access to those services is granted by administrators through roles.
 
-- OAuth2/OIDC-compatible login for internal backoffice users;
-- administrator-managed member lifecycle with no public registration;
-- Role-Based Access Control (RBAC) with explicit permissions where needed;
-- a REST administration API for members, roles, permissions, service access checks, and audit-supporting operations;
-- backend API protection through token validation and server-side permission checks;
-- auditability for privileged administration operations.
+The expected scale is fewer than 1,000 internal users. Operational complexity must be justified by concrete security, compliance, maintainability, or product needs.
 
-Service-to-service authentication is a future extension topic, not part of the first study or minimal Proof of Concept scope.
+## Actors
 
-The minimum administration API capability set is tracked by `API-003` in the requirements baseline. Access-check behavior is tracked by `API-004`.
+| Actor | Minimum responsibility |
+| --- | --- |
+| Super-admin | Highest privilege operator. Can review audit records, manage administrator recovery or reset decisions, and own any future emergency or break-glass process if one is adopted. |
+| Admin | Manages members, roles, role assignments, service access, and member profile data. Admin actions must be logged and auditable. |
+| Member | Internal company user who can view their own profile and access protected backend services only when active and authorized by role. |
 
-## Project Constraints
+Privilege escalation must be controlled. An admin must not be able to silently grant themselves super-admin privileges or bypass auditability for privileged actions.
 
-- Keep the solution simple, efficient, and maintainable.
-- Target fewer than 1,000 users.
-- Compare self-hosted and managed options.
-- Prefer open-source components when relevant.
-- If self-hosted, prefer SQLite where realistic.
-- Do not expose public account registration.
-- Users must be created and managed by administrators.
-- RBAC is required.
-- The solution must remain understandable and operable by the internal team.
-- Avoid unnecessary enterprise IAM complexity.
-- Avoid over-engineering for the expected scale.
-- Administration operations must be auditable.
-- Operational complexity must be justified by concrete security, compliance, maintainability, or product needs.
+## Minimum Feature Requirements
 
-## Scope
+| ID | Requirement |
+| --- | --- |
+| FS-001 | The system must support internal backoffice users only. Public signup, public customer accounts, and social login are out of scope for the initial specification. |
+| FS-002 | Members must be created and managed by administrators only. There is no public self-service registration. |
+| FS-003 | Member records must use stable identifiers that are separate from mutable attributes such as email, username, display name, title, or department. |
+| FS-004 | The member lifecycle must support at least `invited`, `active`, `disabled`, and `archived` states. Members are retained rather than hard-deleted in the initial policy. |
+| FS-005 | Non-active members must not be able to obtain new access to protected backoffice services. Access removal for already-issued access must be simple, documented, and evaluated during the study. |
+| FS-006 | Administrators must be able to create, read, update, list, disable, archive, restore where policy allows, and remove access for members. |
+| FS-007 | Administrators must be able to create roles, list roles, assign roles to members, and remove roles from members. |
+| FS-008 | The minimum authorization model is role-based service access: a member either can or cannot access a protected backend service through an assigned role. |
+| FS-009 | The minimal member role must allow consultation-style access only. More precise permissions may be debated later if real service needs require them. |
+| FS-010 | The system must provide an administration capability for member management, role management, role assignment, service access checks, and audit-supporting operations. |
+| FS-011 | Protected backend services must be able to determine whether a given active member is allowed to access the service. |
+| FS-012 | Only administrators may change member profile attributes and service access assignments. Members may view their own profile information. |
+| FS-013 | Super-admin, admin, and member responsibilities must remain separated. Recovery, authenticator reset, administrator recovery, audit access, and any future break-glass process belong to the super-admin responsibility area unless explicitly changed later. |
+| FS-014 | The security posture must target production-grade internal access control. The first minimal version may use simpler authentication, but Phase 2 must evaluate the risks and the path toward stronger production controls. |
+| FS-015 | Audit events must cover member creation, member update, member disablement, member restoration, role assignment, role removal, role changes, protected-service access configuration changes, protected-service authorization denials, audit reads or exports, and recovery or authenticator reset actions. |
+| FS-016 | Super-admins must be able to consult audit records. Audit access itself must be logged. |
+| FS-017 | The system must remain understandable and operable by the internal team. Simplicity is a requirement, not merely an implementation preference. |
+
+## Initial Scope
 
 In scope for the study:
 
-- the selected micro-service architecture shape with a Backoffice BFF (Backend-for-Frontend), a central IAM Control Plane, and one or more backend API resource servers;
-- the responsibilities, API boundaries, token boundaries, and data ownership of the IAM Control Plane;
 - internal member lifecycle management;
-- administrator-only account creation and access management;
-- OAuth2/OIDC-based authentication and authorization patterns;
-- RBAC and permission modeling for backoffice services;
-- API protection and token validation;
-- service-to-service authentication as a future theoretical extension;
-- administration API shape, risks, and controls;
-- auditability, access reviews, and operational ownership;
-- self-hosted, managed, minimal-library, and hybrid options as later study candidates.
+- administrator-only account and role management;
+- role-based access to protected backend services;
+- service access checks for backend services;
+- auditability of privileged and security-relevant operations;
+- threat modeling and security requirement refinement;
+- comparison of managed, self-hosted, minimal internal, and hybrid approaches;
+- minimal non-production Proofs of Concept when documentation alone cannot answer a material question.
 
-Out of scope:
+Out of scope for the initial immutable specification:
 
-- implementing the Backoffice BFF, backend API services, or service databases except as minimal Proof-of-Concept integration stubs where needed;
+- public account registration;
 - public customer identity;
-- public self-service registration;
-- company-wide workforce IAM or SSO beyond the internal backoffice scope;
 - social login;
 - consumer marketing account flows;
-- multi-tenant external SaaS identity requirements;
-- service-to-service implementation in the first study or minimal Proof of Concept;
+- a complete company-wide workforce IAM replacement;
+- a final vendor, product, architecture, hosting, database, or implementation-stack decision;
+- production high availability or multi-replica operation as a minimum initial requirement;
 - a complete custom cryptographic or IAM implementation.
+
+## Phase 2 Debate Topics
+
+These topics are not settled by the immutable feature specification and must be debated during Phase 2 or later:
+
+- whether the eventual solution should be a simple internal authentication system, SSO integration, an IAM control plane, a managed provider, a self-hosted product, a minimal internal build, or a hybrid approach;
+- whether production administrators require MFA, step-up authentication, passwordless login, hardware-backed authenticators, or fallback authenticators;
+- whether high-risk operations require recent authentication freshness;
+- whether production needs break-glass access, who can activate it, and how it is reviewed;
+- acceptable access lifetime, refresh behavior, revocation delay, and token or session storage strategy;
+- exact token format and validation model;
+- audit retention, privacy, export, and compliance expectations;
+- backup, recovery, restore-test, upgrade, and operational ownership expectations;
+- the exact demo permissions and protected services used by a future Proof of Concept.
 
 ## Roadmap
 
-1. Phase 1 - Document the IAM concepts needed to reason about the IdP / Authorization Server / Admin Control Plane.
-2. Phase 2 - Define the business, technical, security, and operational requirements, and resolve open questions.
-3. Phase 3 - Catalog self-hosted, managed, minimal-library, and hybrid solution approaches.
-4. Phase 4 - Evaluate shortlisted solutions using lightweight Proofs of Concept where needed, and record the evaluation results.
-5. Phase 5 - Define the specification for a minimum viable IAM Control Plane.
-6. Phase 6 - Build a non-production MVP covering the specification, with tests.
+1. Phase 1 - Conceptual IAM Foundation.
+2. Phase 2 - Requirements and Risk Framing.
+3. Phase 3 - Candidate Approach Catalog.
+4. Phase 4 - Evidence-Based Candidate Evaluation.
+5. Phase 5 - Proposed Target Solution Draft.
+6. Phase 6 - Adoption and Production-Readiness Review.
 7. Phase 7 - Produce a final evidence-based technical recommendation.
+8. Phase 8 - Optional Non-Production MVP.
 
 ## Documentation
 
 - [Abstract](./ABSTRACT.md)
+- [Project governance](./PROJECT-GOVERNANCE.md)
 - [Changelog](./CHANGELOG.md)
-- [Documentation index](./docs/README.md)
-- [Requirements baseline](./docs/requirements-baseline.md)
-- [Requirements question register](./docs/requirements-question-register.md)
-- [Minimal backoffice IAM architecture notes](./docs/architecture-minimal-backoffice-iam.md)
-- [Threat Model](./docs/security-threat-model.md)
-- [Evaluation framework](./docs/evaluation-framework.md)
-- [IAM documentation wiki](./docs/wiki/README.md)
+- [Agent instructions](./AGENTS.md)
+- [Conceptual IAM wiki](./docs/wiki/README.md)

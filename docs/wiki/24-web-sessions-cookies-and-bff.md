@@ -6,7 +6,7 @@ A web session is server-side or provider-side state that lets a browser user rem
 
 In an OAuth2/OIDC backoffice architecture, a BFF can handle login, callbacks, token exchange, token storage, refresh, logout, and API calls on behalf of the browser. The browser receives an application session cookie instead of directly storing OAuth access tokens or refresh tokens.
 
-This page explains the conceptual browser security model. The project-specific BFF notes remain in [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md).
+This page explains the conceptual browser security model and the trade-offs of the BFF pattern.
 
 ## Why it matters
 
@@ -141,7 +141,7 @@ The BFF is not the IAM authority. It should not issue OAuth tokens, own global r
 | Token-mediating backend | Browser may receive access tokens; backend keeps refresh tokens. | Medium. | Apps that need direct API calls but want safer refresh handling. |
 | Browser-only OAuth client | Yes, browser handles OAuth tokens. | Lower backend cost. | Lower-risk apps where browser token exposure is acceptable and mitigated. |
 
-This study currently uses the BFF as the browser-facing integration context because the backoffice is an internal administration surface.
+A BFF is one possible browser-facing integration pattern for an internal administration surface, not a mandatory architecture choice.
 
 ## Session lifecycle
 
@@ -196,7 +196,7 @@ For the internal backoffice IAM Control Plane study:
 - session, token, logout, and disablement behavior must be documented before implementation;
 - the BFF is integration context, not the IAM Control Plane itself.
 
-This page is conceptual. The concrete project-specific behavior belongs in [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md).
+Concrete project-specific behavior should be recorded outside the conceptual wiki when a design is selected.
 
 ## Related pages
 
@@ -207,7 +207,6 @@ This page is conceptual. The concrete project-specific behavior belongs in [BFF 
 - [Key Management and Signing Keys](./23-key-management-and-signing-keys.md)
 - [Security Best Practices](./09-security-best-practices.md)
 - [Authentication vs Authorization](./01-authentication-vs-authorization.md)
-- [BFF Sessions and Token Handling](../security-bff-sessions-and-token-handling.md)
 
 ## References
 

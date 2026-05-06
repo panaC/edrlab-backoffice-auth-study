@@ -4,6 +4,29 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-05-06
+
+### Changed
+
+- Replaced the root `README.md` with a company-needs-focused immutable feature specification for the internal backoffice access-control study.
+- Updated `ABSTRACT.md` to align with the restarted Phase 2 baseline and remove links to deleted study artifacts.
+- Updated `AGENTS.md` so future work treats the README feature specification as immutable unless explicitly changed by the user.
+- Cleaned conceptual wiki pages that referenced deleted Phase 2 study artifacts or implied the former selected architecture.
+- Updated the README roadmap to move the optional non-production MVP after the final recommendation as Phase 8 and clarify Phase 3 through Phase 6 names.
+- Renamed roadmap phases to separate the seven study phases from the optional Phase 8 non-production MVP, and aligned the active Phase 2 name in `ABSTRACT.md` and `AGENTS.md`.
+- Added detailed phase descriptions to `AGENTS.md` so agents can distinguish allowed work, boundaries, and expected behavior for each study phase.
+- Moved detailed phase descriptions from `AGENTS.md` into root `PROJECT-GOVERNANCE.md` and linked it from root project documents.
+- Compacted `AGENTS.md` to reduce repeated guidance while preserving phase, documentation, citation, security, PoC, and completion rules.
+- Strengthened citation rules so study and wiki pages require inline source links near supported claims, with bottom `References` sections as source indexes rather than decorative citations.
+- Added pragmatic, action-oriented writing guidance and a chapter-list rule for Markdown documents with more than two top-level sections.
+- Separated `AGENTS.md` repository hygiene from completion checks so editing rules and final validation are less repetitive.
+- Restored explicit completion checks for citation quality and unsourced-claim handling in `AGENTS.md`.
+- Shortened the `AGENTS.md` read-first section to keep startup guidance focused on the three root project references.
+
+### Removed
+
+- Removed the in-progress Phase 2 project study artifacts under `docs/` to restart the requirements definition from an immutable company-needs feature specification; preserved the conceptual IAM wiki under `docs/wiki/`.
+
 ## 2026-05-05
 
 ### Added

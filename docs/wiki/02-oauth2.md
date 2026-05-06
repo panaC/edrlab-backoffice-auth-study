@@ -17,7 +17,7 @@ OAuth2 does not standardize user login, user profile claims, or ID tokens. OpenI
 
 After reading this page, an engineer should be able to explain:
 
-- the four OAuth2 roles and how they map to the selected backoffice architecture;
+- the four OAuth2 roles and how they can map to internal backoffice designs;
 - why OAuth2 access tokens are API credentials, not user sessions or ID tokens;
 - how grants, scopes, audiences, claims, roles, and permissions fit together;
 - why resource servers must validate tokens and enforce permissions server-side;
@@ -48,11 +48,11 @@ OAuth2 defines four core roles:
 | OAuth2 role | Meaning in this study |
 | --- | --- |
 | Resource owner | Usually the company member whose account or authority is involved. For service-to-service access, there may be no human resource owner in the request. |
-| Client | A registered application that requests tokens, such as the Backoffice BFF, a CLI used by internal operators, or a backend service client. |
-| Authorization server | The central IAM component that authorizes grants and issues access tokens. In this study it is considered together with the IdP and admin control plane, without choosing an implementation. |
+| Client | A registered application that requests tokens, such as a server-side backoffice application, a CLI used by internal operators, or a backend service client. |
+| Authorization server | The component that authorizes grants and issues access tokens. It may be a managed provider, self-hosted product, library-backed service, or another design chosen later. |
 | Resource server | A protected backoffice API or backend service that validates access tokens and enforces access control. |
 
-The phrase "client" can be misleading. It does not necessarily mean a browser. A server-side BFF, backend worker, command-line tool, and single-page application can all be OAuth2 clients, but they have different security properties.
+The phrase "client" can be misleading. It does not necessarily mean a browser. A server-side web application, backend worker, command-line tool, and single-page application can all be OAuth2 clients, but they have different security properties.
 
 ## Client types
 
@@ -60,10 +60,10 @@ OAuth2 distinguishes between clients that can protect credentials and clients th
 
 | Client type | Examples | Security implication |
 | --- | --- | --- |
-| Confidential client | Backoffice BFF, backend service, scheduled worker | Can usually protect a client secret, private key, or mTLS credential. Token requests can include client authentication. |
+| Confidential client | Server-side backoffice application, backend service, scheduled worker | Can usually protect a client secret, private key, or mTLS credential. Token requests can include client authentication. |
 | Public client | Browser-only app, mobile app, desktop app distributed to users | Cannot keep a long-term secret. Must not rely on embedded secrets for trust. PKCE is important for authorization code flows. |
 
-In the selected study architecture, the Backoffice BFF is the natural OAuth2/OIDC client for the browser-facing backoffice. That can keep browser sessions and sensitive tokens server-side if the eventual design chooses that pattern. This page still describes public clients because product evaluation may involve SDKs, admin CLIs, or provider behavior that uses the same terms.
+One possible backoffice design uses a server-side application or BFF as the OAuth2/OIDC client for the browser-facing backoffice. That can keep browser sessions and sensitive tokens server-side if the eventual design chooses that pattern. This page still describes public clients because product evaluation may involve SDKs, admin CLIs, or provider behavior that uses the same terms.
 
 For the dedicated registry, redirect URI, credential, and lifecycle concepts behind clients, see [OAuth Client Management](./13-oauth-client-management.md).
 
@@ -164,7 +164,7 @@ RBAC and application policy decide what the subject may do with that credential.
 
 ## Multiple resource servers
 
-The selected architecture has one or more backend API resource servers. Even the first demonstration API should have a clear token audience boundary.
+An internal backoffice environment may have one or more backend API resource servers. Even a first demonstration API should have a clear token audience boundary.
 
 An access token intended for one API should not automatically be valid at every other API. Otherwise a token issued for a low-risk service could be replayed against a high-risk administration endpoint. A later design may handle this with audience claims, resource indicators, per-API scopes, separate clients, token exchange patterns, introspection policy, or a combination. The evaluation criterion is simple: each resource server must be able to tell whether the token was meant for it.
 
@@ -180,9 +180,9 @@ Audience validation is not optional plumbing. It is what prevents token substitu
 
 ## Backoffice example
 
-A company administrator opens the backoffice. The browser talks to the Backoffice BFF. The BFF starts an OIDC/OAuth2 authorization request with the central IAM component. After the administrator authenticates, the BFF receives an authorization code and exchanges it for tokens.
+A company administrator opens the backoffice. In one possible design, the browser talks to a server-side backoffice application. That application starts an OIDC/OAuth2 authorization request with an authorization server. After the administrator authenticates, the application receives an authorization code and exchanges it for tokens.
 
-The BFF keeps the browser session. When it calls `GET /members`, it sends an access token to the members API. The members API validates issuer, audience, lifetime, and token integrity or introspection status. It then checks that the subject has the required access, such as `members:read`.
+The backoffice application keeps the browser session. When it calls `GET /members`, it sends an access token to the members API. The members API validates issuer, audience, lifetime, and token integrity or introspection status. It then checks that the subject has the required access, such as `members:read`.
 
 For `POST /members/{id}/roles`, the same valid token may still be insufficient. The operation should require a stronger permission such as `roles:assign`. A successful login and a valid token are necessary, but they do not replace operation-level authorization.
 
