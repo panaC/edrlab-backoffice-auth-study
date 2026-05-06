@@ -161,14 +161,6 @@ Security guidance must be conservative and evidence-based. Do not recommend:
 
 When describing risks, explain what can go wrong and how to reduce the risk.
 
-## Proof-Of-Concept Boundary
-
-In Phase 2, prefer PoC planning, evaluation criteria, short pseudocode, and short illustrative examples. Full candidate evaluation belongs to later phases unless the user explicitly asks for that artifact now.
-
-If the user asks for a Proof of Concept, keep it scoped to the learning goal, document assumptions and limits, mark it non-production, and avoid production infrastructure.
-
-Code examples must be short, illustrative, and clearly non-production.
-
 ## Repository Hygiene
 
 When modifying the repository:
