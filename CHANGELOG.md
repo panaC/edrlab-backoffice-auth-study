@@ -27,6 +27,7 @@ This repository is a study repository, not a released software package. Changelo
 
 ### Added
 
+- Added the initial Phase 2 threat model skeleton under `docs/risks/threat-model.md`.
 - Added initial Phase 2 project requirements based on current stakeholder scoping answers.
 - Added initial Phase 2 architecture option framing for monolithic, modular monolithic, split control-plane, microservices, and hybrid IAM shapes.
 - Added the Phase 2 requirements baseline under `docs/requirements/baseline.md`.

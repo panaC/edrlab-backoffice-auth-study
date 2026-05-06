@@ -1,8 +1,10 @@
-# Internal Backoffice Access Control Study
+# EDRLab Backoffice Access Control Study
 
-This repository contains a study for a company's internal backoffice access-control capability.
+This repository contains a study for the EDRLab backoffice access-control capability.
 
-The study objective is unchanged: define, compare, and eventually recommend the simplest secure way for the company to authenticate internal backoffice users, manage their access, and protect company-controlled backend services.
+> https://www.notion.so/edrlab/Member-s-back-office-2eca1ca5712f806b9594dd987b5af9e1
+
+The study objective is to define, compare, and eventually recommend the simplest secure way for  EDRLab to authenticate internal backoffice members, manage their access, and protect EDRLab controlled backend services.
 
 The expected outcome is not a production-ready system. The expected outcome is a documented, evidence-based recommendation supported by requirements analysis, comparison documents, and minimal non-production Proofs of Concept where needed.
 
