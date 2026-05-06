@@ -40,7 +40,7 @@ Privilege escalation must be controlled. An admin must not be able to silently g
 | --- | --- |
 | FS-001 | The system must support internal backoffice users only. Public signup, public customer accounts, and social login are out of scope for the initial specification. |
 | FS-002 | Members must be created and managed by administrators only. There is no public self-service registration. |
-| FS-003 | Member records must use stable identifiers that are separate from mutable attributes such as email, username, display name, title, or department. |
+| FS-003 | Member records must use stable identifiers that are separate from mutable attributes such as email, name. |
 | FS-004 | The member lifecycle must support at least `invited`, `active`, `disabled`, and `archived` states. Members are retained rather than hard-deleted in the initial policy. |
 | FS-005 | Non-active members must not be able to obtain new access to protected backoffice services. Access removal for already-issued access must be simple, documented, and evaluated during the study. |
 | FS-006 | Administrators must be able to create, read, update, list, disable, archive, restore where policy allows, and remove access for members. |
@@ -50,7 +50,7 @@ Privilege escalation must be controlled. An admin must not be able to silently g
 | FS-010 | The system must provide an administration capability for member management, role management, role assignment, service access checks, and audit-supporting operations. |
 | FS-011 | Protected backend services must be able to determine whether a given active member is allowed to access the service. |
 | FS-012 | Only administrators may change member profile attributes and service access assignments. Members may view their own profile information. |
-| FS-013 | Super-admin, admin, and member responsibilities must remain separated. Recovery, authenticator reset, administrator recovery, audit access, and any future break-glass process belong to the super-admin responsibility area unless explicitly changed later. |
+| FS-013 | Super-admin, admin, and member responsibilities must remain separated. Recovery, authenticator reset, administrator recovery, audit access, and any future break-glass process belong to the super-admin responsibility. |
 | FS-014 | The security posture must target production-grade internal access control. The first minimal version may use simpler authentication, but Phase 2 must evaluate the risks and the path toward stronger production controls. |
 | FS-015 | Audit events must cover member creation, member update, member disablement, member restoration, role assignment, role removal, role changes, protected-service access configuration changes, protected-service authorization denials, audit reads or exports, and recovery or authenticator reset actions. |
 | FS-016 | Super-admins must be able to consult audit records. Audit access itself must be logged. |
