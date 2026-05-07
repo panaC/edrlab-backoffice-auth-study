@@ -8,6 +8,7 @@ This repository is a study repository, not a released software package. Changelo
 
 ### Changed
 
+- Removed the dedicated Phase 2 threat-modeling baseline requirement and kept threat modeling documented as a risk artifact.
 - Expanded the Phase 2 threat model with explicit external dependencies, entry points, and exit points to improve OWASP threat-modeling alignment.
 
 ## 2026-05-06
@@ -27,7 +28,6 @@ This repository is a study repository, not a released software package. Changelo
 - Removed `RB-039` as a standalone baseline requirement and kept access-token format as an architecture evaluation question.
 - Clarified `RB-005` so admins manage role assignments, while role creation remains a super-admin responsibility.
 - Clarified member lifecycle transitions in `RB-013`: admins may disable `active` members, restore `disabled` members to `active`, and archive `disabled` members; `archived` members are non-restorable in the baseline.
-- Added `RB-048` to require Phase 2 threat modeling and security requirement refinement before candidate evaluation.
 - Removed the duplicate out-of-scope section from the requirements baseline so scope exclusions stay centralized in the root `README.md`.
 - Simplified `RB-016` to require defining how already-issued access stops without embedding JWT-versus-opaque-token comparison in the requirement text.
 

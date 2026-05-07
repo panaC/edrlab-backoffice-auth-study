@@ -23,7 +23,7 @@ Last reviewed: 2026-05-07
 
 ## Purpose
 
-This document records Phase 2 threat modeling for the internal backoffice access-control study. It supports `RB-048`, which requires threat modeling and security requirement refinement before candidate evaluation ([Requirements baseline](../requirements/baseline.md#security-baseline)).
+This document records Phase 2 threat modeling for the internal backoffice access-control study. It supports security requirement refinement before candidate evaluation while staying within the Phase 2 study scope ([README](../../README.md#initial-scope), [Requirements baseline](../requirements/baseline.md#security-baseline)).
 
 ## Scope
 
@@ -35,7 +35,7 @@ It does not select a final vendor, product, architecture, hosting model, impleme
 
 - Immutable feature specification and initial study scope in the root [README](../../README.md#immutable-feature-specification).
 - Phase 2 boundaries and evidence rules in [Project governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing).
-- Phase 2 requirements baseline, especially `RB-048`, in [Requirements baseline](../requirements/baseline.md#security-baseline).
+- Phase 2 requirements baseline, especially the security baseline in [Requirements baseline](../requirements/baseline.md#security-baseline).
 
 ## Method
 

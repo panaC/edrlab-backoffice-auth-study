@@ -104,7 +104,6 @@ Baseline requirements will use `RB-001`, `RB-002`, and following identifiers. Ea
 | RB-036 | Do not rely on custom cryptography or plain-text password storage. | [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html) |
 | RB-037 | If OAuth2 or OIDC is used, do not use the Implicit Flow for new browser-based applications. | [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700), [Phase 2 Debate Topics](../../README.md#phase-2-debate-topics) |
 | RB-038 | Use access tokens for protected-service access. Validate them server-side before protected-service access. | [FS-011](../../README.md#minimum-feature-requirements), [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750), [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700), user-provided requirement, 2026-05-06 |
-| RB-048 | Perform threat modeling during Phase 2 and refine security requirements from identified risks before candidate evaluation. | [Initial Scope](../../README.md#initial-scope), [FS-014](../../README.md#minimum-feature-requirements), [Project Governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing) |
 
 ### Operational Baseline
 
@@ -141,7 +140,7 @@ Baseline requirements will use `RB-001`, `RB-002`, and following identifiers. Ea
 | FS-011 | RB-006, RB-023, RB-024, RB-025, RB-026, RB-030, RB-038 |
 | FS-012 | RB-005, RB-006, RB-019, RB-022 |
 | FS-013 | RB-004, RB-007, RB-008, RB-032, RB-034, RB-043 |
-| FS-014 | RB-033, RB-035, RB-048 |
+| FS-014 | RB-033, RB-035 |
 | FS-015 | RB-005, RB-008, RB-027, RB-028, RB-029, RB-030, RB-031, RB-032, RB-034, RB-040 |
 | FS-016 | RB-007, RB-018, RB-031 |
 | FS-017 | RB-003, RB-042 |
