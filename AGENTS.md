@@ -5,6 +5,7 @@
 Read this file before modifying the repository. Then use:
 
 - [README.md](./README.md) for the project brief and immutable feature specification;
+- [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) for the iterative final-solution feature requirements of the access-control capability;
 - [PROJECT-GOVERNANCE.md](./PROJECT-GOVERNANCE.md) for study phases and phase boundaries;
 - [CHANGELOG.md](./CHANGELOG.md) for project history.
 
@@ -17,6 +18,7 @@ Default Phase 2 work: business, technical, security, and operational requirement
 Phase 2 boundaries:
 
 - create or edit Markdown study artifacts under top-level `docs/` by default;
+- create or edit the root `FEATURE-REQUIREMENTS.md` when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
 - keep project-specific scope debate, requirements refinement, option analysis, candidate evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
 - do not make a final vendor, product, architecture, or production implementation recommendation unless the user explicitly requests a decision or final recommendation;
@@ -52,6 +54,8 @@ A user request overrides the Phase 2 boundary only when it explicitly changes ph
 - Cross-reference overlapping topics instead of duplicating large sections.
 
 ## Documentation Rules
+
+The root `FEATURE-REQUIREMENTS.md` file is the dedicated working base for the backoffice access-control and access-management capability. It is not an implementation artifact. Use it as the starting point when the user asks to refine the final-solution feature requirements for this capability. Keep code, dependencies, generated artifacts, deployments, and PoC files out of this document unless the user explicitly expands the phase or asks for a Proof of Concept.
 
 Project study documents must be organized by reader task and project artifact type, not by filename prefixes. Use these folders under `docs/`:
 

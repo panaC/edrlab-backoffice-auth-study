@@ -25,7 +25,10 @@ This directory contains the project-facing study documents for the internal back
 
 | Document | Purpose |
 | --- | --- |
-| [Requirements baseline](./requirements/baseline.md) | Phase 2 requirements baseline with traceability to the immutable feature specification, user-provided constraints, assumptions, and scope boundaries. |
+| [Feature requirements specification](../FEATURE-REQUIREMENTS.md) | Consolidated final-solution feature requirements list for the access-control capability. |
+| [Feature requirements review](./requirements/feature-requirements-review.md) | Live step-by-step consolidation trail for turning the root `README.md` feature specification and retired baseline material into one unique root `FEATURE-REQUIREMENTS.md` list. |
+| [Feature scope review](./requirements/feature-scope-review.md) | Historical step-by-step validation trail for each immutable `FS-*` requirement, including agreed Phase 2 scope and threat-model implications. |
+| [Requirements baseline review](./requirements/baseline-review.md) | Historical validation trail for the retired `RB-*` requirements, checking sufficiency, scope fit, and concordance with the validated `FS-*` interpretation. |
 | [Threat model](./risks/threat-model.md) | Phase 2 threat model used to identify access-control risks and refine security requirements before candidate evaluation. |
 | [Architecture options](./architecture/options.md) | Phase 2 architecture option framing for monolithic, modular monolithic, split control-plane, microservices, and hybrid shapes. |
 

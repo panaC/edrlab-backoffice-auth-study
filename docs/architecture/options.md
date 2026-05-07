@@ -21,31 +21,7 @@ Last reviewed: 2026-05-06
 
 ## Purpose
 
-This document frames possible architecture shapes for the internal backoffice auth server study. It answers the current architecture question at Phase 2 level: monolithic, modular monolithic, split control-plane, microservices, or hybrid. It does not make a final architecture recommendation, as final architecture selection is explicitly out of scope until later decision phases ([README](../../README.md#phase-2-debate-topics), [Project governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing)).
-
-## Current Project Shape
-
-| Input | Architecture consequence | Source |
-| --- | --- | --- |
-| Starts from zero | There is no legacy decomposition to preserve. Architecture options can be evaluated by fitness, simplicity, and security instead of migration constraints. | User-provided answer, 2026-05-06. |
-| Fewer than 1,000 internal users | Scale alone does not justify distributed complexity unless security, maintainability, deployment, or ownership requirements create that need. | [README](../../README.md#company-goal). |
-| Human users only for initial scope | Service-to-machine flows are not a baseline deployment driver, though protected backend services still need server-side access checks. | User-provided answer, 2026-05-06; [README](../../README.md#minimum-feature-requirements). |
-| Role-based service access | The first authorization model uses simple RBAC for service access. Super-admins can create roles; admins can list, assign, and remove roles. | [Requirements baseline](../requirements/baseline.md#administration-and-role-management); [RBAC](../wiki/05-rbac.md). |
-| Security is the main risk | Options must be judged on access-token validation, admin safety, auditability, credential/key management, access-removal delay, and operational ownership. | User-provided answer, 2026-05-06; [Requirements baseline](../requirements/baseline.md#security-baseline). |
-| PoC targets access-token-backed access, RBAC, backoffice integration, and admin/API | The useful PoC boundary is a login or session path, an admin mutation path, and one protected backend authorization check. The access-token format remains open. | [Requirements baseline](../requirements/baseline.md#assumptions); [Requirements baseline](../requirements/baseline.md#security-baseline). |
-| PoC service boundary | The first PoC should use one simple protected backend API whose only purpose is to answer whether a member has access to a demo resource such as `demo:read`. | [Requirements baseline](../requirements/baseline.md#assumptions). |
-
-## Baseline Alignment
-
-The requirements baseline fixes several points while deliberately leaving the access-token format open. Architecture options must treat the fixed points as constraints without turning them into a final deployment recommendation.
-
-| Baseline decision | Architecture implication | Source |
-| --- | --- | --- |
-| Access tokens are required for protected-service access, but their format is not selected. | Options should compare JWT access tokens, opaque access tokens, and any hybrid pattern before production recommendation. | [Requirements baseline](../requirements/baseline.md#security-baseline), [RFC 7519](https://www.rfc-editor.org/rfc/rfc7519), [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662). |
-| Already-issued access removal remains an evaluation point. | Options need to compare whether access removal relies on token expiration, token introspection, authorization lookup, or a combination. Browser token/session storage also remains open. | [Requirements baseline](../requirements/baseline.md#member-lifecycle), [Requirements baseline](../requirements/baseline.md#simplicity-and-study-constraints). |
-| Admins and super-admins require MFA or phishing-resistant passwordless login. | Candidate products, libraries, or custom flows must support strong privileged-user login controls. | [Requirements baseline](../requirements/baseline.md#security-baseline). |
-| Audit records are retained indefinitely and audit events are append-only. | Options must account for audit storage growth, export, backup, and restore behavior. | [Requirements baseline](../requirements/baseline.md#operational-baseline). |
-| Break-glass access is out of current study scope. | Architecture options should not include break-glass mechanisms as a current evaluation driver. | [Requirements baseline](../requirements/baseline.md#operational-baseline). |
+This document frames possible architecture shapes for the internal backoffice auth server study. It answers the current architecture question at Phase 2 level: monolithic, modular monolithic, split control-plane, microservices, or hybrid. It does not make a final architecture recommendation, as final architecture selection is explicitly out of scope until later decision phases ([README - Open Study Questions](../../README.md#phase-2-debate-topics), [Project governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing)).
 
 ## Token Format Evaluation
 
@@ -88,7 +64,7 @@ The architecture decision is how many deployable units own these responsibilitie
 
 ### Option A - All-in-one Monolith
 
-One deployable application owns the backoffice UI or BFF, member lifecycle, authentication, OAuth2/OIDC behavior if used, access-token issuance, role-based service access, admin API, protected-service access checks, and audit storage. A monolithic application is typically self-contained and deployed as a single unit, even if it calls databases or other services during execution ([Microsoft - Common web application architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures), [Requirements baseline](../requirements/baseline.md#security-baseline)).
+One deployable application owns the backoffice UI or BFF, member lifecycle, authentication, OAuth2/OIDC behavior if used, access-token issuance, role-based service access, admin API, protected-service access checks, and audit storage. A monolithic application is typically self-contained and deployed as a single unit, even if it calls databases or other services during execution ([Microsoft - Common web application architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures), [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
 Best Phase 2 fit:
 
@@ -148,7 +124,7 @@ Main security and study risks:
 
 - More network boundaries create more authentication, authorization, secret-management, observability, and failure-mode work.
 - Distributed IAM state makes consistency and revocation behavior harder to explain.
-- For fewer than 1,000 internal users and simple service roles, operational complexity may outweigh benefits unless later requirements justify it ([README](../../README.md#company-goal), [Microsoft - Architecture styles](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/)).
+- For fewer than 1,000 internal users and simple service roles, operational complexity may outweigh benefits unless later requirements justify it ([README](../../README.md#project-goal), [Microsoft - Architecture styles](https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/)).
 
 ### Option E - Product-backed or Hybrid IAM
 
@@ -187,34 +163,13 @@ No final architecture is selected here. For the next Phase 2 work, the useful co
 3. Option E as the way to keep managed, self-hosted, and library-backed IAM possibilities open without naming candidates yet.
 4. Option D as a complexity benchmark, not a default assumption.
 
-This posture follows the feature specification's simplicity requirement and the current human-only, role-based scope. Access tokens are now a baseline requirement; JWT versus opaque access-token format, token lifetime policy, OAuth2/OIDC usage, browser token storage, product choice, and deployment architecture remain open for later evidence ([README](../../README.md#minimum-feature-requirements), [Requirements baseline](../requirements/baseline.md#security-baseline), [Requirements baseline](../requirements/baseline.md#simplicity-and-study-constraints)).
-
-## PoC Implications
-
-The future PoC should stay minimal with one protected backend service. The baseline now frames this service as a simple "has access" demo API that answers whether a member can access a demo resource such as `demo:read` ([Requirements baseline](../requirements/baseline.md#assumptions)). It can still answer the important architecture questions before any later multi-service test is justified by evidence or scope change:
-
-| PoC question | Why it matters | Source |
-| --- | --- | --- |
-| Can a member complete a login or session flow and call a protected API with an access token? | Tests the login-to-resource-server path without choosing production architecture, access-token format, or browser token storage. | [Requirements baseline](../requirements/baseline.md#security-baseline); [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750). |
-| Can the protected API validate a JWT locally or introspect an opaque token before trusting it? | A resource server must validate a bearer token before using it for authorization; introspection is the standard comparison path for opaque token metadata and active state. | [Requirements baseline](../requirements/baseline.md#security-baseline); [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750); [RFC 7519](https://www.rfc-editor.org/rfc/rfc7519); [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662); [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700). |
-| Can a simple role such as `demo:read` answer "may this active member access this demo resource?" | FS-008 and FS-011 require role-based service access and protected-service access checks. | [Requirements baseline](../requirements/baseline.md#assumptions); [README](../../README.md#minimum-feature-requirements); [RBAC](../wiki/05-rbac.md). |
-| Can admin and super-admin operations change members, roles, and audit records according to their separate responsibilities? | The baseline separates admin role assignment from super-admin role creation, audit access, and recovery-sensitive operations. | [Requirements baseline](../requirements/baseline.md#administration-and-role-management); [Requirements baseline](../requirements/baseline.md#auditability). |
-| Does access removal follow the documented behavior after disablement, archival, or role-access removal? | The baseline requires the already-issued access removal behavior to be defined. | [Requirements baseline](../requirements/baseline.md#member-lifecycle). |
-
-## Open Questions
-
-1. Should protected services use JWT access tokens, opaque access tokens with introspection or authorization lookup, or a hybrid pattern ([Requirements baseline](../requirements/baseline.md#open-questions))?
-2. Which browser token or session storage model should the architecture use: BFF server-side session, HttpOnly cookies, in-memory access tokens, or another pattern ([Requirements baseline](../requirements/baseline.md#simplicity-and-study-constraints))?
-3. Should authentication be local for PoC simplicity, or should the PoC immediately use an external OIDC provider or product ([README](../../README.md#phase-2-debate-topics))?
-4. Which audit events must be produced by the IAM authority, and which must be produced by protected backend services ([Requirements baseline](../requirements/baseline.md#auditability))?
-5. Do role creation, audit export, recovery, or login-factor reset require recent authentication or step-up beyond the baseline MFA or phishing-resistant passwordless login ([README](../../README.md#phase-2-debate-topics), [Requirements baseline](../requirements/baseline.md#security-baseline))?
-6. Is there a future requirement for service-to-machine access, or should service accounts stay outside the study until explicitly requested ([README](../../README.md#initial-scope))?
+This posture follows the feature specification's simplicity requirement and the current human-only, service-access-role-based scope. Protected services need server-side authorization, while JWT versus opaque access-token format, token lifetime policy, OAuth2/OIDC usage, browser token storage, product choice, and deployment architecture remain open for later evidence ([README](../../README.md#minimum-feature-requirements), [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements), [README - Open Study Questions](../../README.md#phase-2-debate-topics)).
 
 ## References
 
-- [README - Immutable Feature Specification](../../README.md#immutable-feature-specification)
+- [README - Minimum Feature Requirements](../../README.md#minimum-feature-requirements)
 - [Project Governance - Phase 2](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing)
-- [Requirements Baseline](../requirements/baseline.md)
+- [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [Wiki - IAM Control Plane vs Data Plane](../wiki/14-iam-control-plane-vs-data-plane.md)
 - [Wiki - IAM Architecture](../wiki/15-iam-architecture.md)
 - [Wiki - RBAC and Permission Modeling](../wiki/05-rbac.md)
