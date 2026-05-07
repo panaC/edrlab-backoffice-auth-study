@@ -4,6 +4,12 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-05-07
+
+### Changed
+
+- Expanded the Phase 2 threat model with explicit external dependencies, entry points, and exit points to improve OWASP threat-modeling alignment.
+
 ## 2026-05-06
 
 ### Changed
