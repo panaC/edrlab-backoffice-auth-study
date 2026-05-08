@@ -19,6 +19,7 @@ This repository is a study repository, not a released software package. Changelo
 ### Changed
 
 - Promoted `docs/risks/threat-model.md` from draft to review state and realigned it with the consolidated `FR-*` feature requirements.
+- Reworked `docs/architecture/options.md` into a Phase 2 review-state architecture option framing derived from the consolidated feature requirements and threat model, with option comparison, threat-fit review, PoC/evaluation implications, and open architecture questions.
 - Updated the responsibility model so active `super-admin` accounts automatically receive access to every protected backend service covered by service-access roles, like active `admin` accounts, while service-access role assignments remain limited to `member` accounts.
 - Simplified the responsibility model so `super-admin` is a high-level administration superset of `admin`, inheriting admin capabilities and adding high-level administration capabilities.
 - Clarified `FR-003` and `FR-004` so `FR-003` describes admin capabilities and `FR-004` gives super-admins those capabilities by inheritance plus high-level administration capabilities.
