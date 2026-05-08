@@ -148,6 +148,7 @@ This repository is a study repository, not a released software package. Changelo
 - Renamed the `README.md` Phase 2 debate topics section to `Open Study Questions` and grouped unresolved security, architecture, access-evidence, operations, and PoC questions.
 - Reworked the `README.md` documentation section into a task-oriented entry-point table.
 - Updated `ABSTRACT.md` to reflect the 2026-05-07 consolidation state: `FEATURE-REQUIREMENTS.md` as the single requirements source, baseline retirement, current validated responsibility model, and remaining open study questions.
+- Updated `ABSTRACT.md` to reflect the review-state `FR-001` through `FR-044` feature requirements, explicit identity-provider and onboarding boundary, and current Phase 2 threat-model, architecture-option, and technical-solution-candidate artifacts.
 - Promoted `FEATURE-REQUIREMENTS.md` from blank-slate working base to review-state single feature-requirements source and replaced former `FS-*` source links with consolidation-review traceability.
 
 ## 2026-05-06
