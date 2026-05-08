@@ -4,6 +4,36 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-05-08
+
+### Added
+
+- Started the final review pass for the consolidated `FR-*` feature requirements and recorded the review slices in `docs/requirements/feature-requirements-review.md`.
+- Added `FR-036` for resolving an authenticated identity to exactly one linked backoffice account before evaluating backoffice authorization.
+- Added `FR-037` to state that a successful identity-provider authentication result must not automatically create, activate, or authorize a backoffice account.
+- Added `FR-038` for prevention of identity-provider claims, groups, or roles overriding the backoffice authorization model.
+- Added `FR-039` to require authorized and audited management of the authenticated-subject link on backoffice accounts.
+- Added `FR-040` through `FR-044` for the validated account-onboarding feature: invited account creation with `email`, `organization`, and `name`; pre-activation member service-access-role assignment without access; IdP-managed invitation and authentication; safe automatic onboarding activation with initial subject linking; and fail-closed handling when matching is unsafe.
+
+### Changed
+
+- Updated the responsibility model so active `super-admin` accounts automatically receive access to every protected backend service covered by service-access roles, like active `admin` accounts, while service-access role assignments remain limited to `member` accounts.
+- Simplified the responsibility model so `super-admin` is a high-level administration superset of `admin`, inheriting admin capabilities and adding high-level administration capabilities.
+- Clarified `FR-003` and `FR-004` so `FR-003` describes admin capabilities and `FR-004` gives super-admins those capabilities by inheritance plus high-level administration capabilities.
+- Split the identity-provider clarification out of `FR-010`, keeping `FR-010` focused on stable authenticated-subject linkage.
+- Reworked `FR-036` from an identity-provider contract placeholder into concrete authenticated-identity resolution behavior.
+- Merged the fail-closed identity-resolution behavior from an earlier draft into `FR-036` to avoid duplicate IdP requirements.
+- Completed the final review pass for the consolidated feature list, which at that point contained 39 active requirements from `FR-001` through `FR-039`.
+- Strengthened `FR-016`, `FR-027`, and `FR-032` so service-access role disablement or archival has a clear access-stop effect, audit coverage includes role lifecycle and authenticated-subject link changes, and only active service-access roles can be used for assignments or protected-service access decisions.
+- Recorded user validation of the seven final-review slices covering all consolidated feature requirements and out-of-scope boundaries.
+- Updated `FR-039` so authenticated-subject links are created only through automatic onboarding activation, are immutable after creation, and cannot be manually created, changed, removed, or rebound by admins, super-admins, or other processes outside the onboarding activation flow.
+- Extended `FR-027` audit coverage to include account activation and failed automatic onboarding activation.
+- Clarified `FR-012`, `FR-039`, `FR-043`, and `FR-044` so automatic account onboarding is coupled to backoffice verification of one invited account with no existing authenticated-subject link and a verified matching IdP email, not to the user's first IdP login.
+- Generalized onboarding from `member` accounts to all account types, with production `admin` and `super-admin` activation requiring evidence that the privileged-authentication requirement was satisfied.
+- Clarified `FR-037` so identity-provider authentication alone does not create, activate, or authorize a backoffice account, while preserving the controlled onboarding activation flow in `FR-043`.
+- Clarified `FR-025` so recovery and login reset are own-account responsibilities for members, admins, and super-admins, with no cross-account reset capability in the initial feature requirements.
+- Clarified `FR-027` so authenticated-subject link audit coverage records link creation and rejected or attempted link mutation, without implying that post-creation link changes are normal allowed operations.
+
 ## 2026-05-07
 
 ### Added

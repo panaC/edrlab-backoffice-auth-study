@@ -38,7 +38,7 @@ The model must support account lifecycle management, identity-provider authentic
 The project keeps two concepts separate:
 
 - account types define backoffice responsibilities: `super-admin`, `admin`, and `member`;
-- service-access roles describe protected backend service access for admins automatically and for members through assignment.
+- service-access roles describe protected backend service access for admins and super-admins automatically and for members through assignment.
 
 The expected scale is fewer than 1,000 users. Operational complexity must be justified by concrete security, compliance, maintainability, or product needs.
 
@@ -46,17 +46,18 @@ The expected scale is fewer than 1,000 users. Operational complexity must be jus
 
 The account types are application account categories in the company system, not only study labels. `super-admin`, `admin`, and `member` accounts are separated account types. An account type is fixed when the account is created and cannot be changed later. A `member` account must never become an `admin` account.
 
-Service-access roles are separate from account types. They are managed by super-admins and assigned to `member` accounts by admins or super-admins. Active admins automatically receive access to every protected backend service covered by any service-access role. A service-access role must not grant account-management responsibilities.
+Service-access roles are separate from account types. They are managed by super-admins and assigned to `member` accounts by admins or super-admins. Active admins automatically receive access to every protected backend service covered by any service-access role, and active super-admins receive the same access through inherited admin capabilities. A service-access role must not grant account-management responsibilities.
+
+A `super-admin` is a high-level administration superset of `admin`: it inherits every admin capability and adds high-level administration capabilities. An `admin` does not inherit super-admin capabilities, and the admin limits below apply to admin accounts only.
 
 ### Super-admin
 
 High-level management account.
 
-- Can manage `admin` and `member` accounts where lifecycle policy allows.
+- Inherits every `admin` capability.
+- Can manage `admin` accounts where lifecycle policy allows.
 - Can manage the service-access-role catalog.
-- Can assign or remove service-access roles for `member` accounts.
 - Can consult audit records.
-- Does not receive protected-service access through service-access roles.
 
 ### Admin
 
@@ -76,7 +77,7 @@ Internal company user account.
 - Can access protected backend services only when active and authorized by assigned service-access roles.
 - Cannot modify their own profile, manage accounts, create or assign service-access roles, or consult audit records.
 
-Privilege escalation must be controlled. An account type must not be changed, merged, or elevated after account creation. An admin must not be able to grant themselves a super-admin account type, create service-access roles, assign service-access roles to admin accounts, or bypass auditability for privileged actions.
+Privilege escalation must be controlled. An account type must not be changed, merged, or elevated after account creation. An admin must not be able to grant themselves a super-admin account type, create service-access roles, assign service-access roles to privileged account types, or bypass auditability for privileged actions.
 
 <a id="minimum-feature-requirements"></a>
 
