@@ -15,6 +15,7 @@ This repository is a study repository, not a released software package. Changelo
 - Added `FR-039` to require authorized and audited management of the authenticated-subject link on backoffice accounts.
 - Added `FR-040` through `FR-044` for the validated account-onboarding feature: invited account creation with `email`, `organization`, and `name`; pre-activation member service-access-role assignment without access; IdP-managed invitation and authentication; safe automatic onboarding activation with initial subject linking; and fail-closed handling when matching is unsafe.
 - Added threat-model review focus, requirement refinement candidates, and expanded threat scenarios for onboarding, identity-provider claim override, privileged authentication, token/session replay, audit integrity, unsafe failure modes, and operational artifacts.
+- Added `docs/evaluation/technical-solutions.md` with three concrete technical solution candidates: Auth0 managed login plus local access-control, self-hosted Keycloak plus local access-control, and a Spring-based local IAM control plane.
 
 ### Changed
 
