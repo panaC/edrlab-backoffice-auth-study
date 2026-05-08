@@ -14,9 +14,11 @@ This repository is a study repository, not a released software package. Changelo
 - Added `FR-038` for prevention of identity-provider claims, groups, or roles overriding the backoffice authorization model.
 - Added `FR-039` to require authorized and audited management of the authenticated-subject link on backoffice accounts.
 - Added `FR-040` through `FR-044` for the validated account-onboarding feature: invited account creation with `email`, `organization`, and `name`; pre-activation member service-access-role assignment without access; IdP-managed invitation and authentication; safe automatic onboarding activation with initial subject linking; and fail-closed handling when matching is unsafe.
+- Added threat-model review focus, requirement refinement candidates, and expanded threat scenarios for onboarding, identity-provider claim override, privileged authentication, token/session replay, audit integrity, unsafe failure modes, and operational artifacts.
 
 ### Changed
 
+- Promoted `docs/risks/threat-model.md` from draft to review state and realigned it with the consolidated `FR-*` feature requirements.
 - Updated the responsibility model so active `super-admin` accounts automatically receive access to every protected backend service covered by service-access roles, like active `admin` accounts, while service-access role assignments remain limited to `member` accounts.
 - Simplified the responsibility model so `super-admin` is a high-level administration superset of `admin`, inheriting admin capabilities and adding high-level administration capabilities.
 - Clarified `FR-003` and `FR-004` so `FR-003` describes admin capabilities and `FR-004` gives super-admins those capabilities by inheritance plus high-level administration capabilities.
