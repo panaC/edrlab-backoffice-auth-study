@@ -39,6 +39,9 @@ The system must provide a simple, secure, and auditable way to manage backoffice
 `protected backend service`
 : A company-controlled backend service that requires an access decision before serving a request. In OAuth 2.0 terms, protected resources are hosted by resource servers and accessed with access tokens issued by an authorization server ([RFC 6749](https://www.rfc-editor.org/rfc/rfc6749)).
 
+`Subject Identifier`
+: Locally unique and never reassigned identifier within the Issuer for the End-User, which is intended to be consumed by the Client, e.g., 24400320 or AItOawmwtWwcT0k51BayewNvutrJUqsvl6qs7A4. It MUST NOT exceed 255 ASCII characters in length. The sub value is a case-sensitive string. ([OIDC IDToken](https://openid.net/specs/openid-connect-basic-1_0.html#IDToken))
+
 `authorization boundary`
 : The boundary between authentication and access-control. The identity provider authenticates the subject. The access-control capability decides whether the authenticated subject is represented by an active backoffice account and whether the account type or assigned service-access roles allow access to a protected backend service.
 
