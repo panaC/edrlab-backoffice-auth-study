@@ -13,16 +13,16 @@ Read this file before modifying the repository. Then use:
 
 The current phase is `Phase 2 - Requirements and Risk Framing`.
 
-Default Phase 2 work: business, technical, security, and operational requirements definition against the immutable feature specification; requirements traceability; open-question resolution; service and permission inventory refinement; candidate-evaluation preparation; lightweight PoC planning; and Markdown study artifacts.
+Default Phase 2 work: business, technical, security, and operational requirements definition against the immutable feature specification; requirements traceability; open-question resolution; service and permission inventory refinement; solution-choice preparation; lightweight PoC planning; and Markdown study artifacts.
 
 Phase 2 boundaries:
 
 - create or edit Markdown study artifacts under top-level `docs/` by default;
 - create or edit the root `FEATURE-REQUIREMENTS.md` when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
-- keep project-specific scope debate, requirements refinement, option analysis, candidate evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
-- do not make a final vendor, product, architecture, or production implementation recommendation unless the user explicitly requests a decision or final recommendation;
-- do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase or asks for a Proof of Concept.
+- keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
+- do not choose a vendor, product, architecture, or production implementation unless the user explicitly requests a solution choice or review decision;
+- do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase, asks for a Proof of Concept, or moves the project into Phase 6 production MVP implementation.
 
 ## Instruction Priority
 
@@ -35,7 +35,7 @@ If instructions conflict:
 5. Follow existing repository conventions.
 6. Follow general best practices.
 
-A user request overrides the Phase 2 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, asks for a later-phase artifact, requests a final recommendation, or asks for a Proof of Concept.
+A user request overrides the Phase 2 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, asks for a later-phase artifact, requests a solution choice, requests a review decision, or asks for a Proof of Concept.
 
 ## Non-Negotiable Rules
 
@@ -45,7 +45,7 @@ A user request overrides the Phase 2 boundary only when it explicitly changes ph
 - `AGENTS.md` may be edited when the user asks to refine agent instructions.
 - Root `ABSTRACT.md` and `CHANGELOG.md` may be edited for project summary, project history, phase movement, or release-style documentation.
 - Record meaningful project history in `CHANGELOG.md`, not in `README.md` or ad hoc notes.
-- Do not make final vendor, product, architecture, or production recommendations unless explicitly requested.
+- Do not make vendor, product, architecture, or production recommendations unless explicitly requested.
 - Do not invent citations, RFC numbers, standards, specification names, URLs, product behavior, or business facts.
 - A debate, requirement interpretation, risk analysis, candidate comparison, or recommendation is not valid unless its material claims are sourced or explicitly marked as assumptions/open questions.
 - Every Markdown documentation page under `docs/` or `docs/wiki/` must include source links in the content near the claims they support. Non-index pages must also include a `References` section. A bottom `References` section is required, but not sufficient by itself.
@@ -55,7 +55,7 @@ A user request overrides the Phase 2 boundary only when it explicitly changes ph
 
 ## Documentation Rules
 
-The root `FEATURE-REQUIREMENTS.md` file is the dedicated working base for the backoffice access-control and access-management capability. It is not an implementation artifact. Use it as the starting point when the user asks to refine the final-solution feature requirements for this capability. Keep code, dependencies, generated artifacts, deployments, and PoC files out of this document unless the user explicitly expands the phase or asks for a Proof of Concept.
+The root `FEATURE-REQUIREMENTS.md` file is the dedicated working base for the backoffice access-control and access-management capability. It is not an implementation artifact. Use it as the starting point when the user asks to refine the final-solution feature requirements for this capability. Keep code, dependencies, generated artifacts, deployments, and PoC files out of this document unless the user explicitly expands the phase, asks for a Proof of Concept, or moves the project into Phase 6 production MVP implementation.
 
 Project study documents must be organized by reader task and project artifact type, not by filename prefixes. Use these folders under `docs/`:
 
@@ -110,7 +110,7 @@ Do not turn a small task into a full analysis. If a decision is needed, give one
 
 ## Citation Rules
 
-Citation is part of the reasoning, not decoration. Put links next to the claims they support, especially in requirement reasoning, threat/risk analysis, comparison matrices, candidate evaluations, PoC plans/results, and recommendation drafts.
+Citation is part of the reasoning, not decoration. Put links next to the claims they support, especially in requirement reasoning, threat/risk analysis, comparison matrices, solution-choice evaluations, PoC plans/results, and recommendation drafts.
 
 Use a bottom `References` section as a source index, but do not rely on it alone. A reader should be able to tell which source supports which claim without guessing.
 
@@ -182,7 +182,7 @@ Before finishing, verify the result rather than restating the workflow:
 - confirm facts align with `README.md`, `PROJECT-GOVERNANCE.md`, and this file;
 - confirm the immutable feature specification was not changed unless explicitly requested;
 - confirm no forbidden implementation files or unnecessary dependencies were added;
-- confirm no final recommendation was made unless explicitly requested;
+- confirm no solution or production recommendation was made unless explicitly requested;
 - confirm meaningful project history was recorded in `CHANGELOG.md` when required;
 - confirm edited `docs/` or `docs/wiki/` pages follow the citation rules: inline citations near claims and useful `References` sections for non-index pages;
 - confirm citations are real, relevant, appropriate, and not merely decorative;

@@ -40,9 +40,9 @@ The Phase 2 study artifacts now include review-state risk, architecture, and eva
 - [docs/architecture/options.md](./docs/architecture/options.md) frames plausible architecture shapes without choosing a final target architecture.
 - [docs/evaluation/technical-solutions.md](./docs/evaluation/technical-solutions.md) identifies three concrete candidates for later evaluation: Auth0 managed login with local access control, self-hosted Keycloak with local access control, and a Spring-based local IAM control plane.
 
-The study still does not choose a final product, vendor, architecture, hosting model, database, implementation stack, token format, session strategy, browser storage model, production deployment model, or final recommendation. Those remain open study questions unless explicitly promoted by the user into a later decision phase or Proof of Concept.
+The study still does not choose a product, vendor, architecture, hosting model, database, implementation stack, token format, session strategy, browser storage model, production deployment model, or final recommendation during Phase 2. Those remain open study questions unless explicitly promoted by the user into solution choice, Proof of Concept, or review.
 
-The expected output remains a documented, evidence-based technical recommendation supported by comparison documents and targeted non-production Proofs of Concept when documentation alone cannot answer a material question.
+The expected output remains a documented, evidence-based review decision supported by comparison documents and targeted non-production Proofs of Concept when documentation alone cannot answer a material question.
 
 ## Key Links
 

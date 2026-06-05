@@ -95,7 +95,7 @@ In scope for the study:
 - identity-provider authentication boundary and stable authenticated-subject linkage;
 - service-access-role catalog management, member role assignment and removal, and protected backend service access decisions;
 - auditability of privileged and security-relevant operations;
-- Phase 2 threat and risk framing, candidate comparison, and targeted non-production Proofs of Concept when documentation cannot answer a material question.
+- Phase 2 requirements and risk framing, Phase 3 solution choice, Phase 4 targeted non-production Proof of Concept, and Phase 5 review and decision.
 
 Out of scope for the initial specification:
 
@@ -121,12 +121,10 @@ These topics remain open for Phase 2 or later study. They are not feature requir
 
 1. Phase 1 - Conceptual IAM Foundation.
 2. Phase 2 - Requirements and Risk Framing.
-3. Phase 3 - Candidate Approach Catalog.
-4. Phase 4 - Evidence-Based Candidate Evaluation.
-5. Phase 5 - Proposed Target Solution Draft.
-6. Phase 6 - Adoption and Production-Readiness Review.
-7. Phase 7 - Produce a final evidence-based technical recommendation.
-8. Phase 8 - Optional Non-Production MVP.
+3. Phase 3 - Solution Choice.
+4. Phase 4 - Proof of Concept.
+5. Phase 5 - Review and Decision.
+6. Phase 6 - Production MVP.
 
 ## Documentation
 

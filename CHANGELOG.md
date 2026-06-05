@@ -4,6 +4,14 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-05
+
+### Changed
+
+- Simplified the project roadmap from seven study phases plus optional MVP to five study phases plus `Phase 6 - Production MVP`, preserving conceptual foundation and requirements/risk framing before solution choice, Proof of Concept, and review/decision.
+- Updated `PROJECT-GOVERNANCE.md`, `README.md`, `AGENTS.md`, `docs/README.md`, and `ABSTRACT.md` to align phase names, boundaries, and documentation routing with the simplified governance model.
+- Replaced the optional non-production MVP phase with `Phase 6 - Production MVP`, keeping the explicit rule that implementation starts only when the user moves the project into that phase.
+
 ## 2026-05-08
 
 ### Added

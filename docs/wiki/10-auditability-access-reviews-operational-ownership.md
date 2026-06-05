@@ -163,7 +163,7 @@ Reviews should result in actual IAM changes, not just a report. If a role is too
 
 Operational ownership is where IAM studies often become uncomfortable in a useful way. A managed provider can reduce infrastructure work, but the internal team still owns configuration, access decisions, review evidence, admin procedures, incident response, and provider risk. A self-hosted product shifts more runtime responsibilities to the team. A custom or library-based approach usually means owning much of the IAM behavior directly.
 
-The later decision phase should name owners for at least these responsibilities:
+The later review phase should name owners for at least these responsibilities:
 
 | Responsibility | Ownership question | Evidence to expect |
 | --- | --- | --- |

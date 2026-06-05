@@ -23,9 +23,9 @@ Last reviewed: 2026-05-08
 
 ## Purpose
 
-This document proposes Phase 2 architecture options from the consolidated feature requirements and the current threat model. It is an option-framing artifact, not an architecture decision, vendor decision, implementation plan, or production recommendation. Final architecture selection remains out of scope for Phase 2 unless the project is explicitly moved into a later decision phase ([Project governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing), [README - Open Study Questions](../../README.md#open-study-questions)).
+This document proposes Phase 2 architecture options from the consolidated feature requirements and the current threat model. It is an option-framing artifact, not an architecture decision, vendor decision, implementation plan, or production recommendation. Architecture selection remains out of scope for Phase 2 unless the project is explicitly moved into solution choice or review ([Project governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing), [README - Open Study Questions](../../README.md#open-study-questions)).
 
-The useful question is not "which product wins?" yet. The useful question is which architecture shapes are plausible enough to carry into candidate cataloging, candidate evaluation, or a focused non-production PoC without violating the feature model or hiding security risk ([Project governance](../../PROJECT-GOVERNANCE.md#phase-3---candidate-approach-catalog), [Project governance](../../PROJECT-GOVERNANCE.md#phase-4---evidence-based-candidate-evaluation)).
+The useful question is not "which product wins?" yet. The useful question is which architecture shapes are plausible enough to carry into solution-choice evaluation or a focused non-production PoC without violating the feature model or hiding security risk ([Project governance](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)).
 
 ## Source Inputs
 
@@ -88,7 +88,7 @@ The diagram is logical. A managed provider, self-hosted product, library, custom
 
 ## Shared Design Questions
 
-These questions apply to every option and should become candidate-evaluation criteria before a final solution is proposed.
+These questions apply to every option and should become solution-choice criteria before a solution is chosen.
 
 | Question | Why it matters | Source |
 | --- | --- | --- |
@@ -136,7 +136,7 @@ This is a hybrid model. It may reduce custom protocol and authentication ownersh
 **Main risks to review**
 
 - Vendor roles, groups, scopes, or claims can look like a shortcut but may not match the fixed account-type and member-only service-role assignment model (`FR-001` through `FR-005`, `FR-038`).
-- Management API limits, data export, audit retention, privileged-authentication evidence, outage behavior, and lock-in are candidate-evaluation topics, not assumptions ([Project governance](../../PROJECT-GOVERNANCE.md#phase-4---evidence-based-candidate-evaluation)).
+- Management API limits, data export, audit retention, privileged-authentication evidence, outage behavior, and lock-in are solution-choice topics, not assumptions ([Project governance](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice)).
 - Already-issued access stop behavior can be constrained by provider token lifetime, revocation, introspection, and session behavior (`FR-016`; [RFC 7009](https://www.rfc-editor.org/rfc/rfc7009), [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662)).
 
 ### Option C - Self-Hosted Identity Platform plus Project-Specific Access-Control Layer
@@ -233,7 +233,7 @@ This option is intentionally a complexity benchmark for the current scope. Micro
 | `TS-005` access continues after lifecycle or role change | E is clearest for comparing introspection, authorization lookup, and JWT staleness; D can PoC both token formats. | B and C depend on provider/product token and session behavior; A still needs an explicit protected-service contract. |
 | `TS-006` protected service trusts wrong signal | E is strongest because it centers the trust contract; A and D can be strong if service checks are local and testable. | JWT claims, IdP groups, mutable email, or frontend state must not become decisive authorization facts. |
 | `TS-007` onboarding takeover | A, B, C, and D can fit if onboarding matching and subject-link creation remain local and audited. | Managed or self-hosted product invitations must be verified against the local invited account rules, not accepted as automatic authorization. |
-| `TS-008` IdP claim override | A and D have the most local control; B and C need strongest candidate-evaluation checks. | Provider/product roles may be useful for login UX or app assignment but cannot override local access-control state. |
+| `TS-008` IdP claim override | A and D have the most local control; B and C need strongest solution-choice checks. | Provider/product roles may be useful for login UX or app assignment but cannot override local access-control state. |
 | `TS-009` weak privileged authentication | B and C may provide mature MFA/passwordless features; A and D need delegated evidence or custom integration. | The architecture still needs a machine-readable way to prove privileged-authentication satisfaction during onboarding. |
 | `TS-010` token/session replay | BFF-style A/B/C/E variants can reduce browser token exposure; E clarifies resource-server validation. | Bearer tokens in browser-readable storage, logs, URLs, traces, or exports remain high risk. |
 | `TS-011` audit gap or tampering | A and D give the clearest single local audit path; E can be strong with correlation IDs. | B and C must reconcile provider/product audit with local append-only audit requirements. |
@@ -243,7 +243,7 @@ This option is intentionally a complexity benchmark for the current scope. Micro
 
 ## PoC and Evaluation Implications
 
-No PoC is started by this document. If the user later asks for a non-production PoC, the highest-value PoC questions are architecture-neutral and can be tested without choosing a final vendor or product ([Project governance](../../PROJECT-GOVERNANCE.md#phase-4---evidence-based-candidate-evaluation)).
+No PoC is started by this document. If the user later asks for a non-production PoC, the highest-value PoC questions are architecture-neutral and can be tested without choosing a final vendor or product ([Project governance](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)).
 
 | Evaluation question | Why it matters | Candidate options to exercise |
 | --- | --- | --- |
@@ -278,9 +278,9 @@ This review checks whether the document is fit for Phase 2 architecture-option d
 | Addresses threat-model pressure | Pass | The review maps options against all current threat scenarios `TS-001` through `TS-014`. |
 | Uses inline citations near material claims | Pass | Project claims cite project artifacts; protocol/security claims cite official specifications or official security guidance. |
 | Avoids implementation artifacts | Pass | No code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files are introduced. |
-| Remaining review gaps | Open | Access-stop delay, protected-service contract, privileged-authentication evidence, audit schema/integrity, BFF/browser strategy, and operational artifacts still need stakeholder or candidate-evaluation input. |
+| Remaining review gaps | Open | Access-stop delay, protected-service contract, privileged-authentication evidence, audit schema/integrity, BFF/browser strategy, and operational artifacts still need stakeholder or solution-choice input. |
 
-Review outcome: this document is ready for stakeholder and architecture review as an option-framing artifact. The main follow-up is to convert the open questions into evaluation criteria before cataloging named products or running a PoC.
+Review outcome: this document is ready for stakeholder and architecture review as an option-framing artifact. The main follow-up is to convert the open questions into solution-choice criteria before choosing a solution or running a PoC.
 
 ## References
 

@@ -19,7 +19,7 @@ IAM failures often happen at ownership boundaries:
 - a policy engine returns decisions, but no team owns policy tests or policy deployment;
 - audit logs exist, but they do not record enough context to answer who changed access and why.
 
-A responsibility model makes these boundaries explicit before implementation or candidate evaluation.
+A responsibility model makes these boundaries explicit before implementation or solution-choice evaluation.
 
 ## Responsibility matrix
 
