@@ -11,21 +11,22 @@ Read this file before modifying the repository. Then use:
 
 ## Current Operating Phase
 
-The current phase is `Phase 3 - Solution Choice`.
+The current phase is `Phase 4 - Proof of Concept`.
 
-Default Phase 3 work: focused comparison of realistic solution options against the immutable feature specification, consolidated feature requirements, threat model, operational constraints, simplicity goal, and source-backed product or standards evidence; assumption and open-question tracking; solution-choice rationale; candidate PoC scope preparation; and Markdown study artifacts.
+Default Phase 4 work: validate the accepted Keycloak candidate through a tight non-production PoC scope; execute or refine the smallest useful validation scenarios; record results, failures, surprises, residual risks, and review inputs; and keep the work traceable to the immutable feature specification, accepted solution choice, threat model, and Keycloak validation plan.
 
-Phase 3 boundaries:
+Phase 4 boundaries:
 
-- create or edit Markdown study artifacts under top-level `docs/evaluation/` by default;
-- create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/poc/` artifacts when needed to support solution-choice traceability, risk handling, architecture evidence, or non-production PoC planning;
+- create or edit PoC planning, execution, evidence, and result artifacts under top-level `docs/poc/` by default;
+- create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/evaluation/` artifacts when needed to clarify PoC scope, validation evidence, residual risk, or review inputs;
+- create temporary non-production PoC artifacts only within the agreed Keycloak validation scope;
 - create or edit the root `FEATURE-REQUIREMENTS.md` only when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
 - keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
-- do not treat the Phase 3 solution choice as production approval;
-- do not start implementation work unless the user explicitly scopes it as a non-production Proof of Concept or moves the project into Phase 6 production MVP implementation;
-- do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase, asks for a Proof of Concept, or moves the project into Phase 6 production MVP implementation;
-- do not expand into a broad market survey when the existing shortlist is enough to decide.
+- do not treat the Phase 3 solution choice or Phase 4 PoC evidence as production approval;
+- do not let a PoC become a hidden MVP;
+- do not add production application code, production dependencies, package managers, production Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly moves the project into Phase 6 production MVP implementation;
+- do not promote temporary PoC artifacts into durable application code without an explicit Phase 5 review decision and explicit Phase 6 movement.
 
 ## Instruction Priority
 
@@ -84,7 +85,7 @@ Non-index project study documents outside `docs/decisions/` should start with a 
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 3 - Solution Choice
+Phase: Phase 4 - Proof of Concept
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```

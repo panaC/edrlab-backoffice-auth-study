@@ -109,9 +109,9 @@ Out of scope for the initial specification:
 
 ## Open Study Questions
 
-These topics remain open for Phase 3 or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
+These topics remain open for Phase 4 or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
 
-- Solution shape: simple internal authentication, SSO integration, IAM control plane, managed provider, self-hosted product, minimal internal build, or hybrid approach.
+- Solution validation: self-hosted Keycloak with local access control has been selected for validation in [ADR 0001](./docs/decisions/0001-choose-keycloak-for-validation.md); production adoption remains open until PoC evidence and review.
 - Privileged account protection: MFA, step-up authentication, passwordless login, hardware-backed authenticators, fallback authenticators, super-admin provisioning, super-admin recovery, and break-glass.
 - Access evidence and revocation: acceptable access lifetime, refresh behavior, revocation delay, token or session strategy, validation model, and browser storage.
 - Audit and operations: audit retention, privacy, export, compliance expectations, backup, recovery, restore testing, upgrades, and operational ownership.

@@ -18,7 +18,7 @@ Last reviewed: 2026-06-05
 - [Keycloak Web Admin Boundary](#keycloak-web-admin-boundary)
 - [Decision Gate](#decision-gate)
 - [Conditions and Open Evidence](#conditions-and-open-evidence)
-- [Next Phase 3 Work](#next-phase-3-work)
+- [Phase 3 Closure](#phase-3-closure)
 - [References](#references)
 
 ## Purpose
@@ -167,15 +167,18 @@ The Phase 3 output should be a candidate solution choice for validation, not a p
 
 These are now validation conditions for the Keycloak candidate, not blockers to recording the Phase 3 solution choice.
 
-## Next Phase 3 Work
+## Phase 3 Closure
 
-| Step | Output | Why this is next |
+Phase 3 is closed on 2026-06-05 by explicit user request. The project moves to Phase 4 - Proof of Concept with Keycloak as the validation candidate. This closure does not approve production adoption, production infrastructure, or durable implementation work; Phase 4 is limited to targeted non-production validation and evidence collection ([Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), [Project governance - Phase 5](../../PROJECT-GOVERNANCE.md#phase-5---review-and-decision), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+
+| Closure item | Status | Evidence |
 | --- | --- | --- |
-| Define Keycloak validation scope | A Phase 4-ready PoC question set or a review checklist if no PoC is needed. | The solution choice is now made; the next useful work is to decide what must be validated before review. |
-| Define the protected-service authorization contract | Candidate contract such as local authorization-check API, local introspection, BFF-mediated session, or short-lived token plus local lookup. | This is the main cross-candidate integration point for `FR-020`, `FR-021`, and `FR-016`, and it remains open for the Keycloak candidate. |
-| Verify Keycloak privileged-authentication evidence shape | A documented Keycloak claim, authentication context, event, or local rule that can satisfy `FR-043` for admin/super-admin onboarding. | `FR-043` requires evidence for production admin and super-admin onboarding, not just a general MFA feature. |
-| Define Keycloak operational evidence | Backup, restore, upgrade, event retention, realm configuration, key rotation, and support/export review items. | Self-hosting makes these operational controls part of the validation burden under `FR-030` and `TS-013`. |
-| Prepare the Phase 4 transition if validation needs runtime evidence | A tight non-production PoC plan under `docs/poc/`. | Phase 4 can validate Keycloak behavior that documentation alone cannot settle without turning the PoC into an MVP. |
+| Candidate solution selected | Complete | Self-hosted Keycloak with a local EDRLab access-control service is selected for validation ([ADR 0001](../decisions/0001-choose-keycloak-for-validation.md)). |
+| Local authorization boundary recorded | Complete | Local access-control remains authoritative for account type, lifecycle, subject links, service-access roles, protected-service decisions, and project audit (`FR-001`, `FR-002`, `FR-020`, `FR-027`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| Keycloak Web Admin boundary recorded | Complete | Keycloak Web Admin is accepted for realm administration and inspection only, not as the EDRLab business Access Control Manager ([Keycloak Web Admin Boundary](#keycloak-web-admin-boundary)). |
+| Phase 4 validation scope prepared | Complete | The accepted entry plan defines validation objectives, scenarios, success criteria, non-production limits, proposed work packages, and an evidence-record template ([Keycloak validation plan](../poc/keycloak-validation-plan.md)). |
+| Remaining uncertainty moved to validation | Complete | Access-stop delay, privileged-authentication evidence, protected-service authorization contract, audit correlation, and self-hosted operations remain Phase 4 validation conditions rather than Phase 3 blockers ([Keycloak validation plan - Validation Objectives](../poc/keycloak-validation-plan.md#validation-objectives)). |
+| Production approval | Not granted | Production adoption remains a later review and implementation decision after PoC evidence ([Project governance - Phase 5](../../PROJECT-GOVERNANCE.md#phase-5---review-and-decision), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)). |
 
 ## References
 

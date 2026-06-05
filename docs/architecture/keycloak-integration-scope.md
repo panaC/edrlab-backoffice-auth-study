@@ -1,7 +1,7 @@
 # Keycloak Integration Scope
 
-Status: Draft
-Phase: Phase 3 - Solution Choice
+Status: Review
+Phase: Phase 4 - Proof of Concept
 Scope: Architecture
 Last reviewed: 2026-06-05
 
@@ -13,12 +13,16 @@ Last reviewed: 2026-06-05
 - [Configuration Block](#configuration-block)
 - [SSO Session Flow](#sso-session-flow)
 - [User Session Management Boundary](#user-session-management-boundary)
+- [Validated Browser Pattern](#validated-browser-pattern)
+- [Validated Access-Stop Delay](#validated-access-stop-delay)
+- [Validated Privileged-Authentication Evidence Approach](#validated-privileged-authentication-evidence-approach)
+- [Validated Session Administration Boundary](#validated-session-administration-boundary)
 - [Validation Questions](#validation-questions)
 - [References](#references)
 
 ## Purpose
 
-This document explains the concrete split between what EDRLab should develop locally and what should be configured in Keycloak for the accepted Phase 3 candidate. It also records the expected SSO session behavior for the future validation work. It is an architecture study artifact, not implementation approval, production deployment approval, or a Phase 4 PoC execution artifact ([Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), [ADR 0001](../decisions/0001-choose-keycloak-for-validation.md)).
+This document explains the concrete split between what EDRLab should develop locally and what should be configured in Keycloak for the accepted Keycloak candidate. It also records the expected SSO session behavior for Phase 4 validation. It is an architecture study artifact, not implementation approval or production deployment approval ([Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), [ADR 0001](../decisions/0001-choose-keycloak-for-validation.md)).
 
 The accepted candidate is self-hosted Keycloak plus local EDRLab access-control. Keycloak provides authentication, OIDC/OAuth2 runtime behavior, SSO session behavior, realm administration, and provider-side evidence. The local EDRLab access-control capability remains authoritative for account type, lifecycle, subject link, service-access roles, protected-service authorization, and project audit (`FR-001`, `FR-002`, `FR-020`, `FR-027`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Solution choice](../evaluation/solution-choice.md#selected-candidate)).
 
@@ -96,14 +100,63 @@ EDRLab does not need to build a full user-session-management UI for the initial 
 
 If a future requirement asks EDRLab administrators to view or terminate Keycloak SSO sessions from the EDRLab Access Control Manager, that should be treated as a later integration feature using Keycloak Admin REST APIs, not as a replacement for the local access-control model ([Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html), [Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary)).
 
+## Validated Browser Pattern
+
+`OQ-KIS-001` is closed for Phase 4 validation. The first browser pattern to validate is a BFF or server-side local application session, accepted by user direction on 2026-06-05. This is a Phase 4 validation choice, not a final production architecture decision ([Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)).
+
+The accepted validation flow is:
+
+1. The browser uses the EDRLab backoffice entry point.
+2. The backoffice backend starts the OIDC Authorization Code flow with Keycloak.
+3. Keycloak authenticates the user and maintains the Keycloak SSO session.
+4. The backoffice backend exchanges the authorization code for tokens and validates issuer, audience, signature, and expiry using Keycloak metadata and keys.
+5. The backoffice backend resolves the Keycloak `sub` to exactly one local account.
+6. The local access-control service checks lifecycle, account type, service-access roles, and fail-closed rules.
+7. The backoffice backend creates a local application session only after local resolution and authorization.
+8. The browser stores only the local session cookie for the backoffice validation path; Keycloak tokens remain server-side.
+9. Protected backend access is decided through the local access-control contract, not from Keycloak roles, groups, or token claims.
+
+This choice keeps browser token exposure small and keeps authorization server-side. It also makes local logout, local session expiry, CSRF protection, and cookie hardening explicit EDRLab responsibilities for the validation slice, while Keycloak remains responsible for SSO authentication, Keycloak session behavior, and OIDC endpoints ([Web sessions, cookies, and BFF pattern](../wiki/24-web-sessions-cookies-and-bff.md), [Keycloak OIDC endpoints](https://www.keycloak.org/securing-apps/oidc-layers), [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)).
+
+Direct OIDC client behavior in the browser remains a deferred alternative. It is not selected first because it would move token-handling concerns into the browser validation path and make the authorization boundary harder to review for this internal backoffice use case ([Web sessions, cookies, and BFF pattern](../wiki/24-web-sessions-cookies-and-bff.md), `FR-020`, `FR-021`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+
+## Validated Access-Stop Delay
+
+`OQ-KIS-002` is closed for Phase 4 validation. The accepted access-stop target is immediate server-side denial on the next fresh protected-service authorization check after a relevant local state change. This is a Phase 4 validation target, not a production cache, token, or session architecture decision ([Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)).
+
+For the PoC, "immediate" means:
+
+- when a local account is disabled or archived, a member service-access role is removed, or a service-access role is disabled or archived, the local access-control state changes first;
+- the next protected-service request that checks current local state through the selected authorization contract must deny access;
+- no positive authorization cache is allowed in the protected service, BFF, or local application session for the validation path;
+- a still-active Keycloak SSO session or still-valid Keycloak token must not grant EDRLab protected-service access by itself;
+- if the local access-control service cannot answer, protected-service access fails closed;
+- requests that were already in-flight before the local state change should be recorded as a PoC observation, not used as evidence that the access-stop target passed or failed.
+
+This target keeps `FR-016` measurable while preserving the accepted authentication/authorization split. Keycloak session and token timeout settings remain relevant configuration evidence, but they do not replace the local authorization check for stopping business access after local lifecycle or role changes ([Keycloak session and token timeouts](https://www.keycloak.org/docs/latest/server_admin/#session-and-token-timeouts), `FR-016`, `FR-020`, `FR-021`, `FR-032`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+
+The production review may later accept a short positive cache or a different token/session strategy only if the delay, failure mode, audit impact, and protected-service risk are explicitly documented. That later decision belongs to Phase 5 review or Phase 6 implementation scope, not to this Phase 4 validation target ([Project governance - Phase 5](../../PROJECT-GOVERNANCE.md#phase-5---review-and-decision), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+
+## Validated Privileged-Authentication Evidence Approach
+
+`OQ-KIS-003` is closed for Phase 4 validation. The first evidence path to validate is a Keycloak OIDC `amr` claim populated from authenticator reference values in the configured authentication flow. If that is not explicit enough for the EDRLab onboarding rule, the PoC may use clear Keycloak event/configured-flow evidence. If neither is explicit enough, production `admin` and `super-admin` activation must be recorded as blocked for review rather than accepted by assumption.
+
+This is a validation approach, not a guarantee that Keycloak will emit the exact evidence in the required shape. Keycloak documents authenticator reference values and an Authentication Method Reference protocol mapper for OIDC tokens; Keycloak also documents WebAuthn/passwordless/two-factor authentication flow configuration ([Keycloak authentication flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows), [Keycloak WebAuthn](https://www.keycloak.org/docs/latest/server_admin/#_webauthn), [RFC 8176](https://www.rfc-editor.org/rfc/rfc8176), `FR-034`, `FR-043`, `FR-044`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+
+## Validated Session Administration Boundary
+
+`OQ-KIS-004` is closed for Phase 4 validation. The EDRLab Access Control Manager should expose no Keycloak SSO-session administration action in the first runtime PoC. The PoC may use Keycloak Web Admin or Keycloak Admin REST evidence for Keycloak-side session inspection, sign-out, revocation, and realm administration, but that remains Keycloak technical administration and does not replace local access-control management.
+
+The EDRLab validation slice owns only local application session creation, expiration, logout, audit correlation, and fail-closed authorization. Adding an EDRLab UI action to view or terminate Keycloak SSO sessions is deferred until a later requirement justifies it, because Keycloak already documents user-session viewing, sign-out, revocation, and session/token timeout controls ([Keycloak managing user sessions](https://www.keycloak.org/docs/latest/server_admin/#managing-user-sessions), [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html), `FR-030`).
+
 ## Validation Questions
 
 | ID | Question | Why it matters |
 | --- | --- | --- |
-| OQ-KIS-001 | Which browser pattern is selected first: BFF/server-side session, direct OIDC client, or another mediated pattern? | It determines token exposure, cookie handling, CSRF controls, logout behavior, and local session storage ([Web sessions, cookies, and BFF pattern](../wiki/24-web-sessions-cookies-and-bff.md)). |
-| OQ-KIS-002 | What is the accepted access-stop delay after local lifecycle or role changes? | Keycloak session/token settings and local authorization cache behavior must be designed around `FR-016` ([Keycloak session and token timeouts](https://www.keycloak.org/docs/latest/server_admin/#session-and-token-timeouts), `FR-016`). |
-| OQ-KIS-003 | What exact Keycloak evidence proves privileged authentication for admin and super-admin activation? | `FR-043` and `FR-044` require the local onboarding flow to accept or reject privileged activation based on explicit evidence, not only a generic successful login. |
-| OQ-KIS-004 | Which Keycloak session actions, if any, should the EDRLab UI expose later? | Keycloak already provides session administration. Building a local session-management UI adds scope and should be justified by a concrete operations need ([Keycloak managing user sessions](https://www.keycloak.org/docs/latest/server_admin/#managing-user-sessions), `FR-030`). |
+| OQ-KIS-001 | Closed for Phase 4: validate BFF/server-side local application session first. | This determines token exposure, cookie handling, CSRF controls, logout behavior, and local session storage for the validation slice ([Validated Browser Pattern](#validated-browser-pattern)). |
+| OQ-KIS-002 | Closed for Phase 4: immediate denial on the next fresh protected-service authorization check after local lifecycle or role changes. | This sets the PoC target for `FR-016`: current local state is decisive, no positive authorization cache is used, and Keycloak SSO/token validity does not grant business access ([Validated Access-Stop Delay](#validated-access-stop-delay)). |
+| OQ-KIS-003 | Closed for Phase 4: validate Keycloak `amr` first, then explicit event/configured-flow evidence, otherwise block privileged activation. | This gives the PoC a concrete evidence path while preserving the rule that production privileged activation must not be accepted on generic login alone ([Validated Privileged-Authentication Evidence Approach](#validated-privileged-authentication-evidence-approach)). |
+| OQ-KIS-004 | Closed for Phase 4: expose no Keycloak SSO-session administration action in the EDRLab UI. | Keycloak-side session inspection or revocation remains technical Keycloak administration during the PoC; local UI scope stays limited to local session behavior and local authorization ([Validated Session Administration Boundary](#validated-session-administration-boundary)). |
 
 ## References
 
@@ -116,8 +169,11 @@ If a future requirement asks EDRLab administrators to view or terminate Keycloak
 - [Web Sessions, Cookies, and BFF Pattern](../wiki/24-web-sessions-cookies-and-bff.md)
 - [Project Governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice)
 - [Project Governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)
+- [Project Governance - Phase 5](../../PROJECT-GOVERNANCE.md#phase-5---review-and-decision)
+- [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)
 - [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
 - [Keycloak OIDC Endpoints and Grant Types](https://www.keycloak.org/securing-apps/oidc-layers)
+- [Keycloak Authentication Flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows)
 - [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)
 - [Keycloak Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#session-and-token-timeouts)
 - [Keycloak Managing User Sessions](https://www.keycloak.org/docs/latest/server_admin/#managing-user-sessions)
@@ -127,5 +183,6 @@ If a future requirement asks EDRLab administrators to view or terminate Keycloak
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
 - [RFC 7662 - OAuth 2.0 Token Introspection](https://www.rfc-editor.org/rfc/rfc7662)
+- [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176)
 - [RFC 9700 - Best Current Practice for OAuth 2.0 Security](https://www.rfc-editor.org/rfc/rfc9700)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
