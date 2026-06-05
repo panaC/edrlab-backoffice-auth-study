@@ -59,7 +59,7 @@ Out of scope until explicit approval:
 
 | Work package | Runtime or document | Goal | Evidence |
 | --- | --- | --- | --- |
-| `WP-001` Keycloak setup | Runtime | Configure the throwaway realm, backoffice OIDC client, redirect URI, Authorization Code flow, test authentication flow, session/token settings, and event settings. | Realm/client notes, discovery endpoint values, selected timeout settings, event settings. |
+| `WP-001` Keycloak setup | Runtime | Configure the throwaway realm, backoffice OIDC client, redirect URI, Authorization Code flow, test authentication flow, session/token settings, and event settings. | Realm/client notes, discovery endpoint values, selected timeout settings, event settings; execute the [Keycloak PoC runtime](../../poc/keycloak/README.md) and use the [Keycloak setup runbook](./keycloak-setup-runbook.md) for evidence review. |
 | `WP-002` Login and SSO boundary | Runtime | Prove Keycloak authenticates and maintains SSO while EDRLab resolves the Keycloak `sub` and owns local authorization. | Login trace, token-validation notes, `sub`, local account resolution, local session decision, logout notes. |
 | `WP-003` Safe and unsafe onboarding | Runtime | Validate activation for exactly one safe invited local account and fail-closed behavior for unsafe matches. | Safe activation record; denied cases for no invitation, duplicate invitation, unverified email, and pre-linked subject (`FR-039`, `FR-043`, `FR-044`). |
 | `WP-004` Privileged-authentication evidence | Runtime | Determine whether `admin` and `super-admin` activation can rely on explicit Keycloak `amr`, event, or configured-flow evidence. | Candidate `amr` claim, event/configuration evidence, or blocker. |

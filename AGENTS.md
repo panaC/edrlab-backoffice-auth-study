@@ -15,11 +15,24 @@ The current phase is `Phase 4 - Proof of Concept`.
 
 Default Phase 4 work: validate the accepted Keycloak candidate through a tight non-production PoC scope; execute or refine the smallest useful validation scenarios; record results, failures, surprises, residual risks, and review inputs; and keep the work traceable to the immutable feature specification, accepted solution choice, threat model, and Keycloak validation plan.
 
+User runtime environment:
+
+- The user works on Linux. Project runbooks, PoC commands, shell examples, and runtime instructions must target Linux shell usage by default.
+- Avoid Windows-specific or PowerShell examples in project documentation unless the user explicitly asks for them or the example is clearly marked as host-specific.
+- Every runtime PoC must be accompanied by a Docker-based runtime definition. Prefer `compose.yaml` or `docker-compose.yml` for multi-container/runtime orchestration, and add a `Dockerfile` only when a custom image is required.
+- Every runtime PoC must be fully scripted and documented. A reviewer should be able to run it from a clean checkout on Linux using documented commands, without relying on hidden manual console steps.
+- Runtime PoC scripts should cover bootstrap/setup, start, verification, evidence collection, stop, and reset/cleanup when those actions are applicable.
+- Manual UI or console actions are acceptable only for inspection or exploratory evidence. If a core setup or validation step cannot be scripted, mark the scenario as blocked or partially manual, document why, and record the residual risk.
+- Runtime PoC documentation must include prerequisites, environment variables, exact run commands, expected outputs, evidence produced, known shortcuts, stop/reset commands, and non-production limitations.
+- PoC Docker runtime artifacts must stay non-production, clearly named as PoC-only, scoped to the active validation question, and separated from production deployment or infrastructure artifacts.
+
 Phase 4 boundaries:
 
 - create or edit PoC planning, execution, evidence, and result artifacts under top-level `docs/poc/` by default;
 - create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/evaluation/` artifacts when needed to clarify PoC scope, validation evidence, residual risk, or review inputs;
 - create temporary non-production PoC artifacts only within the agreed Keycloak validation scope;
+- create or edit PoC-only Docker runtime artifacts when needed to execute a runtime PoC, keeping them in a clearly named PoC workspace and out of production application, deployment, or infrastructure paths;
+- create or edit PoC-only scripts, environment templates, fixtures, and local README/runbook files when needed to make a runtime PoC reproducible and reviewable;
 - create or edit the root `FEATURE-REQUIREMENTS.md` only when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
 - keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
@@ -186,6 +199,9 @@ Before finishing, verify the result rather than restating the workflow:
 - confirm facts align with `README.md`, `PROJECT-GOVERNANCE.md`, and this file;
 - confirm the immutable feature specification was not changed unless explicitly requested;
 - confirm no forbidden implementation files or unnecessary dependencies were added;
+- confirm runtime PoC work includes a Linux-targeted Docker runtime definition, or explicitly records why no runtime PoC was created in that change;
+- confirm runtime PoC work is fully scripted and documented, or explicitly records any unscripted step as a blocker, partial-manual limitation, or residual risk;
+- confirm PoC Docker artifacts are non-production, clearly scoped, and separated from production deployment or infrastructure artifacts;
 - confirm no solution or production recommendation was made unless explicitly requested;
 - confirm meaningful project history was recorded in `CHANGELOG.md` when required;
 - confirm edited `docs/` or `docs/wiki/` pages follow the citation rules: inline citations near claims and useful `References` sections for non-index pages;

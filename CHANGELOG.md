@@ -12,6 +12,10 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/decisions/0001-choose-keycloak-for-validation.md` to record the accepted Phase 3 solution choice.
 - Added `docs/poc/keycloak-validation-plan.md` to define the Keycloak validation objectives, scenarios, success criteria, non-production limits, and Phase 4 readiness gate.
 - Added `docs/architecture/keycloak-integration-scope.md` to document the EDRLab development block, Keycloak configuration block, SSO session flow, and user-session-management boundary for the accepted Keycloak candidate.
+- Added `poc/keycloak/` as the executable Linux/Docker Keycloak PoC runtime for `WP-001`, including Compose runtime, environment template, start/bootstrap/verify/evidence/stop/reset scripts, and local runtime documentation.
+- Added `docs/poc/keycloak-wp001-result.md` to record the Docker-verified `WP-001` result, generated evidence location, and limitations.
+- Restored `jq` as the JSON tooling dependency for the Keycloak PoC scripts after user direction, keeping JSON construction, parsing, validation, and evidence formatting explicit.
+- Retested the scripted Keycloak `WP-001` Docker PoC with `jq`, refreshed the local generated evidence, and updated the result note with the latest evidence path.
 
 ### Changed
 
@@ -30,6 +34,10 @@ This repository is a study repository, not a released software package. Changelo
 - Closed the remaining `Open Questions Before Runtime PoC` entries by selecting local `authorization/check`, a Keycloak `amr`-first privileged-authentication evidence path, a minimum audit correlation schema, a self-hosted operations review list, a documentation/runtime validation split, and a Keycloak Web Admin allow/deny boundary.
 - Closed `OQ-KIS-003` and `OQ-KIS-004` for Phase 4 by documenting the privileged-authentication evidence approach and deferring EDRLab UI exposure of Keycloak SSO-session administration actions.
 - Compressed and finalized `docs/poc/keycloak-validation-plan.md` around accepted validation decisions, runtime scope, work packages, evidence records, and readiness gates.
+- Aligned the Phase 3 closure summary with the finalized Keycloak validation plan sections.
+- Added `docs/poc/keycloak-setup-runbook.md` as the `WP-001` execution runbook for the first non-production Keycloak setup pass.
+- Updated `AGENTS.md` so project runbooks and PoC instructions target Linux by default and every runtime PoC includes a Docker-based runtime definition; aligned the Keycloak setup runbook with that rule.
+- Updated `AGENTS.md` and the Keycloak setup runbook so every runtime PoC must be fully scripted, documented, reproducible from a clean Linux checkout, and explicit about any unscripted blocker or residual manual step.
 - Simplified the project roadmap from seven study phases plus optional MVP to five study phases plus `Phase 6 - Production MVP`, preserving conceptual foundation and requirements/risk framing before solution choice, Proof of Concept, and review/decision.
 - Updated `PROJECT-GOVERNANCE.md`, `README.md`, `AGENTS.md`, `docs/README.md`, and `ABSTRACT.md` to align phase names, boundaries, and documentation routing with the simplified governance model.
 - Replaced the optional non-production MVP phase with `Phase 6 - Production MVP`, keeping the explicit rule that implementation starts only when the user moves the project into that phase.

@@ -1,0 +1,18 @@
+name: edrlab-keycloak-poc
+
+services:
+  keycloak:
+    image: ${KEYCLOAK_IMAGE}
+    command: start-dev
+    ports:
+      - "${KEYCLOAK_HOST_BIND:-127.0.0.1}:${KEYCLOAK_PORT:-8080}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "false"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+
+volumes:
+  keycloak-data:

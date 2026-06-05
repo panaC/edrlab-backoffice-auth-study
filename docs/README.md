@@ -35,6 +35,8 @@ This directory contains the project-facing study documents for the internal back
 | [Concrete technical solution candidates](./evaluation/technical-solutions.md) | Three concrete candidate solution shapes for satisfying the feature requirements: Auth0 managed login plus local access-control, self-hosted Keycloak plus local access-control, and a Spring-based local IAM control plane. |
 | [Solution choice](./evaluation/solution-choice.md) | Accepted Phase 3 artifact recording self-hosted Keycloak plus local access-control as the candidate solution to validate. |
 | [Keycloak validation plan](./poc/keycloak-validation-plan.md) | Accepted Phase 4 entry plan for the tight non-production Keycloak validation. |
+| [Keycloak setup runbook](./poc/keycloak-setup-runbook.md) | Review-state Phase 4 runbook for executing `WP-001`: throwaway realm, backoffice OIDC client, test users, event settings, discovery evidence, and the executable runtime under [`poc/keycloak`](../poc/keycloak/README.md). |
+| [Keycloak WP-001 result](./poc/keycloak-wp001-result.md) | Review-state Phase 4 result note recording the Docker execution, scripted bootstrap, verification checks, evidence location, and limitations for `WP-001`. |
 | [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Accepted decision record for the Phase 3 Keycloak validation candidate. |
 
 ## Reading Path
