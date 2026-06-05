@@ -15,6 +15,7 @@ Last reviewed: 2026-06-05
 - [Comparison Pass 1](#comparison-pass-1)
 - [Selected Candidate](#selected-candidate)
 - [Why Keep Access-Control Local](#why-keep-access-control-local)
+- [Keycloak Web Admin Boundary](#keycloak-web-admin-boundary)
 - [Decision Gate](#decision-gate)
 - [Conditions and Open Evidence](#conditions-and-open-evidence)
 - [Next Phase 3 Work](#next-phase-3-work)
@@ -34,6 +35,7 @@ The existing three-candidate shortlist was used as the decision set. The governa
 | [FEATURE-REQUIREMENTS.md](../../FEATURE-REQUIREMENTS.md) | Provides the `FR-*` requirements that every candidate must satisfy before it can be chosen. |
 | [Threat model](../risks/threat-model.md) | Supplies the main risk pressures that the chosen candidate must answer, especially stale access, claim override, onboarding takeover, authorization bypass, audit gaps, unsafe failure modes, and operational bypass. |
 | [Architecture options](../architecture/options.md) | Provides architecture families and cross-option implications without making a final decision. |
+| [Keycloak integration scope](../architecture/keycloak-integration-scope.md) | Documents the concrete EDRLab development block, Keycloak configuration block, and SSO session flow for the accepted candidate. |
 | [Concrete technical solution candidates](./technical-solutions.md) | Provides the current shortlist and candidate-specific evaluation questions. |
 
 ## Shortlist
@@ -124,6 +126,24 @@ Keycloak can technically support much of that. Keycloak documents role mappings 
 
 Decision rule for the next validation step: use Keycloak for authentication, MFA/WebAuthn/OTP evidence, OIDC subject evidence, realm administration, sessions, and supporting events; keep EDRLab account type, lifecycle, service-access role catalog, member assignments, protected-service authorization decisions, and project audit records in the local access-control service.
 
+The concrete development/configuration split and the expected SSO session flow are documented in [Keycloak integration scope](../architecture/keycloak-integration-scope.md). That architecture note is the current reference for distinguishing EDRLab local development responsibilities from Keycloak realm configuration responsibilities.
+
+## Keycloak Web Admin Boundary
+
+The Keycloak Web Admin / Admin Console is accepted as a technical IAM administration surface for the Keycloak realm. It is not accepted as the EDRLab business access-control manager. Keycloak documents the Admin Console as the place to configure realms and perform most administrative tasks, and its feature list includes central management of users, roles, role mappings, clients, and configuration ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)). That makes it useful for operating Keycloak, not sufficient to replace the local access-control capability defined by `FR-001`, `FR-002`, `FR-020`, `FR-024`, `FR-027`, `FR-032`, `FR-036` through `FR-039`, `FR-043`, and `FR-044` ([Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+
+Keycloak also supports realm administration permissions, dedicated realm admin consoles, role mapping restrictions, and Admin REST API operations; however, these controls govern Keycloak resources and administration paths. The Keycloak documentation warns that server and realm administrators are not affected by the permissions configured for managing access to realm resources, so users with `admin` or `realm-admin` roles must still be reviewed to avoid privilege escalation ([Keycloak - managing access to realm resources](https://www.keycloak.org/docs/latest/server_admin/#managing-access-to-realm-resources), [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)). That is a useful operational control, but it does not encode the EDRLab account lifecycle and service-access invariants by itself.
+
+| Use of Keycloak Web Admin | Phase 3 decision | Why |
+| --- | --- | --- |
+| Configure the realm, OIDC clients, authentication flows, MFA/WebAuthn/OTP behavior, sessions, token settings, and provider-side events. | Accepted as Keycloak technical administration. | These are Keycloak responsibilities in the selected candidate, and Keycloak documents the Admin Console and Admin REST API for realm administration and configuration ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/), [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)). |
+| Create or adjust non-production Keycloak users during a validation exercise. | Accepted for PoC setup only, with no production users or production secrets. | The Phase 4 boundary allows non-production validation artifacts only; Keycloak user administration can support authentication testing, but local backoffice account state remains outside Keycloak ([Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), `FR-038`). |
+| Review Keycloak authentication, session, and admin events as supporting evidence. | Accepted as supplemental evidence. | Keycloak can record admin actions performed through the Admin Console because the console invokes the Keycloak REST interface, but local append-only audit remains required for the project event set (`FR-027`, `FR-035`; [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events)). |
+| Delegate limited realm administration to selected operators. | Allowed only for Keycloak administration, not for EDRLab business authorization. | Keycloak fine-grained admin permissions can restrict some realm administration actions, but Keycloak warns that server and realm administrators are outside those permissions; this must be treated as Keycloak operational governance, not as the project business access model ([Keycloak - managing access to realm resources](https://www.keycloak.org/docs/latest/server_admin/#managing-access-to-realm-resources)). |
+| Manage EDRLab `account_type`, lifecycle state, authenticated-subject link, service-access role catalog, member role assignments, protected-service decisions, or project audit truth. | Not accepted. | These are local access-control responsibilities under the accepted requirements and must not be overridden by IdP roles, groups, claims, or Keycloak administrative state (`FR-001`, `FR-002`, `FR-020`, `FR-027`, `FR-032`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+
+Practical rule: Keycloak Web Admin may manage the Keycloak realm. The EDRLab Access Control Manager must manage the EDRLab access-control domain. If a future implementation exposes a UI for local accounts, account lifecycle, service-access roles, protected-service checks, or audit review, that UI should call the local access-control API and enforce authorization server-side; it should not rely on frontend-only checks or direct manual role edits in Keycloak (`FR-020`, `FR-021`, `FR-024`, `FR-033`; [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)).
+
 ## Decision Gate
 
 The decision gate is satisfied for choosing a candidate to validate:
@@ -164,6 +184,7 @@ These are now validation conditions for the Keycloak candidate, not blockers to 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [Threat Model](../risks/threat-model.md)
 - [Architecture Options](../architecture/options.md)
+- [Keycloak Integration Scope](../architecture/keycloak-integration-scope.md)
 - [Concrete Technical Solution Candidates](./technical-solutions.md)
 - [Keycloak Validation Plan](../poc/keycloak-validation-plan.md)
 - [ADR 0001 - Choose Keycloak for Validation](../decisions/0001-choose-keycloak-for-validation.md)
@@ -175,6 +196,7 @@ These are now validation conditions for the Keycloak candidate, not blockers to 
 - [Auth0 - Logs](https://auth0.com/docs/deploy-monitor/logs)
 - [Auth0 - Manage Role-Based Access Control Roles](https://auth0.com/docs/manage-users/access-control/configure-core-rbac/roles)
 - [Keycloak - Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
+- [Keycloak - Managing Access to Realm Resources](https://www.keycloak.org/docs/latest/server_admin/#managing-access-to-realm-resources)
 - [Keycloak - Authorization Services](https://www.keycloak.org/docs/latest/authorization_services/)
 - [Keycloak - Server Developer Guide](https://www.keycloak.org/docs/latest/server_development/index.html)
 - [Keycloak - Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)

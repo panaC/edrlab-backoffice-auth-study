@@ -9,6 +9,7 @@ Last reviewed: 2026-06-05
 
 - [Purpose](#purpose)
 - [Decision Context](#decision-context)
+- [Development and Configuration Scope](#development-and-configuration-scope)
 - [Validation Objectives](#validation-objectives)
 - [Validation Scope](#validation-scope)
 - [Candidate Validation Scenarios](#candidate-validation-scenarios)
@@ -39,6 +40,16 @@ The local access-control service must remain authoritative for:
 | Service-access roles and protected-service decisions | Protected services must authorize server-side from active account state and account type or member service-access role rules. | `FR-002`, `FR-020`, `FR-021`, `FR-032`, `FR-033` ([Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)); [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html) |
 | Project audit records | Keycloak events may support authentication evidence, but project audit records must cover the `FR-027` event set and remain append-only under the initial policy. | `FR-027`, `FR-035` ([Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)); [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events) |
 
+## Development and Configuration Scope
+
+The validation plan uses [Keycloak integration scope](../architecture/keycloak-integration-scope.md) as the reference for the concrete split between:
+
+| Block | Validation interpretation | Source |
+| --- | --- | --- |
+| EDRLab development block | Local access-control domain model, onboarding and activation, local administration API, EDRLab Access Control Manager UI, protected-service authorization contract, local application session behavior, local audit, and logout integration. | [Keycloak integration scope - Development Block](../architecture/keycloak-integration-scope.md#development-block); `FR-020`, `FR-024`, `FR-027`, `FR-036` through `FR-039` |
+| Keycloak configuration block | Realm and client configuration, OIDC Authorization Code flow, authentication flows, MFA/WebAuthn/OTP behavior, session and token timeouts, JWK/discovery inputs, Keycloak user/session administration, events, and operational configuration evidence. | [Keycloak integration scope - Configuration Block](../architecture/keycloak-integration-scope.md#configuration-block); [Keycloak OIDC endpoints](https://www.keycloak.org/securing-apps/oidc-layers) |
+| SSO session flow | Keycloak manages SSO authentication/session behavior; EDRLab resolves the `sub` to a local account and performs local authorization before protected-service access. | [Keycloak integration scope - SSO Session Flow](../architecture/keycloak-integration-scope.md#sso-session-flow); [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html) |
+
 ## Validation Objectives
 
 | ID | Objective | Validation target | Evidence to collect |
@@ -50,6 +61,8 @@ The local access-control service must remain authoritative for:
 | KV-005 | Validate audit correlation | Correlate local account, role, onboarding, protected-service denial, and audit-read events with relevant Keycloak authentication or admin events where useful. | Minimum audit fields, correlation ID convention, Keycloak event types to retain, and local append-only audit responsibilities (`FR-027`, `FR-035`; [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events)). |
 | KV-006 | Validate self-hosted operational responsibilities | Identify evidence needed for realm configuration, import/export, backup/restore expectations, upgrade path, key rotation, event retention, and support/export access. | Operations checklist and residual risk list; Keycloak documents realm import/export and configuration sources, which are relevant inputs but not a complete operational plan ([Keycloak import/export](https://www.keycloak.org/server/importExport), [Keycloak configuration](https://www.keycloak.org/server/configuration), `FR-030`). |
 | KV-007 | Validate fail-closed dependency behavior | Define what happens when Keycloak, local access-control, protected-service authorization, audit sink, or session/token validation is unavailable. | Failure matrix showing deny behavior, audit handling, retry limits, and residual risks (`FR-021`, `FR-029`; [Threat model TS-012](../risks/threat-model.md#threat-scenarios)). |
+| KV-008 | Validate the Keycloak Web Admin boundary | Confirm that Keycloak Web Admin is used only for Keycloak realm administration and not as the EDRLab business access-control manager. | Boundary checklist showing accepted Keycloak Admin Console uses and rejected shortcuts for account type, lifecycle, subject-link, service-access role, authorization, and audit management ([Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary), `FR-038`). |
+| KV-009 | Validate the SSO session boundary | Confirm that Keycloak SSO session management is not treated as local business authorization and that local application session behavior, if used, is explicitly owned by EDRLab. | Flow notes showing OIDC Authorization Code flow, local `sub` resolution, local session creation or non-creation, logout behavior, and fail-closed access after local account changes ([Keycloak integration scope - SSO Session Flow](../architecture/keycloak-integration-scope.md#sso-session-flow), `FR-016`, `FR-020`, `FR-021`). |
 
 ## Validation Scope
 
@@ -60,6 +73,8 @@ In scope for validation planning:
 - one protected-service example for the first authorization contract, because `FR-020` and `FR-021` require server-side protected-service authorization and fail-closed denial;
 - Keycloak WebAuthn/OTP/passwordless evidence exploration for privileged onboarding (`FR-034`, `FR-043`; [Keycloak WebAuthn](https://www.keycloak.org/docs/latest/server_admin/#_webauthn));
 - Keycloak authentication/admin event review only as supporting evidence for local audit (`FR-027`, `FR-035`; [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events));
+- Keycloak Web Admin / Admin Console usage for non-production realm setup, authentication configuration, and provider-side inspection only; Keycloak documents this console for realm administration, while the accepted boundary keeps EDRLab access-control state local ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/), [Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary));
+- SSO session flow review: Keycloak owns the SSO session, while EDRLab owns local account resolution, local application session behavior if selected, and protected-service authorization ([Keycloak integration scope - User Session Management Boundary](../architecture/keycloak-integration-scope.md#user-session-management-boundary));
 - self-hosted operational review topics that can affect safety or maintainability at the expected scale (`FR-030`; [README - Project Goal](../../README.md#project-goal)).
 
 Out of scope until explicitly approved:
@@ -67,6 +82,7 @@ Out of scope until explicitly approved:
 - production Keycloak deployment, production hosting, production database, production high availability, or CI/deployment automation ([Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp));
 - application code, dependencies, Docker files, generated artifacts, migrations, or executable configuration in this Phase 3 planning step ([AGENTS](../../AGENTS.md#current-operating-phase));
 - using Keycloak roles, groups, organizations, or token claims as the authoritative EDRLab service-access-role or account-type model (`FR-002`, `FR-038`);
+- using the Keycloak Web Admin / Admin Console as the EDRLab business Access Control Manager for local account lifecycle, service-access role assignments, protected-service decisions, or project audit (`FR-020`, `FR-024`, `FR-027`, `FR-032`; [Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary));
 - replacing local project audit records with Keycloak event logs (`FR-027`, `FR-035`);
 - public customer identity, public signup, social login, or company-wide IAM replacement ([README - Initial Scope](../../README.md#initial-scope)).
 
@@ -82,6 +98,8 @@ Out of scope until explicitly approved:
 | KS-006: Access stop after local change | A local admin disables an account or removes a member service-access role. | Does protected-service access stop within the target delay? | Access stops within the accepted delay; any cache or session behavior is documented (`FR-016`, `FR-032`). |
 | KS-007: Audit correlation | Local account/role changes and Keycloak authentication/admin events occur in the same flow. | Can the review link local audit events with Keycloak supporting events without replacing local audit? | Local audit is complete and append-only; Keycloak events are supplemental and correlated where useful (`FR-027`, `FR-035`; [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events)). |
 | KS-008: Operational restore/import review | A realm configuration is exported and imported in a non-production review. | What operational evidence is needed so restore or migration does not break subject-link and audit invariants? | Import/export behavior is understood, but account state, subject links, service-access roles, and audit records remain local responsibilities ([Keycloak import/export](https://www.keycloak.org/server/importExport), `FR-014`, `FR-035`). |
+| KS-009: Admin Console boundary review | An operator uses Keycloak Web Admin to configure the realm or inspect users/events. | Can the team distinguish accepted Keycloak administration from rejected EDRLab access-control management shortcuts? | Realm setup and provider evidence are allowed; account type, lifecycle, subject-link, service-access role assignment, protected-service authorization, and project audit truth remain local ([Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary), `FR-038`). |
+| KS-010: SSO session flow review | A user logs in to the backoffice through Keycloak and receives a local application session if that pattern is selected. | Does the flow preserve the boundary between Keycloak SSO authentication and local EDRLab authorization? | Keycloak authenticates and maintains SSO state; EDRLab resolves the `sub`, checks local account state, creates or rejects local session state, and denies protected-service access when local state is inactive or unauthorized ([Keycloak integration scope - SSO Session Flow](../architecture/keycloak-integration-scope.md#sso-session-flow), `FR-036`, `FR-038`). |
 
 ## Success Criteria
 
@@ -94,6 +112,8 @@ Out of scope until explicitly approved:
 | KP-005 | Audit ownership clear | Local audit remains authoritative, Keycloak events are only supporting evidence, and minimum correlation fields are defined (`FR-027`, `FR-035`). |
 | KP-006 | Operational risks visible | Self-hosted Keycloak responsibilities are listed with evidence needed for backup, restore, upgrade, configuration, key rotation, event retention, support access, and outage behavior (`FR-030`; [Threat model TS-013](../risks/threat-model.md#threat-scenarios)). |
 | KP-007 | Phase 4 scope is tight | Any runtime validation can be performed with non-production data, one realm, representative accounts, one protected-service path, and no production deployment work ([Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)). |
+| KP-008 | Admin Console boundary clear | The validation notes identify what the Keycloak Admin Console may manage and explicitly reject using it as the EDRLab business Access Control Manager (`FR-024`, `FR-038`; [Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary)). |
+| KP-009 | SSO session boundary clear | The validation notes distinguish Keycloak SSO session behavior from local application session and local authorization behavior, including logout and account disablement effects ([Keycloak integration scope - User Session Management Boundary](../architecture/keycloak-integration-scope.md#user-session-management-boundary), `FR-016`). |
 
 ## Non-Production Limits
 
@@ -115,6 +135,8 @@ If the project moves into Phase 4, the PoC must stay inside these limits:
 | OQ-KV-004 | What is the minimum audit correlation schema? | Actor stable ID, local account ID, Keycloak subject, action, result, target, timestamp, correlation ID, and source context should be accepted or revised. |
 | OQ-KV-005 | Which self-hosted operations must be reviewed before Phase 5? | Backup, restore, realm import/export, upgrade, configuration drift, key rotation, event retention, support access, and outage behavior. |
 | OQ-KV-006 | Can documentation alone answer any objective? | If yes, mark it as documentation-validated and avoid runtime PoC work for that objective. |
+| OQ-KV-007 | Which Keycloak Web Admin actions are acceptable during validation? | A short allow/deny list separating Keycloak realm administration from EDRLab account, role, authorization, and audit management. |
+| OQ-KV-008 | Which local browser/session pattern should be validated first? | BFF/server-side session, direct OIDC client, or another pattern; the answer affects token exposure, logout, local session storage, and protected-service authorization. |
 
 ## Phase 4 Readiness Gate
 
@@ -133,6 +155,8 @@ If these conditions are not met, continue with documentation-level evaluation in
 - [ADR 0001 - Choose Keycloak for Validation](../decisions/0001-choose-keycloak-for-validation.md)
 - [Solution Choice](../evaluation/solution-choice.md)
 - [Solution Choice - Why Keep Access-Control Local](../evaluation/solution-choice.md#why-keep-access-control-local)
+- [Solution Choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary)
+- [Keycloak Integration Scope](../architecture/keycloak-integration-scope.md)
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [Threat Model](../risks/threat-model.md)
 - [Project Governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice)
@@ -142,6 +166,7 @@ If these conditions are not met, continue with documentation-level evaluation in
 - [README - Project Goal](../../README.md#project-goal)
 - [README - Initial Scope](../../README.md#initial-scope)
 - [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
+- [Keycloak - Managing Access to Realm Resources](https://www.keycloak.org/docs/latest/server_admin/#managing-access-to-realm-resources)
 - [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)
 - [Keycloak - Importing and Exporting Realms](https://www.keycloak.org/server/importExport)
 - [Keycloak - Configuring Keycloak](https://www.keycloak.org/server/configuration)

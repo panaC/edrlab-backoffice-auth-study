@@ -27,6 +27,7 @@ Choose self-hosted Keycloak with a local EDRLab access-control service as the Ph
 This decision means:
 
 - Keycloak is the candidate authentication product and OIDC/OAuth2 runtime to validate, not the source of truth for EDRLab account types, lifecycle state, service-access roles, or audit requirements ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/), `FR-038`).
+- The Keycloak Admin Console is accepted only as a Keycloak technical administration surface; it is not the EDRLab business Access Control Manager for account lifecycle, account types, service-access roles, protected-service decisions, or project audit truth ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/), `FR-001`, `FR-002`, `FR-020`, `FR-027`, `FR-032`, `FR-038`).
 - The local EDRLab access-control service remains authoritative for the project authorization model and must enforce protected-service authorization server-side (`FR-020`, `FR-021`, `FR-033`; [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)).
 - Keycloak roles, groups, claims, and admin features may support authentication, realm configuration, or provider-side evidence, but they must not replace the local account-type and service-access-role model (`FR-001`, `FR-002`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 - Keycloak events may supplement local audit evidence, but local append-only audit remains required for the project event set (`FR-027`, `FR-035`; [Keycloak events](https://www.keycloak.org/docs/latest/server_admin/#events)).
@@ -46,6 +47,14 @@ This is preferred over implementing the full access-control model inside the Key
 | Custom Keycloak providers would move business correctness into the IAM runtime. | Keycloak SPIs are useful extension points, but using custom providers for core EDRLab authorization would add packaging, deployment, upgrade, compatibility, and operational coupling to Keycloak. | [Keycloak Server Developer Guide](https://www.keycloak.org/docs/latest/server_development/index.html); `FR-030`; [Threat model TS-013](../risks/threat-model.md#threat-scenarios) |
 | Project audit remains broader than Keycloak event evidence. | Keycloak admin/authentication events can support correlation, but the local audit log must remain authoritative for account lifecycle, subject-link attempts, role changes, protected-service denials, audit reads/exports, and onboarding failures. | `FR-027`, `FR-028`, `FR-035`; [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events) |
 | The option avoids external third-party dependency without collapsing responsibilities. | Self-hosted Keycloak plus local access-control avoids a SaaS IdP while preserving a clean authentication/authorization boundary. | [Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice); [Solution choice - Why Keep Access-Control Local](../evaluation/solution-choice.md#why-keep-access-control-local) |
+
+## Admin Console Boundary
+
+The Keycloak Admin Console can be used to administer the Keycloak realm, including users, roles, role mappings, clients, authentication settings, sessions, and events, because those are documented Keycloak administration capabilities ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/), [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)). It must not be treated as the EDRLab business Access Control Manager.
+
+This boundary matters because the project access-control model has local invariants that are not just Keycloak realm administration tasks: fixed account types, member-only service-access role assignments, immutable subject links, lifecycle-dependent access, server-side protected-service decisions, and project-owned audit (`FR-001`, `FR-002`, `FR-016`, `FR-020`, `FR-027`, `FR-032`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)). Keycloak fine-grained realm administration can restrict some realm operations, but Keycloak warns that server and realm administrators are not affected by those permissions, so `admin` and `realm-admin` assignments still need explicit review to avoid privilege escalation ([Keycloak - managing access to realm resources](https://www.keycloak.org/docs/latest/server_admin/#managing-access-to-realm-resources)).
+
+Decision impact: future validation may use the Keycloak Admin Console to configure and inspect Keycloak. Future EDRLab account, lifecycle, service-access role, protected-service authorization, and audit management must remain in the local access-control capability unless a later architecture decision explicitly changes the boundary.
 
 ## Consequences
 
@@ -72,6 +81,7 @@ This ADR does not approve production adoption, production deployment, database c
 - [Project Governance - Phase 5](../../PROJECT-GOVERNANCE.md#phase-5---review-and-decision)
 - [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)
 - [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
+- [Keycloak - Managing Access to Realm Resources](https://www.keycloak.org/docs/latest/server_admin/#managing-access-to-realm-resources)
 - [Keycloak Authorization Services](https://www.keycloak.org/docs/latest/authorization_services/)
 - [Keycloak Server Developer Guide](https://www.keycloak.org/docs/latest/server_development/index.html)
 - [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)
