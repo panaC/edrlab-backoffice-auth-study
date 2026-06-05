@@ -14,6 +14,7 @@ Last reviewed: 2026-06-05
 - [Evidence Snapshot](#evidence-snapshot)
 - [Comparison Pass 1](#comparison-pass-1)
 - [Selected Candidate](#selected-candidate)
+- [Why Keep Access-Control Local](#why-keep-access-control-local)
 - [Decision Gate](#decision-gate)
 - [Conditions and Open Evidence](#conditions-and-open-evidence)
 - [Next Phase 3 Work](#next-phase-3-work)
@@ -103,6 +104,26 @@ Rationale:
 | The choice keeps the custom authorization model local. | The EDRLab feature model needs immutable account types, member-only service-access role assignments, local onboarding rules, protected-service authorization, and project-owned audit evidence. | `FR-001` through `FR-005`, `FR-027`, `FR-036` through `FR-044` ([Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)) |
 | The main risks are explicit enough for a focused validation path. | The self-hosted option concentrates the next work on operational ownership, role/claim separation, privileged-authentication evidence, event correlation, access-stop behavior, and backup/restore safety. | [Threat model TS-005, TS-008, TS-011, TS-012, and TS-013](../risks/threat-model.md#threat-scenarios) |
 
+## Why Keep Access-Control Local
+
+The selected option is self-hosted Keycloak plus a local EDRLab access-control service. It deliberately does not put the whole access-control domain inside the Keycloak realm through realm roles, groups, token claims, Authorization Services policies, or custom Keycloak providers.
+
+Keycloak can technically support much of that. Keycloak documents role mappings into tokens, fine-grained Authorization Services with resources, scopes, permissions, policies, PAP/PDP/PEP concepts, admin events, and SPIs for custom providers ([Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/), [Keycloak Authorization Services](https://www.keycloak.org/docs/latest/authorization_services/), [Keycloak Server Developer Guide](https://www.keycloak.org/docs/latest/server_development/index.html)). Those capabilities remain useful for authentication, evidence, realm administration, and validation. They are not selected as the authoritative EDRLab business authorization model for the reasons below.
+
+| Reason | Why the local access-control service is preferred | What would be riskier in an all-in-Keycloak realm model | Source |
+| --- | --- | --- | --- |
+| Preserve the validated feature boundary | The validated feature requirements say that Keycloak or any IdP can authenticate, but local access-control must decide from account type, lifecycle state, subject link, service-access roles, and audit requirements. `FR-038` explicitly forbids IdP claims, groups, or roles overriding the backoffice model. | Encoding account type, service-access roles, lifecycle state, and protected-service authorization directly as Keycloak realm roles, groups, claims, or policies would make the IdP realm the effective source of business authorization truth. | `FR-001`, `FR-002`, `FR-020`, `FR-036` through `FR-039` ([Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)); [Threat model TS-008](../risks/threat-model.md#threat-scenarios) |
+| Keep account-type invariants explicit | The project model has fixed account types: `super-admin`, `admin`, and `member`; a `member` must never become an `admin`, and service-access roles must not grant account-management responsibility. A local domain model can enforce those invariants as business rules. | Keycloak roles and groups are flexible IAM constructs and can be mapped into tokens. That flexibility is useful for authentication products, but it increases the risk that a realm role, group, or mapper starts approximating account type or service access without the project invariants. | `FR-001`, `FR-002`, `FR-026`; [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/) |
+| Keep onboarding safe and project-specific | Automatic onboarding requires exactly one invited local account, no existing authenticated-subject link, verified matching email, privileged-authentication evidence for privileged accounts, and fail-closed handling. A local onboarding flow can check those conditions against local account state. | A realm-centered model risks treating Keycloak user creation, realm membership, group membership, or first login as implicit backoffice activation. That would conflict with the requirement that authentication alone must not create, activate, or authorize a backoffice account. | `FR-037`, `FR-039`, `FR-043`, `FR-044`; [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html) |
+| Keep protected-service authorization current | Protected services need current local state: active lifecycle, account type, active service-access roles, and fail-closed behavior. A local `authorization/check` or local introspection-style contract can consult current state before allowing access. | Realm roles or token-embedded permissions can become stale until token/session refresh. Keycloak session and token timeouts are relevant controls, but they do not replace the local requirement to stop access after lifecycle or role changes within an accepted delay. | `FR-016`, `FR-020`, `FR-021`, `FR-032`; [Keycloak session and token timeouts](https://www.keycloak.org/docs/latest/server_admin/#session-and-token-timeouts); [RFC 7662](https://www.rfc-editor.org/rfc/rfc7662) |
+| Avoid adopting a larger authorization platform than the current scope needs | Keycloak Authorization Services can act as a centralized authorization platform with resources, scopes, policies, permission tickets, RPTs, and PEP/PDP/PAP behavior. That is powerful, but the current project needs a small internal model with fewer than 1,000 users and coarse service-access roles. | Moving the domain into Authorization Services would introduce resource-server policy administration and policy lifecycle work before the project has evidence that this complexity is needed. It could also blur the agreed split between authentication evidence and business authorization state. | [Keycloak Authorization Services](https://www.keycloak.org/docs/latest/authorization_services/); `FR-023`, `FR-030`; [README - Project Goal](../../README.md#project-goal) |
+| Avoid custom Keycloak extension ownership for core business rules | Keeping the access-control rules local avoids making custom Keycloak SPI providers, custom policy providers, or custom event listeners the place where business access-control correctness lives. | Keycloak documents SPIs for custom providers. Using them for core business authorization would add build, packaging, deployment, upgrade, compatibility, and operational coupling to the Keycloak runtime. | [Keycloak Server Developer Guide](https://www.keycloak.org/docs/latest/server_development/index.html); `FR-030`; [Threat model TS-013](../risks/threat-model.md#threat-scenarios) |
+| Keep project audit authoritative | Keycloak admin and authentication events can support correlation, but the project audit requirement covers local lifecycle changes, service-access-role changes, failed onboarding, protected-service denials, audit reads/exports, and subject-link attempts. | Replacing local audit with Keycloak events would leave business events outside Keycloak incomplete or force all business operations into Keycloak administrative paths. Keycloak admin events are useful supporting evidence, not a substitute for the project audit log. | `FR-027`, `FR-028`, `FR-035`; [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events) |
+| Preserve reversibility | A local access-control domain keeps EDRLab account identifiers, subject links, service-access roles, and audit evidence portable if the authentication provider changes later. | If account lifecycle and service authorization live as Keycloak realm structures, a later move away from Keycloak becomes a domain migration rather than an IdP integration change. | `FR-009`, `FR-010`, `FR-030`; [Architecture options](../architecture/options.md#architecture-options) |
+| Still avoids third-party dependency | This option does not require a SaaS identity provider. Keycloak is self-hosted and the access-control service is local to the EDRLab system boundary. | "No third-party service" should not mean "all logic must live inside the Keycloak realm"; it can mean no external SaaS dependency while keeping authentication and business authorization as separate local responsibilities. | [ADR 0001](../decisions/0001-choose-keycloak-for-validation.md); [Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice) |
+
+Decision rule for the next validation step: use Keycloak for authentication, MFA/WebAuthn/OTP evidence, OIDC subject evidence, realm administration, sessions, and supporting events; keep EDRLab account type, lifecycle, service-access role catalog, member assignments, protected-service authorization decisions, and project audit records in the local access-control service.
+
 ## Decision Gate
 
 The decision gate is satisfied for choosing a candidate to validate:
@@ -144,6 +165,7 @@ These are now validation conditions for the Keycloak candidate, not blockers to 
 - [Threat Model](../risks/threat-model.md)
 - [Architecture Options](../architecture/options.md)
 - [Concrete Technical Solution Candidates](./technical-solutions.md)
+- [Keycloak Validation Plan](../poc/keycloak-validation-plan.md)
 - [ADR 0001 - Choose Keycloak for Validation](../decisions/0001-choose-keycloak-for-validation.md)
 - [Project Governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice)
 - [Project Governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)
@@ -153,9 +175,13 @@ These are now validation conditions for the Keycloak candidate, not blockers to 
 - [Auth0 - Logs](https://auth0.com/docs/deploy-monitor/logs)
 - [Auth0 - Manage Role-Based Access Control Roles](https://auth0.com/docs/manage-users/access-control/configure-core-rbac/roles)
 - [Keycloak - Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
+- [Keycloak - Authorization Services](https://www.keycloak.org/docs/latest/authorization_services/)
+- [Keycloak - Server Developer Guide](https://www.keycloak.org/docs/latest/server_development/index.html)
 - [Keycloak - Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)
+- [Keycloak - Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#session-and-token-timeouts)
 - [Spring Authorization Server - Overview](https://docs.spring.io/spring-authorization-server/reference/overview.html)
 - [Spring Security - OAuth 2.0 Resource Server Opaque Token](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/opaque-token.html)
 - [RFC 7662 - OAuth 2.0 Token Introspection](https://www.rfc-editor.org/rfc/rfc7662)
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - [NIST SP 800-63B - Authentication and Authenticator Management](https://pages.nist.gov/800-63-4/sp800-63b.html)
