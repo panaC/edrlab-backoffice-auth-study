@@ -32,6 +32,8 @@ This directory contains the project-facing study documents for the internal back
 | [Threat model](./risks/threat-model.md) | Phase 2 threat model used to identify access-control risks and refine security requirements before solution choice. |
 | [Architecture options](./architecture/options.md) | Phase 2 architecture option framing derived from the consolidated feature requirements and threat model, covering local access-control, provider-backed, self-hosted, library-based, split control-plane, and policy-engine or microservice shapes. |
 | [Concrete technical solution candidates](./evaluation/technical-solutions.md) | Three concrete candidate solution shapes for satisfying the feature requirements: Auth0 managed login plus local access-control, self-hosted Keycloak plus local access-control, and a Spring-based local IAM control plane. |
+| [Solution choice](./evaluation/solution-choice.md) | Accepted Phase 3 artifact recording self-hosted Keycloak plus local access-control as the candidate solution to validate. |
+| [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Accepted decision record for the Phase 3 Keycloak validation candidate. |
 
 ## Reading Path
 
@@ -48,7 +50,7 @@ Non-index project study documents outside `decisions/` should start with:
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 2 - Requirements and Risk Framing
+Phase: Phase 3 - Solution Choice
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```

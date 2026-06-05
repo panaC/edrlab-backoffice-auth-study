@@ -6,7 +6,7 @@ The study objective is to define, compare, and eventually recommend the simplest
 
 ## Current State
 
-Current phase: Phase 2 - Requirements and Risk Framing.
+Current phase: Phase 3 - Solution Choice.
 
 The requirements work is consolidated:
 
@@ -34,13 +34,15 @@ The identity-provider and onboarding boundary is now explicit:
 - automatic onboarding activation may create the immutable authenticated-subject link only when the backoffice finds exactly one invited account with no existing subject link and a verified matching email; production admin and super-admin onboarding also requires privileged-authentication evidence;
 - unsafe onboarding matches fail closed: no subject link, no activation, no authorization, and administrative intervention required.
 
-The Phase 2 study artifacts now include review-state risk, architecture, and evaluation material:
+The completed Phase 2 study artifacts provide the evidence base for Phase 3 solution choice:
 
 - [docs/risks/threat-model.md](./docs/risks/threat-model.md) frames protected assets, trust boundaries, threat scenarios, requirement-refinement candidates, and review questions.
 - [docs/architecture/options.md](./docs/architecture/options.md) frames plausible architecture shapes without choosing a final target architecture.
 - [docs/evaluation/technical-solutions.md](./docs/evaluation/technical-solutions.md) identifies three concrete candidates for later evaluation: Auth0 managed login with local access control, self-hosted Keycloak with local access control, and a Spring-based local IAM control plane.
+- [docs/evaluation/solution-choice.md](./docs/evaluation/solution-choice.md) records self-hosted Keycloak with a local access-control service as the Phase 3 candidate solution to validate.
+- [docs/decisions/0001-choose-keycloak-for-validation.md](./docs/decisions/0001-choose-keycloak-for-validation.md) records the accepted decision and its validation conditions.
 
-The study still does not choose a product, vendor, architecture, hosting model, database, implementation stack, token format, session strategy, browser storage model, production deployment model, or final recommendation during Phase 2. Those remain open study questions unless explicitly promoted by the user into solution choice, Proof of Concept, or review.
+The study has chosen a candidate solution to validate. That choice is not production approval, does not start implementation, and does not replace the later Proof of Concept and review decision.
 
 The expected output remains a documented, evidence-based review decision supported by comparison documents and targeted non-production Proofs of Concept when documentation alone cannot answer a material question.
 
@@ -52,6 +54,8 @@ The expected output remains a documented, evidence-based review decision support
 - [Threat model](./docs/risks/threat-model.md)
 - [Architecture options](./docs/architecture/options.md)
 - [Concrete technical solution candidates](./docs/evaluation/technical-solutions.md)
+- [Solution choice](./docs/evaluation/solution-choice.md)
+- [ADR 0001 - Choose Keycloak for validation](./docs/decisions/0001-choose-keycloak-for-validation.md)
 - [Project study documentation map](./docs/README.md)
 - [Project governance](./PROJECT-GOVERNANCE.md)
 - [Changelog](./CHANGELOG.md)

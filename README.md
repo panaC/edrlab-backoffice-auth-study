@@ -109,7 +109,7 @@ Out of scope for the initial specification:
 
 ## Open Study Questions
 
-These topics remain open for Phase 2 or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
+These topics remain open for Phase 3 or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
 
 - Solution shape: simple internal authentication, SSO integration, IAM control plane, managed provider, self-hosted product, minimal internal build, or hybrid approach.
 - Privileged account protection: MFA, step-up authentication, passwordless login, hardware-backed authenticators, fallback authenticators, super-admin provisioning, super-admin recovery, and break-glass.

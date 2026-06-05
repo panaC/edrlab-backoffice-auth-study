@@ -6,8 +6,17 @@ This repository is a study repository, not a released software package. Changelo
 
 ## 2026-06-05
 
+### Added
+
+- Added `docs/evaluation/solution-choice.md` as the Phase 3 working entry point for shortlist comparison, decision criteria, open evidence, and candidate solution choice readiness.
+- Added `docs/decisions/0001-choose-keycloak-for-validation.md` to record the accepted Phase 3 solution choice.
+
 ### Changed
 
+- Moved the repository's current operating phase from `Phase 2 - Requirements and Risk Framing` to `Phase 3 - Solution Choice` after explicit user request.
+- Updated `AGENTS.md`, `ABSTRACT.md`, `README.md`, and `docs/README.md` so phase status, metadata examples, and documentation routing reflect the Phase 3 start.
+- Started the Phase 3 comparison pass in `docs/evaluation/solution-choice.md`, adding source-backed evidence snapshots, criterion-by-criterion comparison, and the next solution-choice work items.
+- Accepted self-hosted Keycloak with a local EDRLab access-control service as the Phase 3 candidate solution to validate, while preserving the explicit boundary that this is not production approval or PoC implementation.
 - Simplified the project roadmap from seven study phases plus optional MVP to five study phases plus `Phase 6 - Production MVP`, preserving conceptual foundation and requirements/risk framing before solution choice, Proof of Concept, and review/decision.
 - Updated `PROJECT-GOVERNANCE.md`, `README.md`, `AGENTS.md`, `docs/README.md`, and `ABSTRACT.md` to align phase names, boundaries, and documentation routing with the simplified governance model.
 - Replaced the optional non-production MVP phase with `Phase 6 - Production MVP`, keeping the explicit rule that implementation starts only when the user moves the project into that phase.

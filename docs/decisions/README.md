@@ -44,7 +44,9 @@ Supersedes: none
 
 ## Current Records
 
-No decision records have been created yet.
+| Record | Status | Summary |
+| --- | --- | --- |
+| [0001 - Choose Keycloak for Validation](./0001-choose-keycloak-for-validation.md) | Accepted | Selects self-hosted Keycloak with a local access-control service as the Phase 3 candidate solution to validate. |
 
 ## References
 

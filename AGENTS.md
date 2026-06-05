@@ -11,18 +11,21 @@ Read this file before modifying the repository. Then use:
 
 ## Current Operating Phase
 
-The current phase is `Phase 2 - Requirements and Risk Framing`.
+The current phase is `Phase 3 - Solution Choice`.
 
-Default Phase 2 work: business, technical, security, and operational requirements definition against the immutable feature specification; requirements traceability; open-question resolution; service and permission inventory refinement; solution-choice preparation; lightweight PoC planning; and Markdown study artifacts.
+Default Phase 3 work: focused comparison of realistic solution options against the immutable feature specification, consolidated feature requirements, threat model, operational constraints, simplicity goal, and source-backed product or standards evidence; assumption and open-question tracking; solution-choice rationale; candidate PoC scope preparation; and Markdown study artifacts.
 
-Phase 2 boundaries:
+Phase 3 boundaries:
 
-- create or edit Markdown study artifacts under top-level `docs/` by default;
-- create or edit the root `FEATURE-REQUIREMENTS.md` when the user is refining the final-solution access-control feature requirements;
+- create or edit Markdown study artifacts under top-level `docs/evaluation/` by default;
+- create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/poc/` artifacts when needed to support solution-choice traceability, risk handling, architecture evidence, or non-production PoC planning;
+- create or edit the root `FEATURE-REQUIREMENTS.md` only when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
 - keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
-- do not choose a vendor, product, architecture, or production implementation unless the user explicitly requests a solution choice or review decision;
-- do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase, asks for a Proof of Concept, or moves the project into Phase 6 production MVP implementation.
+- do not treat the Phase 3 solution choice as production approval;
+- do not start implementation work unless the user explicitly scopes it as a non-production Proof of Concept or moves the project into Phase 6 production MVP implementation;
+- do not add application code, dependencies, package managers, Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly expands the phase, asks for a Proof of Concept, or moves the project into Phase 6 production MVP implementation;
+- do not expand into a broad market survey when the existing shortlist is enough to decide.
 
 ## Instruction Priority
 
@@ -35,7 +38,7 @@ If instructions conflict:
 5. Follow existing repository conventions.
 6. Follow general best practices.
 
-A user request overrides the Phase 2 boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, asks for a later-phase artifact, requests a solution choice, requests a review decision, or asks for a Proof of Concept.
+A user request overrides the current phase boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, asks for a later-phase artifact, requests a solution choice, requests a review decision, or asks for a Proof of Concept.
 
 ## Non-Negotiable Rules
 
@@ -81,7 +84,7 @@ Non-index project study documents outside `docs/decisions/` should start with a 
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 2 - Requirements and Risk Framing
+Phase: Phase 3 - Solution Choice
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```
