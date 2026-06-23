@@ -4,6 +4,21 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-23
+
+### Added
+
+- Added `poc/keycloak/scripts/verify-onboarding.sh` for `WP-003`, covering scripted Authorization Code evidence for verified and unverified Keycloak users plus PoC-only local onboarding decisions for safe activation, no invitation, duplicate invitation, unverified email, and pre-linked subject.
+- Added `docs/poc/keycloak-wp003-result.md` to document the WP-003 runtime validation, generated evidence path, first-attempt script correction, and remaining limitations.
+
+### Changed
+
+- Updated `poc/keycloak/README.md` with `WP-003` Linux run commands, expected outputs, evidence files, and non-production limitations.
+- Updated `docs/README.md` to include the new `WP-003` result note in the project documentation map.
+- Corrected the WP-003 local onboarding `jq` evaluator after the first runtime attempt exposed invalid field access and function-argument syntax.
+- Tightened WP-003 evidence by filtering Keycloak events to the current run window, asserting expected authentication/token events for both subjects, and avoiding misleading audit `target_id` values for no-match or duplicate-match denials.
+- Expanded the WP-003 result note with a reviewer-oriented explanation of the test purpose, real versus simulated runtime parts, script flow, scenario matrix, success criteria, and evidence map.
+
 ## 2026-06-07
 
 ### Added

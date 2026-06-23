@@ -26,6 +26,7 @@ It validates that a throwaway Keycloak realm can be created with an OIDC backoff
 | `scripts/verify.sh` | Verifies discovery, client settings, users, and events. |
 | `scripts/collect-evidence.sh` | Collects sanitized evidence into `evidence/<timestamp>/`. |
 | `scripts/verify-login-sso.sh` | Runs `WP-002`: scripted Authorization Code login, token validation, local `sub` resolution, local session decision, SSO check, and logout check. |
+| `scripts/verify-onboarding.sh` | Runs `WP-003`: scripted authenticated-identity evidence plus safe and unsafe local onboarding decisions. |
 | `scripts/stop.sh` | Stops the runtime without deleting the volume. |
 | `scripts/reset.sh` | Deletes local PoC state and generated evidence after explicit confirmation. |
 
@@ -82,6 +83,27 @@ Expected result:
 - A second `prompt=none` authorization succeeds through the existing Keycloak SSO session without posting credentials again.
 - Keycloak logout redirects to the local logout callback, and a post-logout `prompt=none` request no longer returns an authorization code.
 
+## Run WP-003 Safe And Unsafe Onboarding
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-onboarding.sh
+```
+
+Expected result:
+
+- The script authenticates the verified non-production member user and the unverified unsafe user through Authorization Code flow with PKCE.
+- The ID token signatures verify against the realm JWKS.
+- ID token issuer, audience, nonce, time claims, email, email verification state, and `sub` are validated.
+- UserInfo `sub` matches the ID token `sub`.
+- A PoC-only local onboarding fixture activates exactly one invited `member` account with a verified matching email and no existing subject link.
+- The local fixture denies no-invitation, duplicate-invitation, unverified-email, and pre-linked-subject cases.
+- Denied cases do not mutate local accounts and do not create a local session.
+- Local audit-shaped evidence is recorded for the safe activation and each denial.
+
+For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-003 result note](../../docs/poc/keycloak-wp003-result.md).
+
 ## Stop
 
 ```bash
@@ -122,6 +144,23 @@ RESET_CONFIRM=delete-poc-state bash poc/keycloak/scripts/reset.sh
 - `wp-002-keycloak-events.json`
 - `wp-002-evidence.md`
 
+`scripts/verify-onboarding.sh` writes:
+
+- `wp-003-safe-member-token-response.json`
+- `wp-003-safe-member-id-token-claims.json`
+- `wp-003-safe-member-id-token-signature.txt`
+- `wp-003-safe-member-userinfo.json`
+- `wp-003-unverified-user-token-response.json`
+- `wp-003-unverified-user-id-token-claims.json`
+- `wp-003-unverified-user-id-token-signature.txt`
+- `wp-003-unverified-user-userinfo.json`
+- `wp-003-local-onboarding-inputs.json`
+- `wp-003-onboarding-decisions.json`
+- `wp-003-local-audit.json`
+- `wp-003-event-window.json`
+- `wp-003-keycloak-events.json`
+- `wp-003-evidence.md`
+
 Generated evidence is ignored by Git by default. Summarize reviewable results in `docs/poc/` when closing a work package.
 
 ## Non-Production Limits
@@ -133,6 +172,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - Production database, HA, backup, restore, monitoring, CI, migration, secret management, and deployment hardening are out of scope for this PoC runtime.
 - `WP-002` uses a curl cookie jar as a browser simulation and a generated local account fixture. It is not a production BFF, UI, session store, protected-service implementation, or onboarding implementation.
 - `WP-002` does not validate production cookie flags, HTTPS, CSRF protection, framework OIDC middleware, persistent session storage, protected-service authorization, safe onboarding activation, privileged-authentication evidence, or audit authority.
+- `WP-003` uses a PoC-only local onboarding evaluator and JSON fixtures. It is not production onboarding code, persistent storage, a concurrency test, an administrator intervention workflow, or privileged-authentication evidence for admin or super-admin activation.
 
 ## References
 
