@@ -29,6 +29,7 @@ It validates that a throwaway Keycloak realm can be created with an OIDC backoff
 | `scripts/verify-onboarding.sh` | Runs `WP-003`: scripted authenticated-identity evidence plus safe and unsafe local onboarding decisions. |
 | `scripts/verify-privileged-auth.sh` | Runs `WP-004`: scripted admin and super-admin authentication, token evidence, Keycloak `amr`/flow/event inspection, and local privileged-activation blocker decision. |
 | `scripts/verify-claim-override.sh` | Runs `WP-005`: scripted misleading Keycloak role, group, and claim evidence plus local claim-override rejection decisions. |
+| `scripts/verify-authorization-access-stop.sh` | Runs `WP-006`: scripted member authentication evidence plus PoC-only local `authorization/check`, fail-closed, and access-stop decisions. |
 | `scripts/stop.sh` | Stops the runtime without deleting the volume. |
 | `scripts/reset.sh` | Deletes local PoC state and generated evidence after explicit confirmation. |
 
@@ -151,6 +152,29 @@ Expected result:
 
 For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-005 result note](../../docs/poc/keycloak-wp005-result.md).
 
+## Run WP-006 Authorization And Access Stop
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-authorization-access-stop.sh
+```
+
+Expected result:
+
+- The script authenticates the verified non-production member user through Authorization Code flow with PKCE.
+- The ID token signature, issuer, audience, nonce, verified email, `sub`, and time claims are validated.
+- UserInfo `sub` matches the ID token `sub`.
+- A PoC-only local `authorization/check` fixture allows an active linked member with an active covering local service-access role.
+- The fixture denies unresolved subject, unavailable authorization result, disabled account, and active member with no local service-access role.
+- The fixture records next-fresh-check denials after local account disablement, account archival, member service-access-role removal, and service-access-role disablement.
+- Every access-stop case records that no positive authorization cache was used in the validation path.
+- Local audit-shaped evidence is recorded for the authorization decisions.
+
+`WP-006` does not require Keycloak roles, groups, or claims to be clean because the local evaluator ignores them. If the previous `WP-005` claim-override scenario was executed and a clean Keycloak realm is desired for review, run `reset.sh`, then rerun `start.sh`, `bootstrap.sh`, and `verify.sh` before `verify-authorization-access-stop.sh`.
+
+For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-006 result note](../../docs/poc/keycloak-wp006-result.md).
+
 ## Stop
 
 ```bash
@@ -245,6 +269,23 @@ RESET_CONFIRM=delete-poc-state bash poc/keycloak/scripts/reset.sh
 - `wp-005-keycloak-events.json`
 - `wp-005-evidence.md`
 
+`scripts/verify-authorization-access-stop.sh` writes:
+
+- `wp-006-member-token-response.json`
+- `wp-006-member-id-token-claims.json`
+- `wp-006-member-id-token-signature.txt`
+- `wp-006-member-userinfo.json`
+- `wp-006-local-authorization-inputs.json`
+- `wp-006-authorization-check-requests.json`
+- `wp-006-authorization-check-responses.json`
+- `wp-006-authorization-check-decisions.json`
+- `wp-006-local-state-transitions.json`
+- `wp-006-local-audit.json`
+- `wp-006-authorization-access-stop-summary.json`
+- `wp-006-event-window.json`
+- `wp-006-keycloak-events.json`
+- `wp-006-evidence.md`
+
 Generated evidence is ignored by Git by default. Summarize reviewable results in `docs/poc/` when closing a work package.
 
 ## Non-Production Limits
@@ -260,6 +301,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - `WP-004` uses PoC-only evidence inspection and blocker decisions. It does not configure a production MFA or passwordless policy, does not accept a final privileged authenticator set, and does not activate admin or super-admin accounts.
 - `WP-005` intentionally adds misleading PoC-only Keycloak roles, group membership, and token/UserInfo claims to the non-production member user. These inputs are evidence hazards for the test only; they must not become EDRLab account type, lifecycle, service-access-role, protected-service authorization, or audit authority.
 - `WP-005` uses a PoC-only local authorization evaluator and JSON fixtures. It is not production authorization middleware, a BFF, a protected backend service, persistent storage, or audit persistence.
+- `WP-006` uses a PoC-only local `authorization/check` evaluator and JSON fixtures. It is not production middleware, BFF code, protected-service code, persistent storage, distributed cache behavior, or audit persistence.
 
 ## References
 

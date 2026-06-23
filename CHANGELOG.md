@@ -14,6 +14,8 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/poc/keycloak-wp004-result.md` to document the WP-004 runtime validation, generated evidence path, current privileged-authentication evidence blocker, and remaining limitations.
 - Added `poc/keycloak/scripts/verify-claim-override.sh` for `WP-005`, covering scripted misleading Keycloak role, group, and hardcoded-claim evidence plus PoC-only local claim-override rejection decisions.
 - Added `docs/poc/keycloak-wp005-result.md` as a draft status note for the WP-005 claim-override rejection scenario, including expected evidence and the current Windows host execution limitation.
+- Added `poc/keycloak/scripts/verify-authorization-access-stop.sh` for `WP-006`, covering scripted member authentication evidence plus PoC-only local `authorization/check`, fail-closed, no-positive-cache, and access-stop decisions.
+- Added `docs/poc/keycloak-wp006-result.md` as a review-state result note for the WP-006 authorization and access-stop scenario.
 
 ### Changed
 
@@ -30,6 +32,10 @@ This repository is a study repository, not a released software package. Changelo
 - Tightened the prepared WP-005 validation by verifying access-token signature and core claims before using access-token role evidence, and documented the reset expectation after the claim-override scenario mutates the throwaway realm.
 - Executed the WP-005 runtime validation in a temporary Linux container against the Docker Keycloak PoC runtime, recorded the passing evidence path, and promoted the WP-005 result note to review state.
 - Documented the Keycloak role/group boundary in the integration scope: Keycloak roles, groups, and claims may support technical administration or non-authoritative evidence, but local EDRLab account state remains authoritative for business authorization.
+- Updated `poc/keycloak/README.md` with `WP-006` Linux run commands, expected outputs, evidence files, and non-production limitations.
+- Updated `docs/README.md` to include the new `WP-006` status note in the project documentation map.
+- Executed the WP-006 runtime validation against the Docker Keycloak PoC runtime, recorded the passing evidence path, and promoted the WP-006 result note to review state.
+- Tightened WP-006 Keycloak event evidence so token and authorization-code identifiers are recorded only as presence flags.
 
 ## 2026-06-07
 
