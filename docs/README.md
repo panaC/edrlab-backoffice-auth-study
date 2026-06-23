@@ -37,6 +37,7 @@ This directory contains the project-facing study documents for the internal back
 | [Keycloak validation plan](./poc/keycloak-validation-plan.md) | Accepted Phase 4 entry plan for the tight non-production Keycloak validation. |
 | [Keycloak setup runbook](./poc/keycloak-setup-runbook.md) | Review-state Phase 4 runbook for executing `WP-001`: throwaway realm, backoffice OIDC client, test users, event settings, discovery evidence, and the executable runtime under [`poc/keycloak`](../poc/keycloak/README.md). |
 | [Keycloak WP-001 result](./poc/keycloak-wp001-result.md) | Review-state Phase 4 result note recording the Docker execution, scripted bootstrap, verification checks, evidence location, and limitations for `WP-001`. |
+| [Keycloak WP-002 result](./poc/keycloak-wp002-result.md) | Review-state Phase 4 result note recording the scripted login and SSO boundary validation, generated evidence location, and limitations for `WP-002`. |
 | [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Accepted decision record for the Phase 3 Keycloak validation candidate. |
 
 ## Reading Path

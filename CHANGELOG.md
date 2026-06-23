@@ -4,6 +4,19 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-07
+
+### Added
+
+- Added `poc/keycloak/scripts/verify-login-sso.sh` for `WP-002`, covering scripted Authorization Code login, PKCE token exchange, ID token validation, UserInfo subject matching, local `iss` + `sub` account resolution, local session decision, prompt-none SSO validation, and logout validation.
+- Added `docs/poc/keycloak-wp002-result.md` as the review-state result note for the login and SSO boundary scenario, recording the successful runtime validation, generated evidence path, and remaining limitations.
+
+### Changed
+
+- Updated `poc/keycloak/README.md` with `WP-002` prerequisites, Linux run commands, expected outputs, evidence files, and non-production limitations.
+- Updated `docs/README.md` to include the new `WP-002` result note in the project documentation map.
+- Hardened the WP-002 PKCE helper so URL-safe random values strip carriage returns before being used as `code_verifier` values.
+
 ## 2026-06-05
 
 ### Added
