@@ -43,6 +43,8 @@ This directory contains the project-facing study documents for the internal back
 | [Keycloak WP-005 result](./poc/keycloak-wp005-result.md) | Review-state Phase 4 result note recording the scripted claim-override rejection validation, generated evidence location, and limitations for `WP-005`. |
 | [Keycloak WP-006 result](./poc/keycloak-wp006-result.md) | Review-state Phase 4 result note recording the scripted local `authorization/check`, fail-closed, and access-stop validation. |
 | [Keycloak WP-007 result](./poc/keycloak-wp007-result.md) | Review-state Phase 4 result note recording the scripted audit-correlation validation, generated evidence location, expected audit gaps, and local-audit authority boundary. |
+| [Keycloak WP-008 result](./poc/keycloak-wp008-result.md) | Review-state Phase 4 documentation-first result note recording the Keycloak Web Admin boundary and self-hosted operations checklist. |
+| [Keycloak WP-009 result](./poc/keycloak-wp009-result.md) | Review-state Phase 4 result note consolidating the Keycloak PoC matrix, blockers, accepted limitations, residual risks, and Phase 5 review questions. |
 | [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Accepted decision record for the Phase 3 Keycloak validation candidate. |
 
 ## Reading Path

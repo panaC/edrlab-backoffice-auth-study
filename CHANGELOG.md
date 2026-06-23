@@ -18,6 +18,8 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/poc/keycloak-wp006-result.md` as a review-state result note for the WP-006 authorization and access-stop scenario.
 - Added `poc/keycloak/scripts/verify-audit-correlation.sh` for `WP-007`, covering scripted member authentication evidence, supplemental Keycloak user/admin event evidence, PoC-only local audit examples, correlation checks, and expected audit-gap records.
 - Added `docs/poc/keycloak-wp007-result.md` as a review-state result note for the WP-007 audit-correlation scenario.
+- Added `docs/poc/keycloak-wp008-result.md` as a documentation-first review note for the Keycloak Web Admin boundary and self-hosted operations checklist.
+- Added `docs/poc/keycloak-wp009-result.md` as the Phase 4 evidence consolidation note for the Keycloak PoC result matrix, blockers, accepted limitations, residual risks, and Phase 5 review questions.
 
 ### Changed
 
@@ -41,6 +43,7 @@ This repository is a study repository, not a released software package. Changelo
 - Updated `poc/keycloak/README.md` with `WP-007` Linux run commands, expected outputs, evidence files, and non-production limitations.
 - Updated `docs/README.md` to include the new `WP-007` result note in the project documentation map.
 - Executed the WP-007 runtime validation against the Docker Keycloak PoC runtime, recorded the passing evidence path, and documented expected gaps where Keycloak events do not prove local EDRLab authorization, audit-read, persistence, or retention behavior.
+- Updated `docs/README.md` to include the new `WP-008` and `WP-009` review notes in the project documentation map.
 
 ## 2026-06-07
 
