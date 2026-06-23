@@ -10,11 +10,16 @@ This repository is a study repository, not a released software package. Changelo
 
 - Added `poc/keycloak/scripts/verify-onboarding.sh` for `WP-003`, covering scripted Authorization Code evidence for verified and unverified Keycloak users plus PoC-only local onboarding decisions for safe activation, no invitation, duplicate invitation, unverified email, and pre-linked subject.
 - Added `docs/poc/keycloak-wp003-result.md` to document the WP-003 runtime validation, generated evidence path, first-attempt script correction, and remaining limitations.
+- Added `poc/keycloak/scripts/verify-privileged-auth.sh` for `WP-004`, covering scripted admin and super-admin Authorization Code evidence, Keycloak `amr`/flow/event inspection, and PoC-only local privileged-activation blocker decisions.
+- Added `docs/poc/keycloak-wp004-result.md` to document the WP-004 runtime validation, generated evidence path, current privileged-authentication evidence blocker, and remaining limitations.
 
 ### Changed
 
 - Updated `poc/keycloak/README.md` with `WP-003` Linux run commands, expected outputs, evidence files, and non-production limitations.
 - Updated `docs/README.md` to include the new `WP-003` result note in the project documentation map.
+- Updated `poc/keycloak/README.md` with `WP-004` Linux run commands, expected outputs, evidence files, and non-production limitations.
+- Updated `docs/README.md` to include the new `WP-004` result note in the project documentation map.
+- Expanded the WP-004 result note with a reviewer-facing conclusion: Keycloak remains the validation candidate, but privileged `admin` and `super-admin` onboarding stays blocked until explicit privileged-authentication evidence is configured and verified.
 - Corrected the WP-003 local onboarding `jq` evaluator after the first runtime attempt exposed invalid field access and function-argument syntax.
 - Tightened WP-003 evidence by filtering Keycloak events to the current run window, asserting expected authentication/token events for both subjects, and avoiding misleading audit `target_id` values for no-match or duplicate-match denials.
 - Expanded the WP-003 result note with a reviewer-oriented explanation of the test purpose, real versus simulated runtime parts, script flow, scenario matrix, success criteria, and evidence map.

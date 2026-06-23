@@ -39,6 +39,7 @@ This directory contains the project-facing study documents for the internal back
 | [Keycloak WP-001 result](./poc/keycloak-wp001-result.md) | Review-state Phase 4 result note recording the Docker execution, scripted bootstrap, verification checks, evidence location, and limitations for `WP-001`. |
 | [Keycloak WP-002 result](./poc/keycloak-wp002-result.md) | Review-state Phase 4 result note recording the scripted login and SSO boundary validation, generated evidence location, and limitations for `WP-002`. |
 | [Keycloak WP-003 result](./poc/keycloak-wp003-result.md) | Review-state Phase 4 result note recording the scripted safe/unsafe onboarding validation, generated evidence location, and limitations for `WP-003`. |
+| [Keycloak WP-004 result](./poc/keycloak-wp004-result.md) | Review-state Phase 4 result note recording the scripted privileged-authentication evidence validation and current blocker for `admin` and `super-admin` activation. |
 | [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Accepted decision record for the Phase 3 Keycloak validation candidate. |
 
 ## Reading Path

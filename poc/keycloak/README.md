@@ -27,6 +27,7 @@ It validates that a throwaway Keycloak realm can be created with an OIDC backoff
 | `scripts/collect-evidence.sh` | Collects sanitized evidence into `evidence/<timestamp>/`. |
 | `scripts/verify-login-sso.sh` | Runs `WP-002`: scripted Authorization Code login, token validation, local `sub` resolution, local session decision, SSO check, and logout check. |
 | `scripts/verify-onboarding.sh` | Runs `WP-003`: scripted authenticated-identity evidence plus safe and unsafe local onboarding decisions. |
+| `scripts/verify-privileged-auth.sh` | Runs `WP-004`: scripted admin and super-admin authentication, token evidence, Keycloak `amr`/flow/event inspection, and local privileged-activation blocker decision. |
 | `scripts/stop.sh` | Stops the runtime without deleting the volume. |
 | `scripts/reset.sh` | Deletes local PoC state and generated evidence after explicit confirmation. |
 
@@ -104,6 +105,27 @@ Expected result:
 
 For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-003 result note](../../docs/poc/keycloak-wp003-result.md).
 
+## Run WP-004 Privileged-Authentication Evidence
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-privileged-auth.sh
+```
+
+Expected result:
+
+- The script authenticates the verified non-production `admin` and `super-admin` users through Authorization Code flow with PKCE.
+- The ID token signatures verify against the realm JWKS.
+- ID token issuer, audience, nonce, time claims, email, email verification state, and `sub` are validated.
+- UserInfo `sub` matches the corresponding ID token `sub`.
+- The script inspects client protocol mappers, the bound browser authentication flow, token `amr` values, and run-scoped Keycloak `LOGIN` / `CODE_TO_TOKEN` events.
+- The local privileged-activation decision records either candidate explicit evidence or `blocked`. In the current default PoC configuration, `blocked` is expected because no AMR mapper or browser-flow reference value is configured.
+
+Keycloak documents that authenticator executions can have reference values and that an AMR protocol mapper can populate the OIDC `amr` claim from successfully completed executions; OpenID Connect defines `amr` as an optional array of authentication-method identifiers ([Keycloak authentication flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows), [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)).
+
+For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-004 result note](../../docs/poc/keycloak-wp004-result.md).
+
 ## Stop
 
 ```bash
@@ -161,6 +183,26 @@ RESET_CONFIRM=delete-poc-state bash poc/keycloak/scripts/reset.sh
 - `wp-003-keycloak-events.json`
 - `wp-003-evidence.md`
 
+`scripts/verify-privileged-auth.sh` writes:
+
+- `wp-004-admin-token-response.json`
+- `wp-004-admin-id-token-claims.json`
+- `wp-004-admin-id-token-signature.txt`
+- `wp-004-admin-userinfo.json`
+- `wp-004-super-admin-token-response.json`
+- `wp-004-super-admin-id-token-claims.json`
+- `wp-004-super-admin-id-token-signature.txt`
+- `wp-004-super-admin-userinfo.json`
+- `wp-004-client-protocol-mappers.json`
+- `wp-004-realm-flow-bindings.json`
+- `wp-004-browser-flow-executions.json`
+- `wp-004-event-window.json`
+- `wp-004-keycloak-events.json`
+- `wp-004-privileged-auth-decisions.json`
+- `wp-004-local-audit.json`
+- `wp-004-privileged-auth-summary.json`
+- `wp-004-evidence.md`
+
 Generated evidence is ignored by Git by default. Summarize reviewable results in `docs/poc/` when closing a work package.
 
 ## Non-Production Limits
@@ -173,6 +215,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - `WP-002` uses a curl cookie jar as a browser simulation and a generated local account fixture. It is not a production BFF, UI, session store, protected-service implementation, or onboarding implementation.
 - `WP-002` does not validate production cookie flags, HTTPS, CSRF protection, framework OIDC middleware, persistent session storage, protected-service authorization, safe onboarding activation, privileged-authentication evidence, or audit authority.
 - `WP-003` uses a PoC-only local onboarding evaluator and JSON fixtures. It is not production onboarding code, persistent storage, a concurrency test, an administrator intervention workflow, or privileged-authentication evidence for admin or super-admin activation.
+- `WP-004` uses PoC-only evidence inspection and blocker decisions. It does not configure a production MFA or passwordless policy, does not accept a final privileged authenticator set, and does not activate admin or super-admin accounts.
 
 ## References
 
@@ -180,5 +223,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - [Keycloak setup runbook](../../docs/poc/keycloak-setup-runbook.md)
 - [Keycloak container guide](https://www.keycloak.org/server/containers)
 - [Keycloak OIDC endpoints and grant types](https://www.keycloak.org/securing-apps/oidc-layers)
+- [Keycloak authentication flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+- [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176)
 - [RFC 7636 - Proof Key for Code Exchange](https://www.rfc-editor.org/rfc/rfc7636)
