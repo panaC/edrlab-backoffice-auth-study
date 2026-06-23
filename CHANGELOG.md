@@ -12,6 +12,8 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/poc/keycloak-wp003-result.md` to document the WP-003 runtime validation, generated evidence path, first-attempt script correction, and remaining limitations.
 - Added `poc/keycloak/scripts/verify-privileged-auth.sh` for `WP-004`, covering scripted admin and super-admin Authorization Code evidence, Keycloak `amr`/flow/event inspection, and PoC-only local privileged-activation blocker decisions.
 - Added `docs/poc/keycloak-wp004-result.md` to document the WP-004 runtime validation, generated evidence path, current privileged-authentication evidence blocker, and remaining limitations.
+- Added `poc/keycloak/scripts/verify-claim-override.sh` for `WP-005`, covering scripted misleading Keycloak role, group, and hardcoded-claim evidence plus PoC-only local claim-override rejection decisions.
+- Added `docs/poc/keycloak-wp005-result.md` as a draft status note for the WP-005 claim-override rejection scenario, including expected evidence and the current Windows host execution limitation.
 
 ### Changed
 
@@ -23,6 +25,11 @@ This repository is a study repository, not a released software package. Changelo
 - Corrected the WP-003 local onboarding `jq` evaluator after the first runtime attempt exposed invalid field access and function-argument syntax.
 - Tightened WP-003 evidence by filtering Keycloak events to the current run window, asserting expected authentication/token events for both subjects, and avoiding misleading audit `target_id` values for no-match or duplicate-match denials.
 - Expanded the WP-003 result note with a reviewer-oriented explanation of the test purpose, real versus simulated runtime parts, script flow, scenario matrix, success criteria, and evidence map.
+- Updated `poc/keycloak/README.md` with `WP-005` Linux run commands, expected outputs, evidence files, and non-production limitations.
+- Updated `docs/README.md` to include the new `WP-005` status note in the project documentation map.
+- Tightened the prepared WP-005 validation by verifying access-token signature and core claims before using access-token role evidence, and documented the reset expectation after the claim-override scenario mutates the throwaway realm.
+- Executed the WP-005 runtime validation in a temporary Linux container against the Docker Keycloak PoC runtime, recorded the passing evidence path, and promoted the WP-005 result note to review state.
+- Documented the Keycloak role/group boundary in the integration scope: Keycloak roles, groups, and claims may support technical administration or non-authoritative evidence, but local EDRLab account state remains authoritative for business authorization.
 
 ## 2026-06-07
 

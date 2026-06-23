@@ -28,6 +28,7 @@ It validates that a throwaway Keycloak realm can be created with an OIDC backoff
 | `scripts/verify-login-sso.sh` | Runs `WP-002`: scripted Authorization Code login, token validation, local `sub` resolution, local session decision, SSO check, and logout check. |
 | `scripts/verify-onboarding.sh` | Runs `WP-003`: scripted authenticated-identity evidence plus safe and unsafe local onboarding decisions. |
 | `scripts/verify-privileged-auth.sh` | Runs `WP-004`: scripted admin and super-admin authentication, token evidence, Keycloak `amr`/flow/event inspection, and local privileged-activation blocker decision. |
+| `scripts/verify-claim-override.sh` | Runs `WP-005`: scripted misleading Keycloak role, group, and claim evidence plus local claim-override rejection decisions. |
 | `scripts/stop.sh` | Stops the runtime without deleting the volume. |
 | `scripts/reset.sh` | Deletes local PoC state and generated evidence after explicit confirmation. |
 
@@ -126,6 +127,30 @@ Keycloak documents that authenticator executions can have reference values and t
 
 For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-004 result note](../../docs/poc/keycloak-wp004-result.md).
 
+## Run WP-005 Claim Override Rejection
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-claim-override.sh
+```
+
+Expected result:
+
+- The script configures PoC-only Keycloak inputs that deliberately look dangerous: realm roles named like an account-management role and a service-access role, a group named like a privileged backoffice group, and hardcoded OIDC claims for `edrlab_account_type`, `edrlab_lifecycle_state`, and `edrlab_audit_bypass`.
+- The script authenticates the verified non-production member user through Authorization Code flow with PKCE.
+- The ID token signature, issuer, audience, nonce, verified email, `sub`, and time claims are validated.
+- The access token signature, issuer, subject, authorized party, and time claims are validated before role evidence is used.
+- UserInfo `sub` matches the ID token `sub`.
+- Token/UserInfo evidence proves the misleading Keycloak roles, group, and claims are present.
+- A PoC-only local authorization fixture denies account-management, disabled-account protected-service access, missing-local-role protected-service access, and audit-read attempts from local state.
+- Denied cases do not mutate local account type, lifecycle state, subject link, or local service-access-role assignments.
+- Local audit-shaped evidence is recorded even when the token contains the misleading `edrlab_audit_bypass` claim.
+
+`WP-005` intentionally mutates the throwaway realm with misleading roles, group membership, and protocol mappers. Run `reset.sh` before later work packages if they should start from the baseline `WP-001` realm configuration.
+
+For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-005 result note](../../docs/poc/keycloak-wp005-result.md).
+
 ## Stop
 
 ```bash
@@ -203,6 +228,23 @@ RESET_CONFIRM=delete-poc-state bash poc/keycloak/scripts/reset.sh
 - `wp-004-privileged-auth-summary.json`
 - `wp-004-evidence.md`
 
+`scripts/verify-claim-override.sh` writes:
+
+- `wp-005-keycloak-override-setup.json`
+- `wp-005-member-token-response.json`
+- `wp-005-member-id-token-claims.json`
+- `wp-005-member-id-token-signature.txt`
+- `wp-005-member-access-token-claims.json`
+- `wp-005-member-access-token-signature.txt`
+- `wp-005-member-userinfo.json`
+- `wp-005-local-authorization-inputs.json`
+- `wp-005-claim-override-decisions.json`
+- `wp-005-local-audit.json`
+- `wp-005-claim-override-summary.json`
+- `wp-005-event-window.json`
+- `wp-005-keycloak-events.json`
+- `wp-005-evidence.md`
+
 Generated evidence is ignored by Git by default. Summarize reviewable results in `docs/poc/` when closing a work package.
 
 ## Non-Production Limits
@@ -216,6 +258,8 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - `WP-002` does not validate production cookie flags, HTTPS, CSRF protection, framework OIDC middleware, persistent session storage, protected-service authorization, safe onboarding activation, privileged-authentication evidence, or audit authority.
 - `WP-003` uses a PoC-only local onboarding evaluator and JSON fixtures. It is not production onboarding code, persistent storage, a concurrency test, an administrator intervention workflow, or privileged-authentication evidence for admin or super-admin activation.
 - `WP-004` uses PoC-only evidence inspection and blocker decisions. It does not configure a production MFA or passwordless policy, does not accept a final privileged authenticator set, and does not activate admin or super-admin accounts.
+- `WP-005` intentionally adds misleading PoC-only Keycloak roles, group membership, and token/UserInfo claims to the non-production member user. These inputs are evidence hazards for the test only; they must not become EDRLab account type, lifecycle, service-access-role, protected-service authorization, or audit authority.
+- `WP-005` uses a PoC-only local authorization evaluator and JSON fixtures. It is not production authorization middleware, a BFF, a protected backend service, persistent storage, or audit persistence.
 
 ## References
 
@@ -223,6 +267,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - [Keycloak setup runbook](../../docs/poc/keycloak-setup-runbook.md)
 - [Keycloak container guide](https://www.keycloak.org/server/containers)
 - [Keycloak OIDC endpoints and grant types](https://www.keycloak.org/securing-apps/oidc-layers)
+- [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)
 - [Keycloak authentication flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176)

@@ -3,12 +3,13 @@
 Status: Review
 Phase: Phase 4 - Proof of Concept
 Scope: Architecture
-Last reviewed: 2026-06-05
+Last reviewed: 2026-06-23
 
 ## Contents
 
 - [Purpose](#purpose)
 - [Operating Boundary](#operating-boundary)
+- [Role And Group Boundary](#role-and-group-boundary)
 - [Development Block](#development-block)
 - [Configuration Block](#configuration-block)
 - [SSO Session Flow](#sso-session-flow)
@@ -41,6 +42,24 @@ flowchart LR
     Keycloak -. "SSO session, OIDC tokens, provider events" .-> Backoffice
     Keycloak -. "supporting events only" .-> AccessControl
 ```
+
+## Role And Group Boundary
+
+Keycloak roles and groups are useful IAM product features, but they are not the authority for EDRLab business access-control in the accepted candidate. Keycloak documents realm roles, client roles, role mappings, default roles, role scope mappings, and groups as product features for assigning permissions inside Keycloak-managed realms ([Keycloak Server Administration Guide - assigning permissions using roles and groups](https://www.keycloak.org/docs/latest/server_admin/#assigning-permissions-using-roles-and-groups)). Those features may support Keycloak technical administration, non-production setup, authentication experiments, or supplemental evidence, but they must not replace the local EDRLab access-control model.
+
+The local model has invariants that Keycloak roles and groups must not override:
+
+| Local invariant | Why Keycloak roles/groups are not authoritative | Source |
+| --- | --- | --- |
+| Fixed account type | A `member` must not become an `admin` or `super-admin` because a Keycloak role, group, or claim says so. Account type is fixed at local account creation. | `FR-001`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Lifecycle state | A disabled, archived, or invited local account must not become usable because a token claim or group says `active`. Protected-service access requires local active state. | `FR-015`, `FR-020`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Service-access roles | Member access to protected backend services comes from local service-access-role assignment and active local role state, not from Keycloak realm roles or groups. | `FR-002`, `FR-005`, `FR-032`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Subject-link immutability | Keycloak can provide the authenticated `sub`, but the local system owns the subject link and must not rebind it from provider-side group, role, or claim changes. | `FR-036`, `FR-039`, `FR-043`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements); [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html) |
+| Project audit | Keycloak events can support correlation, but local audit remains authoritative for local account lifecycle, role assignment, protected-service denial, and audit-read behavior. | `FR-027`, `FR-035`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Keycloak admin events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events) |
+
+This boundary is not a rejection of all Keycloak role or group usage. Acceptable uses include Keycloak realm administration, Keycloak-side client or user setup, Keycloak technical support workflows, non-production PoC fixtures, and optional token evidence that the local service treats as non-authoritative. The local service may inspect such evidence, but it must resolve the authenticated subject to one local account and then decide from local account type, lifecycle, service-access roles, and local audit policy (`FR-020`, `FR-021`, `FR-036`, `FR-038`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+
+`WP-005` validated this boundary at runtime. The PoC intentionally configured misleading Keycloak roles, group membership, and hardcoded claims that looked like `super-admin`, active lifecycle, service access, and audit bypass evidence. The local evaluator still denied every override attempt from local state and recorded local audit-shaped denial evidence ([Keycloak WP-005 result](../poc/keycloak-wp005-result.md)).
 
 ## Development Block
 
@@ -164,6 +183,7 @@ The EDRLab validation slice owns only local application session creation, expira
 - [Solution Choice](../evaluation/solution-choice.md)
 - [Solution Choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary)
 - [Keycloak Validation Plan](../poc/keycloak-validation-plan.md)
+- [Keycloak WP-005 Result](../poc/keycloak-wp005-result.md)
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [Architecture Options](./options.md)
 - [Web Sessions, Cookies, and BFF Pattern](../wiki/24-web-sessions-cookies-and-bff.md)
