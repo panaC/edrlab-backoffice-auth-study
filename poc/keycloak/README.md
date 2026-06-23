@@ -30,6 +30,7 @@ It validates that a throwaway Keycloak realm can be created with an OIDC backoff
 | `scripts/verify-privileged-auth.sh` | Runs `WP-004`: scripted admin and super-admin authentication, token evidence, Keycloak `amr`/flow/event inspection, and local privileged-activation blocker decision. |
 | `scripts/verify-claim-override.sh` | Runs `WP-005`: scripted misleading Keycloak role, group, and claim evidence plus local claim-override rejection decisions. |
 | `scripts/verify-authorization-access-stop.sh` | Runs `WP-006`: scripted member authentication evidence plus PoC-only local `authorization/check`, fail-closed, and access-stop decisions. |
+| `scripts/verify-audit-correlation.sh` | Runs `WP-007`: scripted member authentication evidence, supplemental Keycloak event evidence, PoC-only local audit examples, correlation checks, and audit-gap records. |
 | `scripts/stop.sh` | Stops the runtime without deleting the volume. |
 | `scripts/reset.sh` | Deletes local PoC state and generated evidence after explicit confirmation. |
 
@@ -175,6 +176,29 @@ Expected result:
 
 For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-006 result note](../../docs/poc/keycloak-wp006-result.md).
 
+## Run WP-007 Audit Correlation
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-audit-correlation.sh
+```
+
+Expected result:
+
+- The script authenticates the verified non-production member user through Authorization Code flow with PKCE.
+- The ID token signature, issuer, audience, nonce, verified email, `sub`, and time claims are validated.
+- UserInfo `sub` matches the ID token `sub`.
+- Keycloak user events are collected for the run-scoped `LOGIN` and `CODE_TO_TOKEN` events.
+- A PoC-only Keycloak admin-event probe updates a non-authoritative user attribute so the script can collect a run-scoped Keycloak admin `UPDATE` event as supplemental technical evidence.
+- PoC-only local audit examples contain the accepted minimum schema fields and correlation IDs.
+- The correlation map shows Keycloak events as supplemental evidence while local audit remains authoritative for local account resolution, protected-service authorization, and audit-read decisions.
+- The audit-gap record explicitly states the expected gaps that this PoC does not prove: production append-only persistence, tamper resistance, retention, export, backup, restore, and privacy policy.
+
+`WP-007` updates a non-authoritative attribute on the throwaway member user to create a Keycloak admin event probe. Run `reset.sh` before later work packages if a clean baseline realm is desired.
+
+For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-007 result note](../../docs/poc/keycloak-wp007-result.md).
+
 ## Stop
 
 ```bash
@@ -286,6 +310,22 @@ RESET_CONFIRM=delete-poc-state bash poc/keycloak/scripts/reset.sh
 - `wp-006-keycloak-events.json`
 - `wp-006-evidence.md`
 
+`scripts/verify-audit-correlation.sh` writes:
+
+- `wp-007-member-token-response.json`
+- `wp-007-member-id-token-claims.json`
+- `wp-007-member-id-token-signature.txt`
+- `wp-007-member-userinfo.json`
+- `wp-007-keycloak-admin-event-probe.json`
+- `wp-007-event-window.json`
+- `wp-007-keycloak-events.json`
+- `wp-007-keycloak-admin-events.json`
+- `wp-007-local-audit.json`
+- `wp-007-audit-correlation-map.json`
+- `wp-007-audit-gaps.json`
+- `wp-007-audit-correlation-summary.json`
+- `wp-007-evidence.md`
+
 Generated evidence is ignored by Git by default. Summarize reviewable results in `docs/poc/` when closing a work package.
 
 ## Non-Production Limits
@@ -302,6 +342,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - `WP-005` intentionally adds misleading PoC-only Keycloak roles, group membership, and token/UserInfo claims to the non-production member user. These inputs are evidence hazards for the test only; they must not become EDRLab account type, lifecycle, service-access-role, protected-service authorization, or audit authority.
 - `WP-005` uses a PoC-only local authorization evaluator and JSON fixtures. It is not production authorization middleware, a BFF, a protected backend service, persistent storage, or audit persistence.
 - `WP-006` uses a PoC-only local `authorization/check` evaluator and JSON fixtures. It is not production middleware, BFF code, protected-service code, persistent storage, distributed cache behavior, or audit persistence.
+- `WP-007` uses PoC-only local audit JSON fixtures and a Keycloak admin-event probe on a throwaway user attribute. It is not production append-only audit storage, tamper resistance, retention, export, backup, restore, privacy policy, or reconciliation logic.
 
 ## References
 
@@ -310,6 +351,7 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - [Keycloak container guide](https://www.keycloak.org/server/containers)
 - [Keycloak OIDC endpoints and grant types](https://www.keycloak.org/securing-apps/oidc-layers)
 - [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html)
+- [Keycloak Admin Events](https://www.keycloak.org/docs/latest/server_admin/#auditing-admin-events)
 - [Keycloak authentication flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [RFC 8176 - Authentication Method Reference Values](https://www.rfc-editor.org/rfc/rfc8176)
