@@ -4,6 +4,36 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-25
+
+### Added
+
+- Added `docs/poc/keycloak-wp010-result.md` to record the selected Keycloak IAM mapping for the first IAM Control Plane API-backed validation slice: account type client roles, lifecycle user attributes, service-access client roles, IAM Control Plane API-mediated protected-service authorization, and local business audit plus Keycloak event evidence.
+- Added `docs/poc/keycloak-wp011-result.md` to define the IAM Control Plane API anti-bypass path, operation contract, drift handling, runtime evidence expectations, and residual risks for Keycloak-backed account administration.
+- Added `docs/poc/keycloak-wp012-result.md` to define the Keycloak-backed lifecycle and onboarding activation scenarios, unsafe onboarding denials, protected-service access expectations, and runtime evidence requirements.
+- Added `docs/poc/keycloak-wp013-result.md` to select ACR/LoA step-up as the first privileged-authentication evidence path for `admin` and `super-admin` onboarding and to keep privileged activation blocked until runtime evidence proves the path.
+- Added `docs/poc/keycloak-wp014-result.md` to define the service-access-role model, IAM Control Plane API `authorization/check` contract, fail-closed decision logic, access-stop scenarios, and runtime evidence expectations for protected-service authorization.
+- Added `docs/poc/keycloak-wp015-result.md` to define direct Keycloak Admin Console drift classes, shortcut rejection, drift detection evidence, event-gap handling, and residual risks for the IAM Control Plane API direction.
+- Added `docs/poc/keycloak-wp016-result.md` to define the audit boundary, local EDRLab audit event contract, Keycloak evidence role, operational review items, and runtime evidence expectations.
+- Added `docs/poc/keycloak-wp017-result.md` to consolidate `WP-010` through `WP-016` into Phase 5 review inputs, runtime evidence gaps, residual risks, review questions, and decision options.
+- Added `poc/keycloak/scripts/verify-iam-control-plane-runtime.sh` as the PoC-only Linux runtime bundle for `WP-011` through `WP-016`, covering controlled Keycloak Admin REST mutations, local IAM Control Plane API fixture decisions, protected-service checks, direct-admin drift handling, Keycloak admin-event collection, and local EDRLab audit examples.
+- Added `docs/poc/keycloak-wp011-016-runtime-result.md` to record the Docker execution of the `WP-011` through `WP-016` runtime bundle, the decision matrix, generated evidence path, Keycloak user-profile finding, and remaining `WP-013` blocker.
+- Added `poc/keycloak/scripts/verify-iam-control-plane-wp013.sh` and its containerized runner for the dedicated `WP-013` ACR/LoA step-up validation using only Docker runtime execution.
+- Added `docs/decisions/0003-accept-otp-for-privileged-authentication.md` to record the accepted decision that OTP MFA is sufficient privileged-authentication evidence for the current Keycloak IAM direction, with WebAuthn/passkeys deferred as future hardening.
+- Added `docs/evaluation/phase-5-review-note.md` to summarize what the Keycloak IAM Control Plane API PoC validates, remaining production risks, decisions to take, and minimum MVP authorization gates.
+
+### Changed
+
+- Updated `docs/poc/keycloak-iam-bff-validation-plan.md` and `docs/README.md` to link the completed `WP-010` mapping result, documentation-first `WP-011` anti-bypass result, documentation-first `WP-012` lifecycle/onboarding result, documentation-first `WP-013` privileged-authentication evidence result, and documentation-first `WP-014` service-access authorization result.
+- Replaced the active validation terminology from `BFF/Admin API` to `EDRLab IAM Control Plane API` in ADR 0002, the active architecture scope, the active validation plan, and `WP-010` through `WP-014`; existing filenames keep `bff` until an explicit rename is requested.
+- Extended `docs/poc/keycloak-wp014-result.md` with the IAM Control Plane API `GET /me/services` effective-service listing contract, scenarios, and runtime evidence expectations, while keeping `authorization/check` as the protected-service enforcement decision.
+- Updated `docs/poc/keycloak-iam-bff-validation-plan.md` and `docs/README.md` to link the documentation-first `WP-015` drift and shortcut-rejection result, the documentation-first `WP-016` audit and operations result, and the documentation-first `WP-017` consolidation result.
+- Updated `poc/keycloak/README.md`, `docs/poc/keycloak-iam-bff-validation-plan.md`, and `docs/poc/keycloak-wp017-result.md` to document the prepared `WP-011` through `WP-016` runtime bundle and to keep execution evidence distinct from script preparation.
+- Tightened the prepared `WP-011` through `WP-016` runtime bundle with an explicit IAM Control Plane API decision matrix, stricter local audit actor fields, resource-specific Keycloak admin-event correlation, and a visible `blocked` marker for unresolved privileged-authentication evidence.
+- Executed the `WP-011` through `WP-016` runtime bundle against the Docker Keycloak PoC, fixed the runtime script to configure Keycloak User Profile unmanaged attributes as `ADMIN_EDIT` for PoC IAM attributes, preserved user profile fields during attribute updates, and recorded the final `pass_with_blocked_privileged_evidence` result.
+- Executed the dedicated `WP-013` Docker runner, configured PoC-only Keycloak ACR/LoA step-up with OTP, validated normal-login denial, privileged admin and super-admin activation fixture allows, mismatched-subject denial, and updated the `WP-013` result note with the passing evidence path and remaining production gaps.
+- Updated `WP-013`, `WP-017`, the active architecture scope, the active validation plan, and documentation indexes to reflect the user decision that OTP MFA is acceptable for privileged admin authentication in the current direction.
+
 ## 2026-06-23
 
 ### Added
@@ -20,9 +50,9 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/poc/keycloak-wp007-result.md` as a review-state result note for the WP-007 audit-correlation scenario.
 - Added `docs/poc/keycloak-wp008-result.md` as a documentation-first review note for the Keycloak Web Admin boundary and self-hosted operations checklist.
 - Added `docs/poc/keycloak-wp009-result.md` as the Phase 4 evidence consolidation note for the Keycloak PoC result matrix, blockers, accepted limitations, residual risks, and Phase 5 review questions.
-- Added `docs/decisions/0002-validate-keycloak-iam-bff.md` to record the user-selected pivot toward Keycloak as the IAM source with an EDRLab BFF/Admin API facade.
+- Added `docs/decisions/0002-validate-keycloak-iam-bff.md` to record the user-selected pivot toward Keycloak as the IAM source with an EDRLab IAM Control Plane API.
 - Added `docs/architecture/keycloak-iam-bff-scope.md` to describe the new Keycloak-IAM-backed administration boundary, state ownership questions, protected-service authorization options, and audit boundary.
-- Added `docs/poc/keycloak-iam-bff-validation-plan.md` to define the next Phase 4 validation work packages for the Keycloak IAM plus EDRLab BFF/Admin API direction.
+- Added `docs/poc/keycloak-iam-bff-validation-plan.md` to define the next Phase 4 validation work packages for the Keycloak IAM plus EDRLab IAM Control Plane API direction.
 
 ### Changed
 
@@ -48,9 +78,9 @@ This repository is a study repository, not a released software package. Changelo
 - Executed the WP-007 runtime validation against the Docker Keycloak PoC runtime, recorded the passing evidence path, and documented expected gaps where Keycloak events do not prove local EDRLab authorization, audit-read, persistence, or retention behavior.
 - Updated `docs/README.md` to include the new `WP-008` and `WP-009` review notes in the project documentation map.
 - Revised `FR-038` from a blanket identity-provider claim override rejection into the new anti-bypass requirement for controlled server-side IAM administration and authorization paths.
-- Marked the original Keycloak local-access-control validation decision, solution-choice note, integration-scope note, and validation plan as superseded by the Keycloak IAM BFF validation direction while preserving their evidence history.
+- Marked the original Keycloak local-access-control validation decision, solution-choice note, integration-scope note, and validation plan as superseded by the Keycloak IAM Control Plane API validation direction while preserving their evidence history.
 - Marked the earlier architecture-options, technical-solutions, and Keycloak setup-runbook artifacts as superseded for future validation because they belong to the local-access-control-authority interpretation.
-- Updated `docs/README.md` and `docs/decisions/README.md` to list the new Keycloak IAM BFF direction, validation plan, and superseded prior boundary.
+- Updated `docs/README.md` and `docs/decisions/README.md` to list the new Keycloak IAM Control Plane API direction, validation plan, and superseded prior boundary.
 
 ## 2026-06-07
 

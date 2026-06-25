@@ -47,7 +47,8 @@ Supersedes: none
 | Record | Status | Summary |
 | --- | --- | --- |
 | [0001 - Choose Keycloak for Validation](./0001-choose-keycloak-for-validation.md) | Superseded | Selected self-hosted Keycloak with a local access-control service as the original Phase 3 candidate solution to validate. |
-| [0002 - Validate Keycloak IAM With EDRLab BFF](./0002-validate-keycloak-iam-bff.md) | Accepted | Supersedes the local-access-control-authority boundary and selects Keycloak IAM state with an EDRLab BFF/Admin API facade as the next validation direction. |
+| [0002 - Validate Keycloak IAM With EDRLab IAM Control Plane API](./0002-validate-keycloak-iam-bff.md) | Accepted | Supersedes the local-access-control-authority boundary and selects Keycloak IAM state with an EDRLab IAM Control Plane API as the next validation direction. |
+| [0003 - Accept OTP for Privileged Authentication](./0003-accept-otp-for-privileged-authentication.md) | Accepted | Accepts OTP MFA as sufficient privileged-authentication evidence for the current Keycloak IAM direction, with WebAuthn/passkeys deferred as future hardening. |
 
 ## References
 

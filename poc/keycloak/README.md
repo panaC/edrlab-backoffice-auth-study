@@ -31,6 +31,9 @@ It validates that a throwaway Keycloak realm can be created with an OIDC backoff
 | `scripts/verify-claim-override.sh` | Runs `WP-005`: scripted misleading Keycloak role, group, and claim evidence plus local claim-override rejection decisions. |
 | `scripts/verify-authorization-access-stop.sh` | Runs `WP-006`: scripted member authentication evidence plus PoC-only local `authorization/check`, fail-closed, and access-stop decisions. |
 | `scripts/verify-audit-correlation.sh` | Runs `WP-007`: scripted member authentication evidence, supplemental Keycloak event evidence, PoC-only local audit examples, correlation checks, and audit-gap records. |
+| `scripts/verify-iam-control-plane-runtime.sh` | Runs the `WP-011` through `WP-016` Keycloak IAM plus EDRLab IAM Control Plane API runtime bundle: controlled Admin REST mutations, local control-plane decisions, drift handling, protected-service checks, event correlation, and local audit examples. |
+| `scripts/verify-iam-control-plane-wp013.sh` | Runs the dedicated `WP-013` Docker-only runner for Keycloak ACR/LoA step-up evidence and IAM Control Plane API privileged-onboarding decisions. |
+| `scripts/verify_iam_control_plane_wp013.py` | PoC-only Python runner executed inside a `python:3.13-alpine` container by `verify-iam-control-plane-wp013.sh`. |
 | `scripts/stop.sh` | Stops the runtime without deleting the volume. |
 | `scripts/reset.sh` | Deletes local PoC state and generated evidence after explicit confirmation. |
 
@@ -199,6 +202,60 @@ Expected result:
 
 For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-007 result note](../../docs/poc/keycloak-wp007-result.md).
 
+## Run WP-011 Through WP-016 IAM Control Plane Runtime Bundle
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-iam-control-plane-runtime.sh
+```
+
+Expected result:
+
+- The script creates or updates dedicated PoC users named `wp-iam-*` so the bundle does not depend on the historical `WP-001` through `WP-007` fixture users.
+- The script creates or updates PoC-only client roles for account type and service access on the existing backoffice OIDC client.
+- The script configures the Keycloak user profile with `ADMIN_EDIT` unmanaged attributes so the PoC IAM attributes can be written through the administrative context.
+- The script resets the dedicated users to a known baseline with lifecycle, account ID, subject-link, and last-control-plane-correlation attributes.
+- A controlled IAM Control Plane API fixture assigns a member service-access role through Keycloak Admin REST and records before/after Keycloak state.
+- A denied account-type mutation is rejected before Keycloak mutation and leaves the account-type role unchanged.
+- Safe onboarding activation changes an invited verified user to `active` and creates the subject link.
+- Unsafe onboarding for an unverified invited user is denied without Keycloak mutation.
+- A local IAM Control Plane API decision matrix records expected result, observed result, reason code, actor, target, mutation expectation, and pass/fail for each controlled or denied business operation.
+- `authorization/check` allows the active member with a service role, denies the disabled member, and fails closed on direct-admin drift.
+- `GET /me/services` returns only current-state effective services and denies or returns no positive service access when the current state is inactive or drifted.
+- A direct Keycloak Admin REST lifecycle change is detected as drift by comparing current Keycloak state with the last managed control-plane state.
+- The script inspects privileged-authentication evidence configuration and records `blocked` unless explicit step-up evidence is configured and verified.
+- Keycloak admin events are collected as supplemental provider evidence.
+- Local EDRLab audit-shaped records are generated for controlled mutations, denials, onboarding, authorization decisions, drift, privileged-evidence checks, and audit read/export examples.
+- The summary records either `pass` or `pass_with_blocked_privileged_evidence`. The latter is expected in the default PoC configuration until explicit privileged step-up evidence is configured.
+
+The script is idempotent for its dedicated users and roles, but it intentionally mutates the throwaway realm. Run `reset.sh` before or after the bundle when a fully clean realm is desired.
+
+For the documentation-first scope that this script implements, see the [WP-011 result note](../../docs/poc/keycloak-wp011-result.md), [WP-012 result note](../../docs/poc/keycloak-wp012-result.md), [WP-013 result note](../../docs/poc/keycloak-wp013-result.md), [WP-014 result note](../../docs/poc/keycloak-wp014-result.md), [WP-015 result note](../../docs/poc/keycloak-wp015-result.md), [WP-016 result note](../../docs/poc/keycloak-wp016-result.md), and [WP-017 consolidation note](../../docs/poc/keycloak-wp017-result.md).
+
+## Run WP-013 IAM Control Plane Privileged Step-Up
+
+Run `WP-001` setup first, then:
+
+```bash
+bash poc/keycloak/scripts/verify-iam-control-plane-wp013.sh
+```
+
+Expected result:
+
+- The wrapper runs all validation logic inside a PoC-only `python:3.13-alpine` Docker container joined to the Keycloak container network.
+- The runner configures a PoC-only ACR-to-LoA map with `edrlab-normal` and `edrlab-privileged`.
+- The runner creates and binds a PoC-only Keycloak browser step-up flow with LoA 1 username/password and LoA 2 OTP.
+- The runner enrolls OTP credentials for the non-production `admin` and `super-admin` users through Keycloak `CONFIGURE_TOTP`.
+- The runner validates a normal admin login with a non-privileged `acr`, then denies privileged onboarding activation in the IAM Control Plane API fixture.
+- The runner validates admin and super-admin logins requesting `edrlab-privileged`, verifies ID-token signature and claims, and allows privileged onboarding activation in the IAM Control Plane API fixture.
+- The runner denies a mismatched-subject privileged activation attempt.
+- The summary records `result = pass`.
+
+The runner intentionally waits for a fresh TOTP window after enrollment because the realm disables reusable OTP codes. It also intercepts the final OIDC redirect to the local backoffice callback because no real backoffice service is part of this PoC runtime.
+
+For a reviewer-friendly explanation of what the script tests and how to read the generated evidence, see the [WP-013 result note](../../docs/poc/keycloak-wp013-result.md).
+
 ## Stop
 
 ```bash
@@ -326,6 +383,54 @@ RESET_CONFIRM=delete-poc-state bash poc/keycloak/scripts/reset.sh
 - `wp-007-audit-correlation-summary.json`
 - `wp-007-evidence.md`
 
+`scripts/verify-iam-control-plane-runtime.sh` writes:
+
+- `wp-011-016-event-window.json`
+- `wp-011-016-events-config.json`
+- `wp-011-016-user-profile-config.json`
+- `wp-011-016-keycloak-mapping.json`
+- `wp-011-016-member-baseline-state.json`
+- `wp-011-016-member-after-service-role-assigned.json`
+- `wp-011-016-member-after-account-type-mutation-denied.json`
+- `wp-011-016-invited-after-safe-onboarding.json`
+- `wp-011-016-unverified-after-onboarding-denied.json`
+- `wp-011-016-member-after-disable.json`
+- `wp-011-016-member-after-direct-admin-drift.json`
+- `wp-011-016-authorization-allow-active-member.json`
+- `wp-011-016-authorization-deny-disabled-member.json`
+- `wp-011-016-authorization-deny-drift-member.json`
+- `wp-011-016-effective-services-active-member.json`
+- `wp-011-016-effective-services-deny-disabled-member.json`
+- `wp-011-016-effective-services-deny-drift-member.json`
+- `wp-011-016-drift-detection.json`
+- `wp-011-016-client-protocol-mappers.json`
+- `wp-011-016-realm-flow-bindings.json`
+- `wp-011-016-browser-flow-executions.json`
+- `wp-011-016-privileged-evidence.json`
+- `wp-011-016-control-plane-decisions.json`
+- `wp-011-016-keycloak-admin-events.json`
+- `wp-011-016-keycloak-admin-event-correlation.json`
+- `wp-011-016-local-audit.json`
+- `wp-011-016-summary.json`
+- `wp-011-016-evidence.md`
+
+`scripts/verify-iam-control-plane-wp013.sh` writes:
+
+- `wp-013-event-window.json`
+- `wp-013-acr-loa-map.json`
+- `wp-013-step-up-flow-config.json`
+- `wp-013-otp-credentials.json`
+- `wp-013-admin-normal-token-response.json`
+- `wp-013-admin-normal-id-token-claims.json`
+- `wp-013-admin-privileged-token-response.json`
+- `wp-013-admin-privileged-id-token-claims.json`
+- `wp-013-super-admin-privileged-token-response.json`
+- `wp-013-super-admin-privileged-id-token-claims.json`
+- `wp-013-control-plane-decisions.json`
+- `wp-013-local-audit.json`
+- `wp-013-summary.json`
+- `wp-013-evidence.md`
+
 Generated evidence is ignored by Git by default. Summarize reviewable results in `docs/poc/` when closing a work package.
 
 ## Non-Production Limits
@@ -343,10 +448,13 @@ Generated evidence is ignored by Git by default. Summarize reviewable results in
 - `WP-005` uses a PoC-only local authorization evaluator and JSON fixtures. It is not production authorization middleware, a BFF, a protected backend service, persistent storage, or audit persistence.
 - `WP-006` uses a PoC-only local `authorization/check` evaluator and JSON fixtures. It is not production middleware, BFF code, protected-service code, persistent storage, distributed cache behavior, or audit persistence.
 - `WP-007` uses PoC-only local audit JSON fixtures and a Keycloak admin-event probe on a throwaway user attribute. It is not production append-only audit storage, tamper resistance, retention, export, backup, restore, privacy policy, or reconciliation logic.
+- `WP-011` through `WP-016` use a PoC-only IAM Control Plane API fixture and dedicated throwaway users. The bundle configures Keycloak User Profile unmanaged attributes as `ADMIN_EDIT` so the PoC IAM attributes can be written from the administrative context; production should review managed attributes, permissions, validations, and visibility before accepting this mapping. The bundle is not production service code, production database topology, durable audit storage, service-to-service authentication, monitoring, alerting, backup/restore, break-glass policy, or privileged-authentication approval.
+- `WP-013` uses a PoC-only Docker runner, PoC-only ACR/LoA flow configuration, and OTP as the scripted privileged factor. It proves the explicit step-up evidence path for review, not production browser UX, production HTTPS cookie policy, WebAuthn/passkey suitability, recovery governance, durable audit storage, or production privileged-authentication approval.
 
 ## References
 
 - [Keycloak validation plan](../../docs/poc/keycloak-validation-plan.md)
+- [Keycloak IAM Control Plane API validation plan](../../docs/poc/keycloak-iam-bff-validation-plan.md)
 - [Keycloak setup runbook](../../docs/poc/keycloak-setup-runbook.md)
 - [Keycloak container guide](https://www.keycloak.org/server/containers)
 - [Keycloak OIDC endpoints and grant types](https://www.keycloak.org/securing-apps/oidc-layers)
