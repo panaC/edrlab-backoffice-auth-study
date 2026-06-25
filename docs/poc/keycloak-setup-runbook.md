@@ -1,13 +1,14 @@
 # Keycloak Setup Runbook
 
-Status: Review
+Status: Superseded
 Phase: Phase 4 - Proof of Concept
 Scope: PoC
-Last reviewed: 2026-06-05
+Last reviewed: 2026-06-23
 
 ## Contents
 
 - [Purpose](#purpose)
+- [Supersession Note](#supersession-note)
 - [Setup Boundaries](#setup-boundaries)
 - [Runtime Inputs](#runtime-inputs)
 - [Setup Steps](#setup-steps)
@@ -20,6 +21,10 @@ Last reviewed: 2026-06-05
 This runbook starts `WP-001` from the accepted [Keycloak validation plan](./keycloak-validation-plan.md#work-packages). Its goal is to create a minimal, throwaway Keycloak runtime that can support later login, SSO boundary, onboarding, privileged-authentication evidence, and authorization-check scenarios without starting production implementation ([Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
 The expected output is the executable PoC workspace at [poc/keycloak](../../poc/keycloak/README.md) plus evidence: realm/client settings, discovery endpoint values, event settings, test-user setup notes, and explicit limitations for Phase 5 review ([Keycloak validation plan - Evidence Record](./keycloak-validation-plan.md#evidence-record)).
+
+## Supersession Note
+
+This runbook is superseded for future validation because it belongs to the completed local-access-control-boundary PoC. It remains valid for reviewing `WP-001` evidence. The next Keycloak-IAM-backed validation needs a new runbook based on [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](../architecture/keycloak-iam-bff-scope.md).
 
 ## Setup Boundaries
 

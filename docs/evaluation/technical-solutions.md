@@ -1,13 +1,14 @@
 # Concrete Technical Solution Candidates
 
-Status: Review
+Status: Superseded
 Phase: Phase 2 - Requirements and Risk Framing
 Scope: Evaluation
-Last reviewed: 2026-05-08
+Last reviewed: 2026-06-23
 
 ## Contents
 
 - [Purpose](#purpose)
+- [Supersession Note](#supersession-note)
 - [Selection Basis](#selection-basis)
 - [Shared Non-Negotiables](#shared-non-negotiables)
 - [Solution 1 - Auth0 Managed Login with Local Access-Control Service](#solution-1---auth0-managed-login-with-local-access-control-service)
@@ -29,6 +30,10 @@ The three candidates are deliberately concrete enough to evaluate:
 3. Spring-based local IAM control plane with Spring Authorization Server and Spring Security.
 
 Each candidate keeps the project-specific authorization model local. The identity provider or authentication runtime may authenticate the user, but backoffice account type, lifecycle state, service-access roles, subject-linking rules, protected-service authorization, and project audit evidence remain owned by the backoffice access-control capability (`FR-001` through `FR-005`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Threat model TS-006 and TS-008](../risks/threat-model.md#threat-scenarios)).
+
+## Supersession Note
+
+This candidate catalogue is superseded for the active validation direction. It remains the historical Phase 2 shortlist that led to the original Keycloak-plus-local-access-control choice. On 2026-06-23, user direction selected a new validation boundary: Keycloak as the IAM source with an EDRLab BFF/Admin API facade. Use [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](../architecture/keycloak-iam-bff-scope.md) for the active direction.
 
 ## Selection Basis
 

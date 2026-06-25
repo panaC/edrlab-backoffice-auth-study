@@ -20,6 +20,9 @@ This repository is a study repository, not a released software package. Changelo
 - Added `docs/poc/keycloak-wp007-result.md` as a review-state result note for the WP-007 audit-correlation scenario.
 - Added `docs/poc/keycloak-wp008-result.md` as a documentation-first review note for the Keycloak Web Admin boundary and self-hosted operations checklist.
 - Added `docs/poc/keycloak-wp009-result.md` as the Phase 4 evidence consolidation note for the Keycloak PoC result matrix, blockers, accepted limitations, residual risks, and Phase 5 review questions.
+- Added `docs/decisions/0002-validate-keycloak-iam-bff.md` to record the user-selected pivot toward Keycloak as the IAM source with an EDRLab BFF/Admin API facade.
+- Added `docs/architecture/keycloak-iam-bff-scope.md` to describe the new Keycloak-IAM-backed administration boundary, state ownership questions, protected-service authorization options, and audit boundary.
+- Added `docs/poc/keycloak-iam-bff-validation-plan.md` to define the next Phase 4 validation work packages for the Keycloak IAM plus EDRLab BFF/Admin API direction.
 
 ### Changed
 
@@ -44,6 +47,10 @@ This repository is a study repository, not a released software package. Changelo
 - Updated `docs/README.md` to include the new `WP-007` result note in the project documentation map.
 - Executed the WP-007 runtime validation against the Docker Keycloak PoC runtime, recorded the passing evidence path, and documented expected gaps where Keycloak events do not prove local EDRLab authorization, audit-read, persistence, or retention behavior.
 - Updated `docs/README.md` to include the new `WP-008` and `WP-009` review notes in the project documentation map.
+- Revised `FR-038` from a blanket identity-provider claim override rejection into the new anti-bypass requirement for controlled server-side IAM administration and authorization paths.
+- Marked the original Keycloak local-access-control validation decision, solution-choice note, integration-scope note, and validation plan as superseded by the Keycloak IAM BFF validation direction while preserving their evidence history.
+- Marked the earlier architecture-options, technical-solutions, and Keycloak setup-runbook artifacts as superseded for future validation because they belong to the local-access-control-authority interpretation.
+- Updated `docs/README.md` and `docs/decisions/README.md` to list the new Keycloak IAM BFF direction, validation plan, and superseded prior boundary.
 
 ## 2026-06-07
 

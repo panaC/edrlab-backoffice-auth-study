@@ -8,6 +8,7 @@ Last reviewed: 2026-06-23
 ## Contents
 
 - [Summary](#summary)
+- [Post-PoC Pivot Note](#post-poc-pivot-note)
 - [Result Matrix](#result-matrix)
 - [Validation Coverage](#validation-coverage)
 - [Blockers](#blockers)
@@ -24,6 +25,10 @@ Last reviewed: 2026-06-23
 Phase 4 produced strong evidence for the core Keycloak-plus-local-access-control boundary: Keycloak can authenticate and provide OIDC/UserInfo/event evidence, while the local side remains authoritative for subject resolution, safe member onboarding, claim override rejection, protected-service authorization, access-stop checks, and audit authority (`FR-020`, `FR-036`, `FR-037`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Keycloak WP-002 result](./keycloak-wp002-result.md), [Keycloak WP-003 result](./keycloak-wp003-result.md), [Keycloak WP-005 result](./keycloak-wp005-result.md), [Keycloak WP-006 result](./keycloak-wp006-result.md), [Keycloak WP-007 result](./keycloak-wp007-result.md)).
 
 Phase 4 did not prove production adoption. The current blocking gap is privileged `admin` and `super-admin` activation evidence: `WP-004` found no usable AMR claim, AMR protocol mapper, or configured-flow reference value in the default PoC configuration, so privileged onboarding activation remains blocked (`FR-034`, `FR-043`, `FR-044`; [Keycloak WP-004 result](./keycloak-wp004-result.md)). Production operations also remain open because `WP-008` records the self-hosted Keycloak operational checklist as review input, not production readiness ([Keycloak WP-008 result](./keycloak-wp008-result.md)).
+
+## Post-PoC Pivot Note
+
+After this result consolidation, user direction on 2026-06-23 changed the next validation direction to Keycloak as the IAM source with an EDRLab BFF/Admin API facade. This `WP-009` result remains valid evidence for the completed local-access-control-boundary PoC, but it is no longer sufficient as the active target direction. Use [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](../architecture/keycloak-iam-bff-scope.md) for the next validation scope.
 
 ## Result Matrix
 
@@ -119,4 +124,3 @@ No Phase 6 production MVP work is implied by this result. Production implementat
 - [Keycloak Authentication Flows](https://www.keycloak.org/docs/latest/server_admin/#creating-flows)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
-

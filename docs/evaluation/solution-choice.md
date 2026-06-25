@@ -1,13 +1,14 @@
 # Solution Choice
 
-Status: Accepted
+Status: Superseded
 Phase: Phase 3 - Solution Choice
 Scope: Evaluation
-Last reviewed: 2026-06-05
+Last reviewed: 2026-06-23
 
 ## Contents
 
 - [Purpose](#purpose)
+- [Supersession Note](#supersession-note)
 - [Phase 3 Inputs](#phase-3-inputs)
 - [Shortlist](#shortlist)
 - [Decision Criteria](#decision-criteria)
@@ -26,6 +27,10 @@ Last reviewed: 2026-06-05
 This document is the Phase 3 working entry point for choosing the candidate solution to validate for the EDRLab backoffice access-control capability. Phase 3 may compare a focused shortlist and choose a candidate solution, but that choice is not production approval and must not start implementation work unless the user explicitly scopes a non-production PoC or moves the project to Phase 6 ([Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
 The existing three-candidate shortlist was used as the decision set. The governance boundary explicitly discourages broad market survey work when the existing shortlist is sufficient to decide ([Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Concrete technical solution candidates](./technical-solutions.md#selection-basis)).
+
+## Supersession Note
+
+This artifact is now superseded for the active validation boundary. It records the original Phase 3 choice: self-hosted Keycloak plus a local EDRLab access-control service. On 2026-06-23, user direction selected a new validation direction: Keycloak as the IAM source for business access-control state, with an EDRLab Admin Console and BFF/Admin API facade. Use [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](../architecture/keycloak-iam-bff-scope.md) as the active direction; this document remains historical evidence for the prior decision.
 
 ## Phase 3 Inputs
 

@@ -1,10 +1,13 @@
 # 0001 - Choose Keycloak for Validation
 
-Status: Accepted
+Status: Superseded
 Date: 2026-06-05
 Supersedes: none
+Superseded by: [0002 - Validate Keycloak IAM With EDRLab BFF](./0002-validate-keycloak-iam-bff.md)
 
 ## Context
+
+Supersession note: this ADR records the original Phase 3 validation choice. On 2026-06-23, user direction changed the validation boundary to Keycloak as the IAM source with an EDRLab BFF/Admin API facade; see [ADR 0002](./0002-validate-keycloak-iam-bff.md). The evidence produced under this ADR remains useful historical PoC evidence, but this is no longer the active validation boundary.
 
 The project is in Phase 3 - Solution Choice. Phase 3 may choose a candidate solution to validate, but the choice is not production approval and must not start implementation work unless it is explicitly scoped as a non-production PoC ([Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)).
 

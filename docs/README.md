@@ -30,12 +30,14 @@ This directory contains the project-facing study documents for the internal back
 | [Feature scope review](./requirements/feature-scope-review.md) | Historical step-by-step validation trail for each immutable `FS-*` requirement, including agreed Phase 2 scope and threat-model implications. |
 | [Requirements baseline review](./requirements/baseline-review.md) | Historical validation trail for the retired `RB-*` requirements, checking sufficiency, scope fit, and concordance with the validated `FS-*` interpretation. |
 | [Threat model](./risks/threat-model.md) | Phase 2 threat model used to identify access-control risks and refine security requirements before solution choice. |
-| [Architecture options](./architecture/options.md) | Phase 2 architecture option framing derived from the consolidated feature requirements and threat model, covering local access-control, provider-backed, self-hosted, library-based, split control-plane, and policy-engine or microservice shapes. |
-| [Keycloak integration scope](./architecture/keycloak-integration-scope.md) | Architecture note that separates EDRLab development responsibilities, Keycloak configuration responsibilities, and the SSO session flow for the accepted Keycloak candidate. |
-| [Concrete technical solution candidates](./evaluation/technical-solutions.md) | Three concrete candidate solution shapes for satisfying the feature requirements: Auth0 managed login plus local access-control, self-hosted Keycloak plus local access-control, and a Spring-based local IAM control plane. |
-| [Solution choice](./evaluation/solution-choice.md) | Accepted Phase 3 artifact recording self-hosted Keycloak plus local access-control as the candidate solution to validate. |
-| [Keycloak validation plan](./poc/keycloak-validation-plan.md) | Accepted Phase 4 entry plan for the tight non-production Keycloak validation. |
-| [Keycloak setup runbook](./poc/keycloak-setup-runbook.md) | Review-state Phase 4 runbook for executing `WP-001`: throwaway realm, backoffice OIDC client, test users, event settings, discovery evidence, and the executable runtime under [`poc/keycloak`](../poc/keycloak/README.md). |
+| [Architecture options](./architecture/options.md) | Superseded Phase 2 architecture option framing derived from the earlier local-access-control-authority interpretation. |
+| [Keycloak integration scope](./architecture/keycloak-integration-scope.md) | Superseded architecture note that separates EDRLab development responsibilities, Keycloak configuration responsibilities, and the SSO session flow for the original local-access-control-authority Keycloak candidate. |
+| [Keycloak IAM BFF scope](./architecture/keycloak-iam-bff-scope.md) | Review-state architecture note for the active pivot: Keycloak as IAM source with an EDRLab Admin Console and BFF/Admin API facade. |
+| [Concrete technical solution candidates](./evaluation/technical-solutions.md) | Superseded Phase 2 candidate catalogue for Auth0 plus local access-control, Keycloak plus local access-control, and Spring local IAM. |
+| [Solution choice](./evaluation/solution-choice.md) | Superseded Phase 3 artifact recording self-hosted Keycloak plus local access-control as the original candidate solution to validate. |
+| [Keycloak validation plan](./poc/keycloak-validation-plan.md) | Superseded Phase 4 entry plan for the completed non-production Keycloak local-access-control-boundary validation. |
+| [Keycloak IAM BFF validation plan](./poc/keycloak-iam-bff-validation-plan.md) | Review-state Phase 4 plan for validating Keycloak as the IAM source with an EDRLab Admin Console and BFF/Admin API facade. |
+| [Keycloak setup runbook](./poc/keycloak-setup-runbook.md) | Superseded Phase 4 runbook for executing `WP-001`: throwaway realm, backoffice OIDC client, test users, event settings, discovery evidence, and the executable runtime under [`poc/keycloak`](../poc/keycloak/README.md). |
 | [Keycloak WP-001 result](./poc/keycloak-wp001-result.md) | Review-state Phase 4 result note recording the Docker execution, scripted bootstrap, verification checks, evidence location, and limitations for `WP-001`. |
 | [Keycloak WP-002 result](./poc/keycloak-wp002-result.md) | Review-state Phase 4 result note recording the scripted login and SSO boundary validation, generated evidence location, and limitations for `WP-002`. |
 | [Keycloak WP-003 result](./poc/keycloak-wp003-result.md) | Review-state Phase 4 result note recording the scripted safe/unsafe onboarding validation, generated evidence location, and limitations for `WP-003`. |
@@ -45,7 +47,8 @@ This directory contains the project-facing study documents for the internal back
 | [Keycloak WP-007 result](./poc/keycloak-wp007-result.md) | Review-state Phase 4 result note recording the scripted audit-correlation validation, generated evidence location, expected audit gaps, and local-audit authority boundary. |
 | [Keycloak WP-008 result](./poc/keycloak-wp008-result.md) | Review-state Phase 4 documentation-first result note recording the Keycloak Web Admin boundary and self-hosted operations checklist. |
 | [Keycloak WP-009 result](./poc/keycloak-wp009-result.md) | Review-state Phase 4 result note consolidating the Keycloak PoC matrix, blockers, accepted limitations, residual risks, and Phase 5 review questions. |
-| [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Accepted decision record for the Phase 3 Keycloak validation candidate. |
+| [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Superseded decision record for the original Phase 3 Keycloak local-access-control validation candidate. |
+| [ADR 0002 - Validate Keycloak IAM with EDRLab BFF](./decisions/0002-validate-keycloak-iam-bff.md) | Accepted decision record for the active Keycloak-IAM-source validation direction with an EDRLab BFF/Admin API facade. |
 
 ## Reading Path
 

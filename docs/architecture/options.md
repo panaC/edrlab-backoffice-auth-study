@@ -1,13 +1,14 @@
 # Architecture Options
 
-Status: Review
+Status: Superseded
 Phase: Phase 2 - Requirements and Risk Framing
 Scope: Architecture
-Last reviewed: 2026-05-08
+Last reviewed: 2026-06-23
 
 ## Contents
 
 - [Purpose](#purpose)
+- [Supersession Note](#supersession-note)
 - [Source Inputs](#source-inputs)
 - [Current Project Shape](#current-project-shape)
 - [Architecture Drivers](#architecture-drivers)
@@ -26,6 +27,10 @@ Last reviewed: 2026-05-08
 This document proposes Phase 2 architecture options from the consolidated feature requirements and the current threat model. It is an option-framing artifact, not an architecture decision, vendor decision, implementation plan, or production recommendation. Architecture selection remains out of scope for Phase 2 unless the project is explicitly moved into solution choice or review ([Project governance](../../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing), [README - Open Study Questions](../../README.md#open-study-questions)).
 
 The useful question is not "which product wins?" yet. The useful question is which architecture shapes are plausible enough to carry into solution-choice evaluation or a focused non-production PoC without violating the feature model or hiding security risk ([Project governance](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)).
+
+## Supersession Note
+
+This architecture option framing is superseded for the active validation direction because it assumed local backoffice access-control remained the authority for account and authorization state. It remains useful historical framing. On 2026-06-23, user direction selected Keycloak as the IAM source with an EDRLab BFF/Admin API facade; use [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](./keycloak-iam-bff-scope.md) for the active boundary.
 
 ## Source Inputs
 

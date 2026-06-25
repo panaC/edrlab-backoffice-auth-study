@@ -1,13 +1,14 @@
 # Keycloak Validation Plan
 
-Status: Accepted
+Status: Superseded
 Phase: Phase 4 - Proof of Concept
 Scope: PoC
-Last reviewed: 2026-06-05
+Last reviewed: 2026-06-23
 
 ## Contents
 
 - [Purpose](#purpose)
+- [Supersession Note](#supersession-note)
 - [Accepted Validation Decisions](#accepted-validation-decisions)
 - [Runtime Scope](#runtime-scope)
 - [Work Packages](#work-packages)
@@ -22,6 +23,10 @@ This is the finalized Phase 4 entry plan for validating the accepted Keycloak ca
 The validation target is self-hosted Keycloak plus a local EDRLab access-control service. Keycloak provides authentication, OIDC/OAuth2 runtime behavior, SSO session behavior, realm administration, and provider-side evidence; the local access-control service remains authoritative for account type, lifecycle, subject link, service-access roles, protected-service authorization, and project audit records ([ADR 0001](../decisions/0001-choose-keycloak-for-validation.md), [Keycloak integration scope](../architecture/keycloak-integration-scope.md), `FR-001`, `FR-002`, `FR-020`, `FR-027`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
 The PoC does not validate an all-in-Keycloak realm model for EDRLab account lifecycle, service-access roles, protected-service authorization, or project audit. That boundary is part of the accepted Phase 3 rationale ([Solution choice - Why Keep Access-Control Local](../evaluation/solution-choice.md#why-keep-access-control-local), [Solution choice - Keycloak Web Admin Boundary](../evaluation/solution-choice.md#keycloak-web-admin-boundary)).
+
+## Supersession Note
+
+This plan is superseded for future validation. It remains the completed plan for `WP-001` through `WP-009`, which validated the original Keycloak-authentication plus local-access-control boundary. On 2026-06-23, user direction selected a new validation direction: Keycloak as the IAM source with an EDRLab BFF/Admin API facade. Use [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](../architecture/keycloak-iam-bff-scope.md) for the next validation plan.
 
 ## Accepted Validation Decisions
 

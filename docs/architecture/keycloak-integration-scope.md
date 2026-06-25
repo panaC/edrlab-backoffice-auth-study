@@ -1,6 +1,6 @@
 # Keycloak Integration Scope
 
-Status: Review
+Status: Superseded
 Phase: Phase 4 - Proof of Concept
 Scope: Architecture
 Last reviewed: 2026-06-23
@@ -8,6 +8,7 @@ Last reviewed: 2026-06-23
 ## Contents
 
 - [Purpose](#purpose)
+- [Supersession Note](#supersession-note)
 - [Operating Boundary](#operating-boundary)
 - [Role And Group Boundary](#role-and-group-boundary)
 - [Development Block](#development-block)
@@ -26,6 +27,10 @@ Last reviewed: 2026-06-23
 This document explains the concrete split between what EDRLab should develop locally and what should be configured in Keycloak for the accepted Keycloak candidate. It also records the expected SSO session behavior for Phase 4 validation. It is an architecture study artifact, not implementation approval or production deployment approval ([Project governance - Phase 3](../../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance - Phase 4](../../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept), [ADR 0001](../decisions/0001-choose-keycloak-for-validation.md)).
 
 The accepted candidate is self-hosted Keycloak plus local EDRLab access-control. Keycloak provides authentication, OIDC/OAuth2 runtime behavior, SSO session behavior, realm administration, and provider-side evidence. The local EDRLab access-control capability remains authoritative for account type, lifecycle, subject link, service-access roles, protected-service authorization, and project audit (`FR-001`, `FR-002`, `FR-020`, `FR-027`, `FR-036` through `FR-039`; [Feature requirements specification](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Solution choice](../evaluation/solution-choice.md#selected-candidate)).
+
+## Supersession Note
+
+This architecture note is superseded for the active validation direction. It remains the reference for the completed `WP-001` through `WP-009` local-access-control-boundary PoC evidence. On 2026-06-23, user direction selected Keycloak as the IAM source with an EDRLab BFF/Admin API facade; use [ADR 0002](../decisions/0002-validate-keycloak-iam-bff.md) and [Keycloak IAM BFF scope](./keycloak-iam-bff-scope.md) for the new boundary.
 
 ## Operating Boundary
 
