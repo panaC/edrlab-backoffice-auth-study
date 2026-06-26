@@ -1,12 +1,12 @@
 # Abstract
 
-This repository contains the EDRLab backoffice access-control study.
+This repository contains the EDRLab backoffice access-control study and the approved production MVP workspace.
 
 The study objective is to define, compare, and eventually recommend the simplest secure way to authenticate selected backoffice users, manage their accounts, control access to company-controlled protected backend services, and audit privileged or security-relevant actions without expanding into public customer identity or a company-wide IAM replacement.
 
 ## Current State
 
-Current phase: Phase 5 - Review and Decision.
+Current phase: Phase 6 - Production MVP.
 
 The requirements work is consolidated:
 
@@ -34,7 +34,7 @@ The identity-provider and onboarding boundary is now explicit:
 - automatic onboarding activation may create the immutable authenticated-subject link only when the backoffice finds exactly one invited account with no existing subject link and a verified matching email; production admin and super-admin onboarding also requires privileged-authentication evidence;
 - unsafe onboarding matches fail closed: no subject link, no activation, no authorization, and administrative intervention required.
 
-The completed Phase 2 and Phase 3 study artifacts, plus the Phase 4 Keycloak PoC results, provide the evidence base for the Phase 5 review:
+The completed Phase 2 and Phase 3 study artifacts, plus the Phase 4 Keycloak PoC results and Phase 5 review decisions, provide the evidence base for the approved Phase 6 production MVP:
 
 - [docs/risks/threat-model.md](./docs/risks/threat-model.md) frames protected assets, trust boundaries, threat scenarios, requirement-refinement candidates, and review questions.
 - [docs/architecture/options.md](./docs/architecture/options.md) frames plausible architecture shapes without choosing a final target architecture.
@@ -43,13 +43,16 @@ The completed Phase 2 and Phase 3 study artifacts, plus the Phase 4 Keycloak PoC
 - [docs/decisions/0001-choose-keycloak-for-validation.md](./docs/decisions/0001-choose-keycloak-for-validation.md) records the original Keycloak validation decision, now superseded for the active validation boundary.
 - [docs/decisions/0002-validate-keycloak-iam-bff.md](./docs/decisions/0002-validate-keycloak-iam-bff.md) records the accepted active direction: Keycloak as IAM source with an EDRLab IAM Control Plane API.
 - [docs/decisions/0003-accept-otp-for-privileged-authentication.md](./docs/decisions/0003-accept-otp-for-privileged-authentication.md) records the accepted OTP privileged-authentication decision for the current direction.
+- [docs/decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md](./docs/decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) records the Phase 5 decision to adopt the Keycloak IAM Control Plane API architecture for constrained MVP design without starting Phase 6 implementation.
+- [docs/decisions/0005-authorize-phase-6-production-mvp.md](./docs/decisions/0005-authorize-phase-6-production-mvp.md) records the explicit decision authorizing Phase 6 production MVP implementation for the accepted scope.
 - [docs/poc/keycloak-validation-plan.md](./docs/poc/keycloak-validation-plan.md) is the original Phase 4 entry plan for the targeted non-production Keycloak validation.
 - [docs/poc/keycloak-iam-bff-validation-plan.md](./docs/poc/keycloak-iam-bff-validation-plan.md) is the active Phase 4 validation plan for Keycloak as IAM source with an EDRLab IAM Control Plane API.
-- [docs/evaluation/phase-5-review-note.md](./docs/evaluation/phase-5-review-note.md) summarizes what the Keycloak IAM Control Plane API PoC validates, what remains risky, which decisions remain open, and the minimum conditions before any Phase 6 MVP authorization.
+- [docs/evaluation/phase-5-review-note.md](./docs/evaluation/phase-5-review-note.md) summarizes what the Keycloak IAM Control Plane API PoC validates, the accepted residual risks, and the now-closed minimum conditions for Phase 6 MVP authorization.
+- [docs/evaluation/mvp-scope.md](./docs/evaluation/mvp-scope.md) defines the accepted MVP scope for account operations, lifecycle, service-access roles, protected services, audit, and privileged onboarding.
 
-The study has completed Phase 4 by producing targeted non-production Keycloak PoC evidence. Phase 5 is now the review and decision step. It is not production approval and does not start Phase 6 without an explicit user or project-owner decision.
+The study has completed Phase 5. ADR 0005 authorizes Phase 6 production MVP implementation inside the accepted scope: Keycloak as IAM source, EDRLab Admin Console plus IAM Control Plane API as the business boundary, `access-check-demo-service` as the first protected service, file-backed append-only audit, accepted security tests, and simple audited first-super-admin bootstrap.
 
-The expected output remains a documented, evidence-based review decision supported by comparison documents and targeted non-production Proofs of Concept when documentation alone cannot answer a material question.
+The expected output is now a production-scope MVP implementation with executable security evidence, documented runtime and operations behavior, and explicit tracking of post-MVP deferrals.
 
 ## Key Links
 
@@ -61,6 +64,8 @@ The expected output remains a documented, evidence-based review decision support
 - [Concrete technical solution candidates](./docs/evaluation/technical-solutions.md)
 - [Solution choice](./docs/evaluation/solution-choice.md)
 - [ADR 0001 - Choose Keycloak for validation](./docs/decisions/0001-choose-keycloak-for-validation.md)
+- [ADR 0005 - Authorize Phase 6 production MVP](./docs/decisions/0005-authorize-phase-6-production-mvp.md)
+- [MVP scope](./docs/evaluation/mvp-scope.md)
 - [Keycloak validation plan](./docs/poc/keycloak-validation-plan.md)
 - [Project study documentation map](./docs/README.md)
 - [Project governance](./PROJECT-GOVERNANCE.md)

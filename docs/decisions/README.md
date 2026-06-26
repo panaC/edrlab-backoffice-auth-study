@@ -49,6 +49,8 @@ Supersedes: none
 | [0001 - Choose Keycloak for Validation](./0001-choose-keycloak-for-validation.md) | Superseded | Selected self-hosted Keycloak with a local access-control service as the original Phase 3 candidate solution to validate. |
 | [0002 - Validate Keycloak IAM With EDRLab IAM Control Plane API](./0002-validate-keycloak-iam-bff.md) | Accepted | Supersedes the local-access-control-authority boundary and selects Keycloak IAM state with an EDRLab IAM Control Plane API as the next validation direction. |
 | [0003 - Accept OTP for Privileged Authentication](./0003-accept-otp-for-privileged-authentication.md) | Accepted | Accepts OTP MFA as sufficient privileged-authentication evidence for the current Keycloak IAM direction, with WebAuthn/passkeys deferred as future hardening. |
+| [0004 - Adopt Keycloak IAM Control Plane for MVP Design](./0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) | Accepted | Adopts self-hosted Keycloak as IAM source with an EDRLab Admin Console and IAM Control Plane API as the architectural direction for constrained MVP design, without authorizing Phase 6 implementation. |
+| [0005 - Authorize Phase 6 Production MVP](./0005-authorize-phase-6-production-mvp.md) | Accepted | Authorizes Phase 6 production MVP implementation for the accepted Keycloak IAM Control Plane API scope, with explicit MVP residual risks and post-MVP deferrals. |
 
 ## References
 

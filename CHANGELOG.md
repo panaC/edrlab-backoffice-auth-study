@@ -10,6 +10,25 @@ This repository is a study repository, not a released software package. Changelo
 
 - Moved the repository's current operating phase from `Phase 4 - Proof of Concept` to `Phase 5 - Review and Decision` after explicit user request.
 - Updated `AGENTS.md`, `ABSTRACT.md`, `README.md`, and `docs/README.md` so phase status, metadata examples, active-direction references, and review-facing open-study wording reflect the Phase 5 review state.
+- Added ADR 0004 to record the accepted Phase 5 decision adopting the Keycloak IAM Control Plane API architecture for constrained MVP design without authorizing Phase 6 implementation.
+- Updated the Phase 5 review note, documentation map, decision index, and abstract to reference the accepted MVP architecture decision and remaining MVP authorization gates.
+- Added `docs/evaluation/mvp-scope.md` to define the review-state MVP boundary for account operations, lifecycle, service-access roles, protected services, audit, privileged onboarding, out-of-scope items, and remaining Phase 6 inputs.
+- Updated the Phase 5 review note and documentation map to link the new MVP scope gate artifact.
+- Updated the MVP scope and Phase 5 review note with the user-selected first protected service: a synthetic access-check service whose only purpose is to verify the current user's access and return `OK` or `KO`.
+- Refined the MVP scope with the concrete `access-check-demo-service` service, `access-check-demo:consult` role, `OK`/`KO` HTTP response contract, required account fields, build-initialization first-super-admin bootstrap, simplest audit consultation, and confirmed MVP exclusions.
+- Added `docs/architecture/iam-control-plane-api-contract.md` to accept the MVP IAM Control Plane API contract: REST endpoints under `/iam`, actors, Keycloak/OIDC user authentication, service-to-service client credentials, operation authorization, RFC 9457 Problem Details errors, idempotence, correlation IDs, and audit.
+- Updated the MVP scope to make the `access-check-demo-service` `OK`/`KO` response JSON everywhere, and linked the accepted API contract from the Phase 5 review note and documentation map.
+- Added `docs/architecture/authorization-check-behavior.md` to accept the MVP runtime behavior for `authorization/check`: `500 ms` protected-service timeout per attempt, one retry with jitter, `1000 ms` IAM-to-Keycloak timeout, one transient dependency retry, no positive cache, optional `5 second` deny cache, no indeterminate cache, fail-closed `KO`, next-check access stop with `<= 1 second` measurable bound outside outage, durable audit for deny/indeterminate outcomes, and required metrics.
+- Updated the IAM Control Plane API contract, Phase 5 review note, and documentation map to link the accepted authorization-check runtime behavior.
+- Added `docs/architecture/audit-storage.md` to accept the MVP audit storage policy: local durable file-backed append-only records, one JSON event object per line, indefinite retention, super-admin API read, no initial export, correlation IDs, backup inclusion, confidentiality controls, and explicit operational limits.
+- Updated the MVP scope, IAM Control Plane API contract, authorization-check behavior note, Phase 5 review note, and documentation map to link the accepted audit storage policy.
+- Added `docs/architecture/keycloak-iam-schema-policy.md` to accept the MVP Keycloak IAM schema policy: managed User Profile attributes, unmanaged attributes disabled, account-type client roles, protected-service client roles, role lifecycle metadata, IAM Control Plane API-only mutation, strict invariant checks, dry-run migration, and token-claim boundaries.
+- Updated the MVP scope, IAM Control Plane API contract, authorization-check behavior note, Phase 5 review note, and documentation map to link the accepted Keycloak IAM schema policy.
+- Added `docs/evaluation/security-test-plan.md` to accept the MVP security regression test plan covering frontend-only bypass rejection, raw token-claim rejection, issuer/audience/token validation, immutable subject link, fail-closed dependency behavior, drift denial, and audit evidence.
+- Updated the Phase 5 review note and documentation map to link the accepted MVP security test plan and close the security regression test gate for design.
+- Accepted the MVP scope and added ADR 0005 to explicitly authorize `Phase 6 - Production MVP` implementation for the accepted Keycloak IAM Control Plane API scope.
+- Recorded the final Phase 5 closure decisions: formal direct Keycloak admin governance is post-MVP, `super-admin` owns Keycloak operations for the MVP, OTP safeguards follow Keycloak documented built-ins, and first-super-admin bootstrap remains simple, idempotent, outside the public API, and audited.
+- Updated `AGENTS.md`, `ABSTRACT.md`, `README.md`, the documentation map, decision index, MVP scope, and Phase 5 review note so the repository status and guardrails reflect the Phase 6 authorization.
 
 ## 2026-06-25
 

@@ -11,14 +11,16 @@ Read this file before modifying the repository. Then use:
 
 ## Current Operating Phase
 
-The current phase is `Phase 5 - Review and Decision`.
+The current phase is `Phase 6 - Production MVP`.
 
-Default Phase 5 work: review the accepted Keycloak IAM Control Plane API direction and Phase 4 PoC evidence against the immutable feature specification, final-solution feature requirements, threat model, accepted decisions, and Keycloak validation results; summarize what the PoC proved, what it did not prove, required adjustments, unresolved questions, production-readiness gaps, and residual risks; and prepare or update review inputs needed to decide whether to adopt the direction for the next step, adjust and re-review, return to Phase 3, or run a targeted additional Phase 4 validation.
+Default Phase 6 work: implement the approved production MVP scope authorized by [ADR 0005](./docs/decisions/0005-authorize-phase-6-production-mvp.md), constrained by the accepted MVP scope, IAM Control Plane API contract, `authorization/check` behavior, audit storage policy, Keycloak IAM schema policy, and MVP security test plan. Phase 6 work must turn the accepted design into production-scope code, tests, runtime configuration, migration or bootstrap scripts, operational evidence, and documentation without expanding beyond the approved MVP boundary.
 
 User runtime environment:
 
 - The user works on Linux. Project runbooks, PoC commands, shell examples, and runtime instructions must target Linux shell usage by default.
 - Avoid Windows-specific or PowerShell examples in project documentation unless the user explicitly asks for them or the example is clearly marked as host-specific.
+- Runtime MVP artifacts should be Docker-based or Docker-documented where applicable, so a reviewer can run the approved MVP services from a clean checkout on Linux using documented commands.
+- Runtime MVP documentation must include prerequisites, environment variables, exact run commands, expected outputs, evidence produced, known shortcuts, stop/reset commands when applicable, and production or MVP limitations.
 - Every runtime PoC must be accompanied by a Docker-based runtime definition. Prefer `compose.yaml` or `docker-compose.yml` for multi-container/runtime orchestration, and add a `Dockerfile` only when a custom image is required.
 - Every runtime PoC must be fully scripted and documented. A reviewer should be able to run it from a clean checkout on Linux using documented commands, without relying on hidden manual console steps.
 - Runtime PoC scripts should cover bootstrap/setup, start, verification, evidence collection, stop, and reset/cleanup when those actions are applicable.
@@ -26,21 +28,20 @@ User runtime environment:
 - Runtime PoC documentation must include prerequisites, environment variables, exact run commands, expected outputs, evidence produced, known shortcuts, stop/reset commands, and non-production limitations.
 - PoC Docker runtime artifacts must stay non-production, clearly named as PoC-only, scoped to the active validation question, and separated from production deployment or infrastructure artifacts.
 
-Phase 5 boundaries:
+Phase 6 boundaries:
 
-- create or edit Phase 5 review artifacts under top-level `docs/evaluation/` by default;
-- create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/poc/` artifacts when needed to clarify review scope, validation evidence, residual risk, production-readiness gaps, or review inputs;
-- create or edit decision records under `docs/decisions/` only when a real review decision is proposed or accepted;
-- create temporary non-production PoC artifacts only when Phase 5 review explicitly calls for a targeted additional validation;
-- create or edit PoC-only Docker runtime artifacts only for targeted follow-up validation, keeping them in a clearly named PoC workspace and out of production application, deployment, or infrastructure paths;
-- create or edit PoC-only scripts, environment templates, fixtures, and local README/runbook files when needed to make a follow-up runtime PoC reproducible and reviewable;
+- create or edit production-scope application code, dependencies, services, tests, runtime configuration, Docker artifacts, migration scripts, bootstrap scripts, CI, and development tooling only when needed for the approved MVP scope;
+- create or edit production-oriented documentation under top-level `docs/` when needed for MVP scope, operations, rollout, rollback, security hardening, audit, backup, restore, monitoring, or residual-risk tracking;
+- create or edit decision records under `docs/decisions/` only when a real project, architecture, vendor, product, or production-impacting decision is proposed or accepted;
+- implement the accepted MVP security test plan as executable evidence before claiming MVP production readiness;
+- produce concrete operations evidence before production data is trusted, including Keycloak ownership by `super-admin`, backup/restore notes, secrets handling, monitoring, incident handling, and rollback notes;
 - create or edit the root `FEATURE-REQUIREMENTS.md` only when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
 - keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, review notes, implementation notes, phase status, and recommendations out of `docs/wiki/`;
-- do not treat the Phase 3 solution choice, Phase 4 PoC evidence, or Phase 5 review decision as automatic production approval;
-- do not let a PoC become a hidden MVP;
-- do not add production application code, production dependencies, package managers, production Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly moves the project into Phase 6 production MVP implementation;
-- do not promote temporary PoC artifacts into durable application code without an explicit Phase 6 movement.
+- do not expand beyond the approved MVP scope without an explicit scope change;
+- do not promote temporary PoC artifacts into production code without review, hardening, and acceptance;
+- do not implement real business protected-service integration, advanced audit export/search, WebAuthn/passkeys as mandatory authentication, production high availability, or formal direct-admin governance unless the user explicitly adds them to the MVP scope;
+- do not claim full production completeness where the MVP intentionally defers non-critical capabilities.
 
 ## Instruction Priority
 
@@ -99,7 +100,7 @@ Non-index project study documents outside `docs/decisions/` should start with a 
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 5 - Review and Decision
+Phase: Phase 6 - Production MVP
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```

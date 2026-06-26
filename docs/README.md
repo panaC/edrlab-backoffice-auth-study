@@ -16,7 +16,7 @@ This directory contains the project-facing study documents for the internal back
 | `requirements/` | Requirements and traceability | Requirements derived from the immutable feature specification, traceability matrices, acceptance criteria, assumptions, and open questions ([README](../README.md), [Project governance](../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing)). |
 | `risks/` | Risk registers | Security, operational, privacy, audit, lifecycle, and delivery risks that need tracking or mitigation during the study ([Project governance](../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing)). |
 | `architecture/` | Architecture study material | Context boundaries, important flows, option analysis, integration boundaries, and architecture notes that are not final decisions ([arc42 overview](https://arc42.org/overview), [Project governance](../PROJECT-GOVERNANCE.md#phase-2---requirements-and-risk-framing)). |
-| `evaluation/` | Solution-choice evaluation | Evaluation criteria, candidate catalogues, comparison matrices, evidence notes, solution-choice rationale, and review inputs ([Project governance](../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance](../PROJECT-GOVERNANCE.md#phase-5---review-and-decision)). |
+| `evaluation/` | Solution-choice evaluation | Evaluation criteria, candidate catalogues, comparison matrices, evidence notes, solution-choice rationale, review inputs, and accepted MVP scope boundaries ([Project governance](../PROJECT-GOVERNANCE.md#phase-3---solution-choice), [Project governance](../PROJECT-GOVERNANCE.md#phase-5---review-and-decision), [Project governance](../PROJECT-GOVERNANCE.md#phase-6---production-mvp)). |
 | `poc/` | Proof-of-Concept planning and results | Lightweight non-production PoC plans, assumptions, limits, evaluation questions, and results ([Project governance](../PROJECT-GOVERNANCE.md#phase-4---proof-of-concept)). |
 | [`decisions/`](./decisions/) | Decision records | ADR-style records for real project or architecture decisions. ADR guidance recommends keeping decision records short, factual, statused, and tied to context and consequences ([Microsoft ADR guidance](https://learn.microsoft.com/en-ie/azure/well-architected/architect-role/architecture-decision-record), [ADR GitHub organization](https://adr.github.io/)). |
 | [`wiki/`](./wiki/) | Conceptual IAM reference | General IAM concepts, protocol explanations, security concepts, terminology, and source-backed reference pages ([Project governance](../PROJECT-GOVERNANCE.md#phase-1---conceptual-iam-foundation)). |
@@ -33,9 +33,15 @@ This directory contains the project-facing study documents for the internal back
 | [Architecture options](./architecture/options.md) | Superseded Phase 2 architecture option framing derived from the earlier local-access-control-authority interpretation. |
 | [Keycloak integration scope](./architecture/keycloak-integration-scope.md) | Superseded architecture note that separates EDRLab development responsibilities, Keycloak configuration responsibilities, and the SSO session flow for the original local-access-control-authority Keycloak candidate. |
 | [Keycloak IAM Control Plane API scope](./architecture/keycloak-iam-bff-scope.md) | Review-state architecture note for the active pivot: Keycloak as IAM source with an EDRLab Admin Console and IAM Control Plane API. |
+| [IAM Control Plane API contract](./architecture/iam-control-plane-api-contract.md) | Accepted Phase 5 API contract for MVP endpoints, actors, service-to-service authentication, operation authorization, Problem Details errors, idempotence, correlation IDs, and audit. |
+| [Authorization check runtime behavior](./architecture/authorization-check-behavior.md) | Accepted Phase 5 runtime behavior for `authorization/check` timeout, retry, cache, fail-closed handling, access-stop delay, audit, metrics, and cache headers. |
+| [Audit storage policy](./architecture/audit-storage.md) | Accepted Phase 5 audit storage policy for local file-backed append-only audit records with one JSON event object per line, retention, read/export boundary, correlation, backup, and confidentiality. |
+| [Keycloak IAM schema policy](./architecture/keycloak-iam-schema-policy.md) | Accepted Phase 5 Keycloak IAM schema policy for managed attributes, client roles, edit permissions, invariant checks, migration, and token-claim boundaries. |
 | [Concrete technical solution candidates](./evaluation/technical-solutions.md) | Superseded Phase 2 candidate catalogue for Auth0 plus local access-control, Keycloak plus local access-control, and Spring local IAM. |
 | [Solution choice](./evaluation/solution-choice.md) | Superseded Phase 3 artifact recording self-hosted Keycloak plus local access-control as the original candidate solution to validate. |
-| [Phase 5 review note](./evaluation/phase-5-review-note.md) | Review-state Phase 5 note summarizing what the Keycloak IAM Control Plane API PoC validates, production risks, decisions to take, and minimum MVP authorization gates. |
+| [Phase 5 review note](./evaluation/phase-5-review-note.md) | Accepted Phase 5 note recording adoption of the Keycloak IAM Control Plane API architecture, accepted residual risks, and closed Phase 6 MVP authorization gates. |
+| [MVP scope](./evaluation/mvp-scope.md) | Accepted Phase 5 scope note defining the Phase 6 MVP boundary for account operations, lifecycle, service-access roles, protected services, audit, and privileged onboarding. |
+| [MVP security test plan](./evaluation/security-test-plan.md) | Accepted Phase 5 security regression test plan for frontend-only bypass rejection, raw-claim rejection, token validation, subject-link immutability, fail-closed behavior, drift denial, and audit evidence. |
 | [Keycloak validation plan](./poc/keycloak-validation-plan.md) | Superseded Phase 4 entry plan for the completed non-production Keycloak local-access-control-boundary validation. |
 | [Keycloak IAM Control Plane API validation plan](./poc/keycloak-iam-bff-validation-plan.md) | Review-state Phase 4 plan for validating Keycloak as the IAM source with an EDRLab Admin Console and IAM Control Plane API. |
 | [Keycloak setup runbook](./poc/keycloak-setup-runbook.md) | Superseded Phase 4 runbook for executing `WP-001`: throwaway realm, backoffice OIDC client, test users, event settings, discovery evidence, and the executable runtime under [`poc/keycloak`](../poc/keycloak/README.md). |
@@ -60,6 +66,8 @@ This directory contains the project-facing study documents for the internal back
 | [ADR 0001 - Choose Keycloak for validation](./decisions/0001-choose-keycloak-for-validation.md) | Superseded decision record for the original Phase 3 Keycloak local-access-control validation candidate. |
 | [ADR 0002 - Validate Keycloak IAM with EDRLab IAM Control Plane API](./decisions/0002-validate-keycloak-iam-bff.md) | Accepted decision record for the active Keycloak-IAM-source validation direction with an EDRLab IAM Control Plane API. |
 | [ADR 0003 - Accept OTP for privileged authentication](./decisions/0003-accept-otp-for-privileged-authentication.md) | Accepted decision record confirming OTP MFA as sufficient privileged-authentication evidence for the current Keycloak IAM direction. |
+| [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP design](./decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) | Accepted Phase 5 decision adopting the Keycloak IAM Control Plane architecture for constrained MVP design without starting Phase 6 production implementation. |
+| [ADR 0005 - Authorize Phase 6 production MVP](./decisions/0005-authorize-phase-6-production-mvp.md) | Accepted Phase 5 decision authorizing Phase 6 production MVP implementation for the accepted Keycloak IAM Control Plane API scope, with explicit residual risks and post-MVP deferrals. |
 
 ## Reading Path
 
@@ -76,7 +84,7 @@ Non-index project study documents outside `decisions/` should start with:
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 5 - Review and Decision
+Phase: Phase 6 - Production MVP
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```

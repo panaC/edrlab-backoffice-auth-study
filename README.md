@@ -1,6 +1,6 @@
 # EDRLab Backoffice Access-Control Study
 
-This repository is the study space for the EDRLab backoffice access-control solution. It defines the project scope, captures the consolidated feature requirements, frames security and operational risks, compares candidate approaches, and prepares an evidence-based technical recommendation.
+This repository is the study and approved MVP workspace for the EDRLab backoffice access-control solution. It defines the project scope, captures the consolidated feature requirements, frames security and operational risks, records the accepted Keycloak IAM Control Plane API direction, and now carries the authorized Phase 6 production MVP boundary.
 
 > https://www.notion.so/edrlab/Member-s-back-office-2eca1ca5712f806b9594dd987b5af9e1
 
@@ -89,13 +89,13 @@ This README summarizes the project purpose, actor model, scope, roadmap, and doc
 
 ## Initial Scope
 
-In scope for the study:
+In scope for the study and approved MVP:
 
 - backoffice account lifecycle and profile-management boundaries for `super-admin`, `admin`, and `member` accounts;
 - identity-provider authentication boundary and stable authenticated-subject linkage;
 - service-access-role catalog management, member role assignment and removal, and protected backend service access decisions;
 - auditability of privileged and security-relevant operations;
-- Phase 2 requirements and risk framing, Phase 3 solution choice, Phase 4 targeted non-production Proof of Concept, and Phase 5 review and decision.
+- Phase 2 requirements and risk framing, Phase 3 solution choice, Phase 4 targeted non-production Proof of Concept, Phase 5 review and decision, and Phase 6 production MVP implementation within the scope authorized by [ADR 0005](./docs/decisions/0005-authorize-phase-6-production-mvp.md).
 
 Out of scope for the initial specification:
 
@@ -109,13 +109,13 @@ Out of scope for the initial specification:
 
 ## Open Study Questions
 
-These topics remain open for Phase 5 review or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
+These topics remain open for Phase 6 implementation detail or post-MVP study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
 
-- Solution validation: self-hosted Keycloak as IAM source with an EDRLab IAM Control Plane API is the active validation direction in [ADR 0002](./docs/decisions/0002-validate-keycloak-iam-bff.md); production adoption remains open until Phase 5 review and explicit Phase 6 authorization.
-- Privileged account protection: MFA, step-up authentication, passwordless login, hardware-backed authenticators, fallback authenticators, super-admin provisioning, super-admin recovery, and break-glass.
-- Access evidence and revocation: acceptable access lifetime, refresh behavior, revocation delay, token or session strategy, validation model, and browser storage.
-- Audit and operations: audit retention, privacy, export, compliance expectations, backup, recovery, restore testing, upgrades, and operational ownership.
-- Review and MVP authorization gates: exact first protected services, production operation ownership, audit storage, direct-admin governance, and any remaining targeted validation.
+- MVP implementation boundary: Phase 6 is authorized by [ADR 0005](./docs/decisions/0005-authorize-phase-6-production-mvp.md) only for the accepted MVP scope in [MVP scope](./docs/evaluation/mvp-scope.md).
+- Privileged account protection: OTP safeguards follow the accepted Keycloak built-in mechanisms for the MVP; passwordless login, hardware-backed authenticator policy, broader fallback authenticators, super-admin recovery, and break-glass remain post-MVP unless explicitly added.
+- Access evidence and revocation: exact token lifetime, refresh behavior, session handling, and browser storage remain Phase 6 implementation details constrained by the accepted API and `authorization/check` behavior.
+- Audit and operations: the MVP audit storage choice is accepted, but Phase 6 still needs exact file path, rotation, permissions, backup/restore evidence, confidentiality controls, monitoring, upgrades, and operational runbooks.
+- Post-MVP governance: formal direct Keycloak admin governance is deferred post-MVP; the MVP still forbids routine direct Keycloak business administration and treats unmanaged mutation as drift.
 
 ## Roadmap
 
@@ -134,6 +134,7 @@ These topics remain open for Phase 5 review or later study. They are not feature
 | Consolidated feature requirements | [Feature requirements](./FEATURE-REQUIREMENTS.md) |
 | Phase boundaries and study rules | [Project governance](./PROJECT-GOVERNANCE.md) |
 | Project study documents | [Documentation map](./docs/README.md) |
+| Production MVP authorization | [ADR 0005](./docs/decisions/0005-authorize-phase-6-production-mvp.md) |
 | General IAM concepts and references | [Conceptual IAM wiki](./docs/wiki/README.md) |
 | Project history | [Changelog](./CHANGELOG.md) |
 | Agent working instructions | [Agent instructions](./AGENTS.md) |
