@@ -6,7 +6,7 @@ The study objective is to define, compare, and eventually recommend the simplest
 
 ## Current State
 
-Current phase: Phase 4 - Proof of Concept.
+Current phase: Phase 5 - Review and Decision.
 
 The requirements work is consolidated:
 
@@ -34,16 +34,20 @@ The identity-provider and onboarding boundary is now explicit:
 - automatic onboarding activation may create the immutable authenticated-subject link only when the backoffice finds exactly one invited account with no existing subject link and a verified matching email; production admin and super-admin onboarding also requires privileged-authentication evidence;
 - unsafe onboarding matches fail closed: no subject link, no activation, no authorization, and administrative intervention required.
 
-The completed Phase 2 and Phase 3 study artifacts provide the evidence base for the Phase 4 Proof of Concept:
+The completed Phase 2 and Phase 3 study artifacts, plus the Phase 4 Keycloak PoC results, provide the evidence base for the Phase 5 review:
 
 - [docs/risks/threat-model.md](./docs/risks/threat-model.md) frames protected assets, trust boundaries, threat scenarios, requirement-refinement candidates, and review questions.
 - [docs/architecture/options.md](./docs/architecture/options.md) frames plausible architecture shapes without choosing a final target architecture.
 - [docs/evaluation/technical-solutions.md](./docs/evaluation/technical-solutions.md) identifies three concrete candidates for later evaluation: Auth0 managed login with local access control, self-hosted Keycloak with local access control, and a Spring-based local IAM control plane.
-- [docs/evaluation/solution-choice.md](./docs/evaluation/solution-choice.md) records self-hosted Keycloak with a local access-control service as the Phase 3 candidate solution to validate and closes Phase 3.
-- [docs/decisions/0001-choose-keycloak-for-validation.md](./docs/decisions/0001-choose-keycloak-for-validation.md) records the accepted decision and its validation conditions.
-- [docs/poc/keycloak-validation-plan.md](./docs/poc/keycloak-validation-plan.md) is the accepted Phase 4 entry plan for the targeted non-production Keycloak validation.
+- [docs/evaluation/solution-choice.md](./docs/evaluation/solution-choice.md) records the original self-hosted Keycloak candidate selection and closes Phase 3.
+- [docs/decisions/0001-choose-keycloak-for-validation.md](./docs/decisions/0001-choose-keycloak-for-validation.md) records the original Keycloak validation decision, now superseded for the active validation boundary.
+- [docs/decisions/0002-validate-keycloak-iam-bff.md](./docs/decisions/0002-validate-keycloak-iam-bff.md) records the accepted active direction: Keycloak as IAM source with an EDRLab IAM Control Plane API.
+- [docs/decisions/0003-accept-otp-for-privileged-authentication.md](./docs/decisions/0003-accept-otp-for-privileged-authentication.md) records the accepted OTP privileged-authentication decision for the current direction.
+- [docs/poc/keycloak-validation-plan.md](./docs/poc/keycloak-validation-plan.md) is the original Phase 4 entry plan for the targeted non-production Keycloak validation.
+- [docs/poc/keycloak-iam-bff-validation-plan.md](./docs/poc/keycloak-iam-bff-validation-plan.md) is the active Phase 4 validation plan for Keycloak as IAM source with an EDRLab IAM Control Plane API.
+- [docs/evaluation/phase-5-review-note.md](./docs/evaluation/phase-5-review-note.md) summarizes what the Keycloak IAM Control Plane API PoC validates, what remains risky, which decisions remain open, and the minimum conditions before any Phase 6 MVP authorization.
 
-The study has completed Phase 3 by choosing the candidate solution to validate. Phase 4 is now the targeted non-production Proof of Concept. It is not production approval and does not replace the later Phase 5 review decision.
+The study has completed Phase 4 by producing targeted non-production Keycloak PoC evidence. Phase 5 is now the review and decision step. It is not production approval and does not start Phase 6 without an explicit user or project-owner decision.
 
 The expected output remains a documented, evidence-based review decision supported by comparison documents and targeted non-production Proofs of Concept when documentation alone cannot answer a material question.
 

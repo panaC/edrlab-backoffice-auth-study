@@ -76,7 +76,7 @@ Non-index project study documents outside `decisions/` should start with:
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 4 - Proof of Concept
+Phase: Phase 5 - Review and Decision
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```

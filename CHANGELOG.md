@@ -4,6 +4,13 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-26
+
+### Changed
+
+- Moved the repository's current operating phase from `Phase 4 - Proof of Concept` to `Phase 5 - Review and Decision` after explicit user request.
+- Updated `AGENTS.md`, `ABSTRACT.md`, `README.md`, and `docs/README.md` so phase status, metadata examples, active-direction references, and review-facing open-study wording reflect the Phase 5 review state.
+
 ## 2026-06-25
 
 ### Added

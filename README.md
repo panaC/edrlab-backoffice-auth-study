@@ -109,13 +109,13 @@ Out of scope for the initial specification:
 
 ## Open Study Questions
 
-These topics remain open for Phase 4 or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
+These topics remain open for Phase 5 review or later study. They are not feature requirements until explicitly adopted in [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md).
 
-- Solution validation: self-hosted Keycloak with local access control has been selected for validation in [ADR 0001](./docs/decisions/0001-choose-keycloak-for-validation.md); production adoption remains open until PoC evidence and review.
+- Solution validation: self-hosted Keycloak as IAM source with an EDRLab IAM Control Plane API is the active validation direction in [ADR 0002](./docs/decisions/0002-validate-keycloak-iam-bff.md); production adoption remains open until Phase 5 review and explicit Phase 6 authorization.
 - Privileged account protection: MFA, step-up authentication, passwordless login, hardware-backed authenticators, fallback authenticators, super-admin provisioning, super-admin recovery, and break-glass.
 - Access evidence and revocation: acceptable access lifetime, refresh behavior, revocation delay, token or session strategy, validation model, and browser storage.
 - Audit and operations: audit retention, privacy, export, compliance expectations, backup, recovery, restore testing, upgrades, and operational ownership.
-- Proof of Concept scope: exact demo permissions and protected services to exercise.
+- Review and MVP authorization gates: exact first protected services, production operation ownership, audit storage, direct-admin governance, and any remaining targeted validation.
 
 ## Roadmap
 

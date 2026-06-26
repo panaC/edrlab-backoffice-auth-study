@@ -11,9 +11,9 @@ Read this file before modifying the repository. Then use:
 
 ## Current Operating Phase
 
-The current phase is `Phase 4 - Proof of Concept`.
+The current phase is `Phase 5 - Review and Decision`.
 
-Default Phase 4 work: validate the accepted Keycloak candidate through a tight non-production PoC scope; execute or refine the smallest useful validation scenarios; record results, failures, surprises, residual risks, and review inputs; and keep the work traceable to the immutable feature specification, accepted solution choice, threat model, and Keycloak validation plan.
+Default Phase 5 work: review the accepted Keycloak IAM Control Plane API direction and Phase 4 PoC evidence against the immutable feature specification, final-solution feature requirements, threat model, accepted decisions, and Keycloak validation results; summarize what the PoC proved, what it did not prove, required adjustments, unresolved questions, production-readiness gaps, and residual risks; and prepare or update review inputs needed to decide whether to adopt the direction for the next step, adjust and re-review, return to Phase 3, or run a targeted additional Phase 4 validation.
 
 User runtime environment:
 
@@ -26,20 +26,21 @@ User runtime environment:
 - Runtime PoC documentation must include prerequisites, environment variables, exact run commands, expected outputs, evidence produced, known shortcuts, stop/reset commands, and non-production limitations.
 - PoC Docker runtime artifacts must stay non-production, clearly named as PoC-only, scoped to the active validation question, and separated from production deployment or infrastructure artifacts.
 
-Phase 4 boundaries:
+Phase 5 boundaries:
 
-- create or edit PoC planning, execution, evidence, and result artifacts under top-level `docs/poc/` by default;
-- create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/evaluation/` artifacts when needed to clarify PoC scope, validation evidence, residual risk, or review inputs;
-- create temporary non-production PoC artifacts only within the agreed Keycloak validation scope;
-- create or edit PoC-only Docker runtime artifacts when needed to execute a runtime PoC, keeping them in a clearly named PoC workspace and out of production application, deployment, or infrastructure paths;
-- create or edit PoC-only scripts, environment templates, fixtures, and local README/runbook files when needed to make a runtime PoC reproducible and reviewable;
+- create or edit Phase 5 review artifacts under top-level `docs/evaluation/` by default;
+- create or edit top-level `docs/requirements/`, `docs/risks/`, `docs/architecture/`, or `docs/poc/` artifacts when needed to clarify review scope, validation evidence, residual risk, production-readiness gaps, or review inputs;
+- create or edit decision records under `docs/decisions/` only when a real review decision is proposed or accepted;
+- create temporary non-production PoC artifacts only when Phase 5 review explicitly calls for a targeted additional validation;
+- create or edit PoC-only Docker runtime artifacts only for targeted follow-up validation, keeping them in a clearly named PoC workspace and out of production application, deployment, or infrastructure paths;
+- create or edit PoC-only scripts, environment templates, fixtures, and local README/runbook files when needed to make a follow-up runtime PoC reproducible and reviewable;
 - create or edit the root `FEATURE-REQUIREMENTS.md` only when the user is refining the final-solution access-control feature requirements;
 - keep conceptual IAM wiki pages under `docs/wiki/`;
-- keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, implementation notes, phase status, and recommendations out of `docs/wiki/`;
-- do not treat the Phase 3 solution choice or Phase 4 PoC evidence as production approval;
+- keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, review notes, implementation notes, phase status, and recommendations out of `docs/wiki/`;
+- do not treat the Phase 3 solution choice, Phase 4 PoC evidence, or Phase 5 review decision as automatic production approval;
 - do not let a PoC become a hidden MVP;
 - do not add production application code, production dependencies, package managers, production Docker files, databases, migrations, CI files, generated artifacts, or deployment files unless the user explicitly moves the project into Phase 6 production MVP implementation;
-- do not promote temporary PoC artifacts into durable application code without an explicit Phase 5 review decision and explicit Phase 6 movement.
+- do not promote temporary PoC artifacts into durable application code without an explicit Phase 6 movement.
 
 ## Instruction Priority
 
@@ -98,7 +99,7 @@ Non-index project study documents outside `docs/decisions/` should start with a 
 
 ```text
 Status: Draft | Review | Accepted | Superseded
-Phase: Phase 4 - Proof of Concept
+Phase: Phase 5 - Review and Decision
 Scope: Requirements | Risks | Architecture | Evaluation | PoC
 Last reviewed: YYYY-MM-DD
 ```
