@@ -6,8 +6,14 @@ This repository is a study repository, not a released software package. Changelo
 
 ## 2026-06-26
 
+### Added
+
+- Added the first Phase 6 `access-control/` MVP runtime slice with a Python IAM Control Plane API, `access-check-demo-service`, local append-only JSONL audit storage, idempotent first-`super-admin` bootstrap, Docker Compose runtime, Linux scripts, and executable security/contract tests.
+- Added the second Phase 6 `access-control/` MVP runtime slice with Dockerized Keycloak, scripted realm/client/user bootstrap, OIDC token introspection for protected-service subject tokens, Keycloak client-credentials authentication for `authorization/check`, Docker-only tests, and a Docker smoke verification for the access-check path.
+
 ### Changed
 
+- Hardened the Phase 6 `access-control/` MVP runtime so human IAM API endpoints resolve actors from validated bearer user tokens instead of trusting `X-Actor-Account-Id`; the development actor header is now opt-in only, and the Keycloak smoke path uses a real super-admin bearer token.
 - Moved the repository's current operating phase from `Phase 4 - Proof of Concept` to `Phase 5 - Review and Decision` after explicit user request.
 - Updated `AGENTS.md`, `ABSTRACT.md`, `README.md`, and `docs/README.md` so phase status, metadata examples, active-direction references, and review-facing open-study wording reflect the Phase 5 review state.
 - Added ADR 0004 to record the accepted Phase 5 decision adopting the Keycloak IAM Control Plane API architecture for constrained MVP design without authorizing Phase 6 implementation.

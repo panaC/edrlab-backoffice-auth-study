@@ -135,6 +135,7 @@ These topics remain open for Phase 6 implementation detail or post-MVP study. Th
 | Phase boundaries and study rules | [Project governance](./PROJECT-GOVERNANCE.md) |
 | Project study documents | [Documentation map](./docs/README.md) |
 | Production MVP authorization | [ADR 0005](./docs/decisions/0005-authorize-phase-6-production-mvp.md) |
+| Phase 6 MVP runtime slice | [Access-control MVP runtime](./access-control/README.md) |
 | General IAM concepts and references | [Conceptual IAM wiki](./docs/wiki/README.md) |
 | Project history | [Changelog](./CHANGELOG.md) |
 | Agent working instructions | [Agent instructions](./AGENTS.md) |

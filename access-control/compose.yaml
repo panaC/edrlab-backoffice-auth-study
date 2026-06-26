@@ -1,0 +1,143 @@
+name: edrlab-access-control-mvp
+
+services:
+  keycloak:
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.6.1}
+    command: ["start-dev"]
+    ports:
+      - "${KEYCLOAK_HOST_BIND:-127.0.0.1}:${KEYCLOAK_PORT:-8080}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:-change-me-admin-password}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "false"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+
+  iam-api:
+    build: .
+    command: ["python", "-m", "edrlab_access_control.iam_api"]
+    ports:
+      - "${IAM_API_HOST_BIND:-127.0.0.1}:${IAM_API_PORT:-8000}:8000"
+    environment:
+      IAM_HOST: "0.0.0.0"
+      IAM_PORT: "8000"
+      IAM_STATE_PATH: /app/runtime/state/state.json
+      IAM_AUDIT_PATH: /app/runtime/audit/audit.jsonl
+      IAM_SERVICE_TOKEN: ${IAM_SERVICE_TOKEN:-change-me-service-token}
+      IAM_SUBJECT_TOKEN_MODE: oidc
+      IAM_SERVICE_AUTH_MODE: oidc
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-edrlab-backoffice-mvp}
+      OIDC_ISSUER: http://keycloak:8080/realms/${KEYCLOAK_REALM:-edrlab-backoffice-mvp}
+      OIDC_INTROSPECTION_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM:-edrlab-backoffice-mvp}/protocol/openid-connect/token/introspect
+      OIDC_CLIENT_ID: ${KEYCLOAK_BACKOFFICE_CLIENT_ID:-edrlab-backoffice}
+      OIDC_CLIENT_SECRET: ${KEYCLOAK_BACKOFFICE_CLIENT_SECRET:-change-me-backoffice-secret}
+      OIDC_EXPECTED_AUDIENCE: ${KEYCLOAK_SERVICE_CLIENT_ID:-access-check-demo-service}
+      IAM_SERVICE_INTROSPECTION_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM:-edrlab-backoffice-mvp}/protocol/openid-connect/token/introspect
+      IAM_SERVICE_CLIENT_ID: ${KEYCLOAK_SERVICE_CLIENT_ID:-access-check-demo-service}
+      IAM_SERVICE_CLIENT_SECRET: ${KEYCLOAK_SERVICE_CLIENT_SECRET:-change-me-demo-service-secret}
+      OIDC_TIMEOUT_MS: "1000"
+    volumes:
+      - access-control-runtime:/app/runtime
+    depends_on:
+      - keycloak
+
+  access-check-demo-service:
+    build: .
+    command: ["python", "-m", "edrlab_access_control.demo_service"]
+    ports:
+      - "${DEMO_HOST_BIND:-127.0.0.1}:${DEMO_PORT:-8001}:8001"
+    environment:
+      DEMO_HOST: "0.0.0.0"
+      DEMO_PORT: "8001"
+      IAM_API_URL: http://iam-api:8000/iam/authorization/check
+      IAM_SERVICE_TOKEN: ${IAM_SERVICE_TOKEN:-change-me-service-token}
+      IAM_SERVICE_AUTH_MODE: oidc
+      IAM_SERVICE_TOKEN_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM:-edrlab-backoffice-mvp}/protocol/openid-connect/token
+      IAM_SERVICE_CLIENT_ID: ${KEYCLOAK_SERVICE_CLIENT_ID:-access-check-demo-service}
+      IAM_SERVICE_CLIENT_SECRET: ${KEYCLOAK_SERVICE_CLIENT_SECRET:-change-me-demo-service-secret}
+      OIDC_TIMEOUT_MS: "1000"
+      IAM_CALL_TIMEOUT_MS: "500"
+      IAM_CALL_RETRY_COUNT: "1"
+    depends_on:
+      - iam-api
+      - keycloak
+
+  keycloak-bootstrap:
+    build: .
+    command: ["python", "-m", "edrlab_access_control.keycloak_bootstrap"]
+    profiles: ["tools"]
+    environment:
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-edrlab-backoffice-mvp}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:-change-me-admin-password}
+      KEYCLOAK_BACKOFFICE_CLIENT_ID: ${KEYCLOAK_BACKOFFICE_CLIENT_ID:-edrlab-backoffice}
+      KEYCLOAK_BACKOFFICE_CLIENT_SECRET: ${KEYCLOAK_BACKOFFICE_CLIENT_SECRET:-change-me-backoffice-secret}
+      KEYCLOAK_BACKOFFICE_REDIRECT_URI: ${KEYCLOAK_BACKOFFICE_REDIRECT_URI:-http://localhost:9999/callback}
+      KEYCLOAK_SERVICE_CLIENT_ID: ${KEYCLOAK_SERVICE_CLIENT_ID:-access-check-demo-service}
+      KEYCLOAK_SERVICE_CLIENT_SECRET: ${KEYCLOAK_SERVICE_CLIENT_SECRET:-change-me-demo-service-secret}
+      KEYCLOAK_SUPER_ADMIN_USERNAME: ${KEYCLOAK_SUPER_ADMIN_USERNAME:-mvp-super-admin}
+      KEYCLOAK_SUPER_ADMIN_PASSWORD: ${KEYCLOAK_SUPER_ADMIN_PASSWORD:-change-me-super-admin-password}
+      BOOTSTRAP_SUPER_ADMIN_EMAIL: ${BOOTSTRAP_SUPER_ADMIN_EMAIL:-super-admin@example.test}
+      KEYCLOAK_BOOTSTRAP_OUTPUT: /app/runtime/state/keycloak-bootstrap.json
+      KEYCLOAK_SMOKE_USERNAME: ${KEYCLOAK_SMOKE_USERNAME:-mvp-member}
+      KEYCLOAK_SMOKE_EMAIL: ${KEYCLOAK_SMOKE_EMAIL:-mvp-member@example.test}
+      KEYCLOAK_SMOKE_PASSWORD: ${KEYCLOAK_SMOKE_PASSWORD:-change-me-member-password}
+    depends_on:
+      - keycloak
+    volumes:
+      - access-control-runtime:/app/runtime
+
+  bootstrap:
+    build: .
+    command: ["python", "-m", "edrlab_access_control.bootstrap"]
+    profiles: ["tools"]
+    environment:
+      IAM_STATE_PATH: /app/runtime/state/state.json
+      IAM_AUDIT_PATH: /app/runtime/audit/audit.jsonl
+      BOOTSTRAP_SUPER_ADMIN_EMAIL: ${BOOTSTRAP_SUPER_ADMIN_EMAIL:-super-admin@example.test}
+      BOOTSTRAP_SUPER_ADMIN_NAME: ${BOOTSTRAP_SUPER_ADMIN_NAME:-Initial Super Admin}
+      BOOTSTRAP_SUPER_ADMIN_ORGANIZATION: ${BOOTSTRAP_SUPER_ADMIN_ORGANIZATION:-EDRLab}
+      BOOTSTRAP_SUPER_ADMIN_SUBJECT: ${BOOTSTRAP_SUPER_ADMIN_SUBJECT:-bootstrap-super-admin-subject}
+      BOOTSTRAP_SUPER_ADMIN_SUBJECT_FILE: /app/runtime/state/keycloak-bootstrap.json
+    volumes:
+      - access-control-runtime:/app/runtime
+
+  tests:
+    build: .
+    command: ["python", "-m", "unittest", "discover", "-s", "tests"]
+    profiles: ["tools"]
+    environment:
+      PYTHONPATH: /app/src
+
+  keycloak-smoke:
+    build: .
+    command: ["python", "-m", "edrlab_access_control.keycloak_smoke"]
+    profiles: ["tools"]
+    environment:
+      KEYCLOAK_BASE_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-edrlab-backoffice-mvp}
+      KEYCLOAK_BACKOFFICE_CLIENT_ID: ${KEYCLOAK_BACKOFFICE_CLIENT_ID:-edrlab-backoffice}
+      KEYCLOAK_BACKOFFICE_CLIENT_SECRET: ${KEYCLOAK_BACKOFFICE_CLIENT_SECRET:-change-me-backoffice-secret}
+      KEYCLOAK_BACKOFFICE_REDIRECT_URI: ${KEYCLOAK_BACKOFFICE_REDIRECT_URI:-http://localhost:9999/callback}
+      KEYCLOAK_SUPER_ADMIN_USERNAME: ${KEYCLOAK_SUPER_ADMIN_USERNAME:-mvp-super-admin}
+      KEYCLOAK_SUPER_ADMIN_PASSWORD: ${KEYCLOAK_SUPER_ADMIN_PASSWORD:-change-me-super-admin-password}
+      BOOTSTRAP_SUPER_ADMIN_SUBJECT: ${BOOTSTRAP_SUPER_ADMIN_SUBJECT:-bootstrap-super-admin-subject}
+      KEYCLOAK_BOOTSTRAP_OUTPUT: /app/runtime/state/keycloak-bootstrap.json
+      KEYCLOAK_SMOKE_USERNAME: ${KEYCLOAK_SMOKE_USERNAME:-mvp-member}
+      KEYCLOAK_SMOKE_EMAIL: ${KEYCLOAK_SMOKE_EMAIL:-mvp-member@example.test}
+      KEYCLOAK_SMOKE_PASSWORD: ${KEYCLOAK_SMOKE_PASSWORD:-change-me-member-password}
+      IAM_API_BASE_URL: http://iam-api:8000
+      DEMO_BASE_URL: http://access-check-demo-service:8001
+    depends_on:
+      - keycloak
+      - iam-api
+      - access-check-demo-service
+    volumes:
+      - access-control-runtime:/app/runtime
+
+volumes:
+  access-control-runtime:
+  keycloak-data:
