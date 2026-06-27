@@ -4,10 +4,20 @@ import json
 import os
 import threading
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Protocol, TypeVar
+
+from . import config
 
 
 T = TypeVar("T")
+
+
+class StateStore(Protocol):
+    def load(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def transact(self, callback: Callable[[dict[str, Any]], T]) -> T:
+        raise NotImplementedError
 
 
 class FileStateStore:
@@ -42,3 +52,13 @@ class FileStateStore:
     def _default_state(self) -> dict[str, Any]:
         return {"accounts": {}, "serviceRoles": {}}
 
+
+def state_store_from_env() -> StateStore:
+    backend = config.state_backend()
+    if backend == "file":
+        return FileStateStore(config.state_path())
+    if backend == "keycloak":
+        from .keycloak_store import KeycloakStateStore
+
+        return KeycloakStateStore.from_env()
+    raise RuntimeError(f"Unsupported IAM_STATE_BACKEND: {backend}")

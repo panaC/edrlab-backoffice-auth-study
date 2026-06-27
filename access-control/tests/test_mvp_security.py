@@ -16,6 +16,7 @@ from edrlab_access_control.audit import AuditWriter
 from edrlab_access_control.config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
 from edrlab_access_control.demo_service import DemoHandler
 from edrlab_access_control.iam_api import IamServer
+from edrlab_access_control.keycloak_store import KeycloakStateStore
 from edrlab_access_control.service import AccessControlService, ApiError
 from edrlab_access_control.store import FileStateStore
 from edrlab_access_control.tokens import (
@@ -755,6 +756,210 @@ class HttpContractTests(unittest.TestCase):
         thread.start()
         self.servers.append(server)
         return server, f"http://127.0.0.1:{server.server_port}"
+
+
+class FakeKeycloakAdminClient:
+    def __init__(self) -> None:
+        self.users: dict[str, dict[str, object]] = {}
+        self.roles: dict[str, dict[str, dict[str, object]]] = {}
+        self.assignments: dict[str, dict[str, set[str]]] = {}
+        self.next_user = 1
+
+    def add_user(
+        self,
+        user_id: str,
+        email: str,
+        attributes: dict[str, list[str]],
+        assignments: dict[str, set[str]],
+        *,
+        enabled: bool = True,
+        first_name: str = "Test",
+        last_name: str = "User",
+    ) -> None:
+        self.users[user_id] = {
+            "id": user_id,
+            "username": email,
+            "enabled": enabled,
+            "email": email,
+            "emailVerified": True,
+            "firstName": first_name,
+            "lastName": last_name,
+            "requiredActions": [],
+            "attributes": attributes,
+        }
+        self.assignments[user_id] = {client_id: set(names) for client_id, names in assignments.items()}
+
+    def list_users(self) -> list[dict[str, object]]:
+        return [self._copy_user(user) for user in self.users.values()]
+
+    def get_user(self, user_id: str) -> dict[str, object] | None:
+        user = self.users.get(user_id)
+        return self._copy_user(user) if user else None
+
+    def find_user_by_email(self, email: str) -> dict[str, object] | None:
+        for user in self.users.values():
+            if str(user.get("email", "")).lower() == email.lower():
+                return self._copy_user(user)
+        return None
+
+    def find_user_by_attribute(self, attr_name: str, value: str) -> dict[str, object] | None:
+        for user in self.users.values():
+            attrs = user.get("attributes")
+            if isinstance(attrs, dict) and attrs.get(attr_name) == [value]:
+                return self._copy_user(user)
+        return None
+
+    def create_user(self, payload: dict[str, object]) -> str:
+        user_id = f"kc-user-{self.next_user}"
+        self.next_user += 1
+        self.users[user_id] = {**payload, "id": user_id}
+        self.assignments[user_id] = {}
+        return user_id
+
+    def update_user(self, user_id: str, payload: dict[str, object]) -> None:
+        self.users[user_id] = {**payload, "id": user_id}
+
+    def list_client_roles(self, client_id: str) -> list[dict[str, object]]:
+        return [dict(role) for role in self.roles.get(client_id, {}).values()]
+
+    def ensure_client_role(
+        self,
+        client_id: str,
+        role_name: str,
+        description: str,
+        attributes: dict[str, list[str]],
+    ) -> dict[str, object]:
+        client_roles = self.roles.setdefault(client_id, {})
+        existing = client_roles.get(role_name, {})
+        merged_attributes = dict(existing.get("attributes") if isinstance(existing.get("attributes"), dict) else {})
+        merged_attributes.update(attributes)
+        role = {
+            "id": f"{client_id}:{role_name}",
+            "name": role_name,
+            "description": description,
+            "clientRole": True,
+            "attributes": merged_attributes,
+        }
+        client_roles[role_name] = role
+        return dict(role)
+
+    def get_user_client_roles(self, user_id: str, client_id: str) -> list[dict[str, object]]:
+        names = self.assignments.get(user_id, {}).get(client_id, set())
+        return [
+            dict(self.roles.get(client_id, {}).get(name, {"name": name, "attributes": {}}))
+            for name in sorted(names)
+        ]
+
+    def add_user_client_roles(self, user_id: str, client_id: str, role_names: list[str]) -> None:
+        self.assignments.setdefault(user_id, {}).setdefault(client_id, set()).update(role_names)
+
+    def remove_user_client_roles(self, user_id: str, client_id: str, role_names: list[str]) -> None:
+        self.assignments.setdefault(user_id, {}).setdefault(client_id, set()).difference_update(role_names)
+
+    def _copy_user(self, user: dict[str, object]) -> dict[str, object]:
+        copied = dict(user)
+        attrs = copied.get("attributes")
+        if isinstance(attrs, dict):
+            copied["attributes"] = {str(key): list(value) for key, value in attrs.items()}
+        return copied
+
+
+class KeycloakStateStoreTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.client = FakeKeycloakAdminClient()
+        self.store = KeycloakStateStore(
+            self.client,  # type: ignore[arg-type]
+            backoffice_client_id="edrlab-backoffice",
+            service_client_ids=[DEFAULT_SERVICE_ID],
+        )
+        self.client.ensure_client_role(
+            DEFAULT_SERVICE_ID,
+            "consult",
+            "Initial MVP access-check demo consultation role.",
+            {
+                "edrlab.role_id": [DEFAULT_SERVICE_ROLE_ID],
+                "edrlab.role_status": ["active"],
+                "edrlab.schema_version": ["iam-schema-v1"],
+            },
+        )
+        self.client.add_user(
+            "super-sub",
+            "super-admin@example.test",
+            {
+                "edrlab.account_id": ["acc-super"],
+                "edrlab.lifecycle": ["active"],
+                "edrlab.linked_subject": ["super-sub"],
+                "edrlab.organization": ["EDRLab"],
+                "edrlab.schema_version": ["iam-schema-v1"],
+            },
+            {"edrlab-backoffice": {"account-type-super-admin"}},
+            first_name="Super",
+            last_name="Admin",
+        )
+        self.subject_tokens = {
+            "super-token": SubjectEvidence(subject="super-sub"),
+            "member-token": SubjectEvidence(
+                subject="member-sub",
+                email="member@example.test",
+                email_verified=True,
+            ),
+        }
+        self.service = AccessControlService(
+            self.store,
+            AuditWriter(Path(self.tmp.name) / "audit.jsonl"),
+            StaticSubjectTokenValidator(self.subject_tokens),
+        )
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_control_plane_mutations_are_written_to_keycloak_state(self) -> None:
+        created = self.service.create_account(
+            "acc-super",
+            {
+                "email": "member@example.test",
+                "organization": "EDRLab",
+                "name": "MVP Member",
+                "accountType": "member",
+            },
+            "corr-create",
+        )
+        account_id = created["accountId"]
+        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        self.assertIsNotNone(user)
+        assert user is not None
+        self.assertEqual(user["attributes"]["edrlab.lifecycle"], ["invited"])
+        self.assertIn("account-type-member", self.client.assignments[user["id"]]["edrlab-backoffice"])
+
+        self.service.assign_service_role("acc-super", account_id, DEFAULT_SERVICE_ROLE_ID, "corr-assign")
+        self.assertIn("consult", self.client.assignments[user["id"]][DEFAULT_SERVICE_ID])
+
+        activated = self.service.activate_onboarding_from_bearer("Bearer member-token", {}, "corr-activate")
+        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        assert user is not None
+        self.assertEqual(activated["lifecycle"], "active")
+        self.assertEqual(user["attributes"]["edrlab.lifecycle"], ["active"])
+        self.assertEqual(user["attributes"]["edrlab.linked_subject"], ["member-sub"])
+
+        decision = self.service.authorization_check(
+            {
+                "subjectToken": "member-token",
+                "serviceId": DEFAULT_SERVICE_ID,
+                "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+            },
+            "corr-check",
+        )
+        self.assertEqual(decision["decision"], "allow")
+
+    def test_keycloak_account_type_drift_blocks_actor_resolution(self) -> None:
+        self.client.assignments["super-sub"]["edrlab-backoffice"].add("account-type-admin")
+
+        with self.assertRaises(ApiError) as raised:
+            self.service.resolve_actor_id_from_bearer("Bearer super-token", "corr-drift")
+
+        self.assertEqual(raised.exception.status, 503)
+        self.assertEqual(raised.exception.code, "iam_state_drift")
 
 
 if __name__ == "__main__":

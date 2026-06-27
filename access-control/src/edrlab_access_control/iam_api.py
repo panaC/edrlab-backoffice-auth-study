@@ -8,10 +8,10 @@ from urllib.parse import urlparse
 
 from .audit import AuditWriter
 from .config import allow_dev_actor_header
-from .config import audit_path, state_path
+from .config import audit_path
 from .http_util import correlation_id, json_response, problem_response, read_json
 from .service import AccessControlService, ApiError
-from .store import FileStateStore
+from .store import state_store_from_env
 from .tokens import ServiceAuthenticator, TokenValidationError, service_authenticator_from_env
 
 
@@ -175,7 +175,7 @@ class IamServer(ThreadingHTTPServer):
 
 
 def main() -> None:
-    service = AccessControlService(FileStateStore(state_path()), AuditWriter(audit_path()))
+    service = AccessControlService(state_store_from_env(), AuditWriter(audit_path()))
     host = os.environ.get("IAM_HOST", "127.0.0.1")
     port = int(os.environ.get("IAM_PORT", "8000"))
     IamServer((host, port), service, service_authenticator_from_env()).serve_forever()

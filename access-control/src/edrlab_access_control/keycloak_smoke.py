@@ -151,7 +151,8 @@ def login_with_authorization_code(username: str, password: str) -> dict[str, Any
     parsed = urllib.parse.urlparse(location)
     params = urllib.parse.parse_qs(parsed.query)
     if params.get("state", [""])[0] != state:
-        raise RuntimeError("Keycloak returned an unexpected OAuth state")
+        returned_state = params.get("state", [""])[0]
+        raise RuntimeError(f"Keycloak returned an unexpected OAuth state: {returned_state!r} in {location}")
     code = params.get("code", [""])[0]
     if not code:
         raise RuntimeError("Keycloak login did not return an authorization code")

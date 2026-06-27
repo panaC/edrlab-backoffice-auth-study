@@ -17,6 +17,10 @@ def state_path() -> str:
     return os.environ.get("IAM_STATE_PATH", DEFAULT_STATE_PATH)
 
 
+def state_backend() -> str:
+    return os.environ.get("IAM_STATE_BACKEND", "file").strip().lower()
+
+
 def audit_path() -> str:
     return os.environ.get("IAM_AUDIT_PATH", DEFAULT_AUDIT_PATH)
 
@@ -91,6 +95,18 @@ def service_client_secret() -> str:
 
 def service_token_url() -> str:
     return os.environ.get("IAM_SERVICE_TOKEN_URL", f"{oidc_issuer()}/protocol/openid-connect/token")
+
+
+def keycloak_admin_client_id() -> str:
+    return os.environ.get("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID", "edrlab-iam-control-plane")
+
+
+def keycloak_admin_client_secret() -> str:
+    return os.environ.get("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_SECRET", "change-me-iam-control-plane-secret")
+
+
+def keycloak_admin_token_url() -> str:
+    return os.environ.get("KEYCLOAK_ADMIN_TOKEN_URL", f"{oidc_issuer()}/protocol/openid-connect/token")
 
 
 def bootstrap_config() -> dict[str, str]:

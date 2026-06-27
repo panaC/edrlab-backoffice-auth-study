@@ -5,7 +5,7 @@ from typing import Any
 
 from .audit import AuditWriter, build_event
 from .config import DEFAULT_PRIVILEGED_ACR, DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID, privileged_acr
-from .store import FileStateStore
+from .store import StateStore
 from .tokens import SubjectEvidence, SubjectTokenValidator, TokenValidationError, subject_token_validator_from_env
 
 
@@ -45,7 +45,7 @@ class ApiError(Exception):
 class AccessControlService:
     def __init__(
         self,
-        store: FileStateStore,
+        store: StateStore,
         audit: AuditWriter,
         subject_token_validator: SubjectTokenValidator | None = None,
     ) -> None:
@@ -214,6 +214,7 @@ class AccessControlService:
 
         def mutate(state: dict[str, Any]) -> dict[str, Any]:
             account = self._require_account_from_state(state, account_id)
+            self._assert_account_invariants(account)
             if not self._can_manage(actor, account):
                 raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
             for field in ("email", "organization", "name"):
@@ -238,6 +239,7 @@ class AccessControlService:
 
         def mutate(state: dict[str, Any]) -> dict[str, Any]:
             account = self._require_account_from_state(state, account_id)
+            self._assert_account_invariants(account)
             if not self._can_manage(actor, account):
                 raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
             old = account["lifecycle"]
@@ -480,8 +482,8 @@ class AccessControlService:
         service_id = self._required_string(payload, "serviceId")
         required_role = self._required_string(payload, "requiredRole")
         subject = self._parse_subject_token(subject_token)
-        state = self.store.load()
         try:
+            state = self.store.load()
             role = state["serviceRoles"].get(required_role)
             if not role or role.get("serviceId") != service_id or role.get("status") != "active":
                 return self._deny(correlation_id, service_id, required_role, "role_not_active")
@@ -501,7 +503,7 @@ class AccessControlService:
             if required_role in account.get("serviceRoles", []):
                 return self._allow(correlation_id, service_id, required_role, account)
             return self._deny(correlation_id, service_id, required_role, "not_authorized", account)
-        except ApiError:
+        except Exception:
             self._audit(
                 "authorization.check.indeterminate",
                 "service",
@@ -553,6 +555,7 @@ class AccessControlService:
 
         def mutate(state: dict[str, Any]) -> dict[str, Any]:
             account = self._require_account_from_state(state, account_id)
+            self._assert_account_invariants(account)
             if not self._can_manage(actor, account) or account["accountType"] != "member":
                 raise ApiError(403, "forbidden", "Forbidden", "Service roles can be assigned only to managed member accounts.")
             role = state["serviceRoles"].get(role_id)
@@ -689,6 +692,8 @@ class AccessControlService:
         return account
 
     def _assert_account_invariants(self, account: dict[str, Any]) -> None:
+        if account.get("_invariantViolations"):
+            raise ApiError(503, "iam_state_drift", "Service Unavailable", "IAM state violates the managed Keycloak schema.")
         if account.get("accountType") not in ACCOUNT_TYPES:
             raise ApiError(503, "invalid_account_type", "Service Unavailable", "Invalid account type state.")
         if account.get("lifecycle") not in LIFECYCLES:

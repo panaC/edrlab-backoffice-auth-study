@@ -23,17 +23,17 @@ Last reviewed: 2026-06-27
 
 This directory contains the Phase 6 executable MVP runtime for the accepted MVP scope: Keycloak, an IAM Control Plane API, an `access-check-demo-service`, append-only local audit storage, idempotent first-`super-admin` bootstrap, Linux scripts, Docker Compose runtime, and executable tests. The runtime follows the accepted MVP boundary in ADR 0005 and the accepted API, audit, authorization-check, schema, and security-test artifacts ([ADR 0005](../docs/decisions/0005-authorize-phase-6-production-mvp.md), [MVP scope](../docs/evaluation/mvp-scope.md), [IAM Control Plane API contract](../docs/architecture/iam-control-plane-api-contract.md), [Authorization Check Runtime Behavior](../docs/architecture/authorization-check-behavior.md), [Audit Storage Policy](../docs/architecture/audit-storage.md), [Keycloak IAM Schema Policy](../docs/architecture/keycloak-iam-schema-policy.md), [MVP Security Test Plan](../docs/evaluation/security-test-plan.md)).
 
-This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 runtime: it now validates the protected-service subject-token path and service-to-service authentication through Keycloak/OIDC, but it does not yet include the Admin Console UI, full Keycloak IAM schema migration, or production operations hardening.
+This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 runtime: it now validates the protected-service subject-token path, service-to-service authentication, and Keycloak-backed IAM state through Keycloak/OIDC and Admin REST, but it does not yet include the Admin Console UI, full Keycloak IAM schema migration, or production operations hardening.
 
 ## What This Slice Includes
 
 | Item | Included |
 | --- | --- |
-| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, backoffice OIDC client, service client, audience mapper, and smoke-test user. |
-| IAM API | `GET /healthz`, `/iam/me`, account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
+| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed EDRLab User Profile attributes, account-type roles, service-role metadata, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
+| IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
 | Demo protected service | `GET /access-check-demo`, returning JSON `OK` or `KO`, obtaining a client-credentials service token, and calling `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
-| Bootstrap | Scripted Keycloak realm/client/user bootstrap plus idempotent first-`super-admin` bootstrap outside the public API and the initial `access-check-demo:consult` role. |
+| Bootstrap | Scripted Keycloak realm/client/user/profile/role bootstrap plus idempotent first-`super-admin` bootstrap outside the public API and the initial `access-check-demo:consult` role. |
 | Tests | Docker-only Python `unittest` coverage for bootstrap, actor authorization, onboarding, access checks, OIDC token validation, service authentication, access-stop behavior, audit format, and audit confidentiality. |
 | Smoke test | Docker-only Authorization Code + PKCE login against Keycloak, local account activation, service-role assignment, and access-check demo call with a real Keycloak access token. |
 | Runtime | Linux-first Docker Compose runtime for Keycloak, the IAM API, demo service, bootstrap, tests, and smoke verification. |
@@ -66,6 +66,7 @@ The main variables are:
 | `KC_BOOTSTRAP_ADMIN_USERNAME` / `KC_BOOTSTRAP_ADMIN_PASSWORD` | Local Keycloak bootstrap administrator used by the scripted realm setup. |
 | `KEYCLOAK_BACKOFFICE_CLIENT_ID` / `KEYCLOAK_BACKOFFICE_CLIENT_SECRET` | Confidential OIDC client used for the backoffice user Authorization Code flow and user-token introspection. |
 | `KEYCLOAK_SERVICE_CLIENT_ID` / `KEYCLOAK_SERVICE_CLIENT_SECRET` | Confidential service client used by `access-check-demo-service` with OAuth client credentials. |
+| `KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID` / `KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_SECRET` | Confidential Keycloak service-account client used by the IAM API to read and mutate managed IAM state through Keycloak Admin REST. |
 | `KEYCLOAK_SUPER_ADMIN_USERNAME` / `KEYCLOAK_SUPER_ADMIN_PASSWORD` | Local non-production super-admin user used by Docker smoke verification of admin API calls. |
 | `KEYCLOAK_SMOKE_USERNAME` / `KEYCLOAK_SMOKE_EMAIL` / `KEYCLOAK_SMOKE_PASSWORD` | Local non-production user used by the Docker smoke verification. |
 | `BOOTSTRAP_SUPER_ADMIN_EMAIL` | First `super-admin` email used by the bootstrap process. |
@@ -84,6 +85,8 @@ bash access-control/scripts/verify.sh
 ```
 
 The IAM API is exposed on `http://127.0.0.1:8000`. The demo protected service is exposed on `http://127.0.0.1:8001`. Keycloak is exposed on `http://127.0.0.1:8080`.
+
+In the Docker runtime, `IAM_STATE_BACKEND=keycloak`. Account type, lifecycle, immutable subject link, organization, schema marker, service-role metadata, and member role assignments are read from and written to Keycloak through the IAM Control Plane API. The local runtime volume still holds audit JSONL and bootstrap evidence files, but `state.json` is not the canonical IAM account store.
 
 The Docker smoke verification obtains a Keycloak access token through Authorization Code + PKCE and calls the demo service with that token. It also checks that an invalid bearer value returns `KO`.
 
@@ -154,6 +157,7 @@ For `admin` and `super-admin` accounts, activation also requires the accepted pr
 - the Docker `unittest` security and contract tests pass;
 - the Docker Keycloak smoke check returns JSON with `status: "ok"`;
 - the smoke check proves a real Keycloak access token can authorize `access-check-demo-service`;
+- the smoke check creates or reuses a member account whose lifecycle, subject link, account type, and service-role assignment are stored in Keycloak;
 - the smoke check proves an invalid bearer value returns `KO`.
 
 ## Evidence
@@ -183,11 +187,11 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 ## Known MVP Shortcuts
 
 - `dev-sub:<subject>` remains available only for focused unit tests and non-OIDC local fallback paths.
+- `FileStateStore` remains available for focused unit tests and non-OIDC local fallback paths. The Docker MVP runtime uses `KeycloakStateStore` as the IAM state backend.
 - Admin Console-to-IAM API calls authenticate with bearer user tokens in the runtime. `X-Actor-Account-Id` is ignored unless `IAM_ALLOW_DEV_ACTOR_HEADER=true` is set explicitly for focused local tests.
 - Onboarding activation now uses bearer-derived identity evidence and rejects request-body attempts to provide `subject`, `emailVerified`, `acr`, or other authorization-significant fields.
-- The state backend is a local file-backed implementation of the accepted control-plane contract. It is intentionally isolated behind code boundaries so the Keycloak Admin REST adapter can replace it.
 - The runtime does not include the Admin Console UI yet.
-- Direct Keycloak drift detection is represented by invariant checks in this runtime. Real Keycloak schema migration, drift reconciliation, and managed-attribute enforcement still need the production Keycloak adapter and migration workflow.
+- Direct Keycloak drift detection is represented by invariant checks in this runtime. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
 - The smoke-test user, realm, clients, redirect URI, and secrets are local runtime fixtures only.
 - High availability, multi-replica Keycloak operation, advanced audit search/export, and real business protected-service integration remain outside the accepted MVP scope unless explicitly added.
 

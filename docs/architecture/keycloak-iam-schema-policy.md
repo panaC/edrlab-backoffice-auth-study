@@ -3,7 +3,7 @@
 Status: Accepted
 Phase: Phase 5 - Review and Decision
 Scope: Architecture
-Last reviewed: 2026-06-26
+Last reviewed: 2026-06-27
 
 ## Contents
 
@@ -160,12 +160,12 @@ Protected backend services must call `POST /iam/authorization/check`. The IAM Co
 
 | Input | Status |
 | --- | --- |
-| Exact Keycloak User Profile JSON | Open Phase 6 implementation detail. Must implement the managed attributes and permissions above. |
-| Exact technical service-account grants | Open operations/security detail. Must grant only the IAM Control Plane API mutation surface needed for the MVP. |
+| Exact Keycloak User Profile JSON | Implemented for the local `access-control/` Docker MVP bootstrap for the managed `edrlab.*` attributes above. Production deployment still needs review of display names, validations, and operator permissions. |
+| Exact technical service-account grants | Implemented for the local `access-control/` Docker MVP with an `edrlab-iam-control-plane` service account granted the Admin REST roles needed to read users, mutate users, and manage client roles. Production deployment still needs least-privilege and credential-rotation review. |
 | Exact human operator read-only or break-glass grants | Phase 6 operations/security detail. Formal direct-admin governance is deferred post-MVP, but the MVP must avoid routine business mutation in Keycloak Admin Console ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
 | Migration script and dry-run report format | Open Phase 6 implementation detail. Must follow the strict migration policy above. |
 | Reconciliation workflow for drift | Phase 6 MVP workflow detail for deny, quarantine, or report behavior. Broader direct-admin governance remains post-MVP ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
-| Role metadata serialization details | Open implementation detail. Must preserve `active`, `disabled`, and `archived` role behavior. |
+| Role metadata serialization details | Implemented for the initial Docker MVP role as Keycloak client-role attributes, including `edrlab.role_id`, `edrlab.role_status`, and `edrlab.schema_version`. Broader role-catalog migration remains open. |
 
 ## References
 
