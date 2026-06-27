@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
 import time
@@ -14,6 +15,13 @@ from .config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
 
 def env(name: str, default: str) -> str:
     return os.environ.get(name, default)
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 KEYCLOAK_BASE_URL = env("KEYCLOAK_BASE_URL", "http://keycloak:8080").rstrip("/")
@@ -34,6 +42,17 @@ SMOKE_USERNAME = env("KEYCLOAK_SMOKE_USERNAME", "mvp-member")
 SMOKE_EMAIL = env("KEYCLOAK_SMOKE_EMAIL", "mvp-member@example.test")
 SMOKE_PASSWORD = env("KEYCLOAK_SMOKE_PASSWORD", "change-me-member-password")
 BACKOFFICE_REDIRECT_URI = env("KEYCLOAK_BACKOFFICE_REDIRECT_URI", "http://localhost:9999/callback")
+RESET_FIXTURE_PASSWORDS = env_bool("KEYCLOAK_BOOTSTRAP_RESET_FIXTURE_PASSWORDS")
+
+EDRLAB_USER_ATTRIBUTES = (
+    "edrlab.account_id",
+    "edrlab.lifecycle",
+    "edrlab.linked_subject",
+    "edrlab.organization",
+    "edrlab.schema_version",
+    "edrlab.last_control_plane_mutation_at",
+)
+REALM_EVENT_TYPES = ("LOGIN", "LOGIN_ERROR", "LOGOUT", "CODE_TO_TOKEN", "CLIENT_LOGIN")
 
 
 def main() -> None:
@@ -99,14 +118,19 @@ def ensure_realm(token: str) -> None:
         "displayName": "EDRLab Backoffice MVP",
         "eventsEnabled": True,
         "eventsExpiration": 3600,
-        "enabledEventTypes": ["LOGIN", "LOGIN_ERROR", "LOGOUT", "CODE_TO_TOKEN", "CLIENT_LOGIN"],
+        "enabledEventTypes": list(REALM_EVENT_TYPES),
         "adminEventsEnabled": True,
         "adminEventsDetailsEnabled": True,
     }
-    if api_get(token, f"realms/{KEYCLOAK_REALM}", ok_missing=True) is None:
+    existing = api_get(token, f"realms/{KEYCLOAK_REALM}", ok_missing=True)
+    if existing is None:
         api_json("POST", token, "realms", payload, expected={201, 204})
     else:
-        api_json("PUT", token, f"realms/{KEYCLOAK_REALM}", payload, expected={200, 204})
+        if not isinstance(existing, dict):
+            raise RuntimeError("Unexpected Keycloak realm response")
+        merged = merge_realm_representation(existing, payload)
+        if merged != existing:
+            api_json("PUT", token, f"realms/{KEYCLOAK_REALM}", merged, expected={200, 204})
 
 
 def ensure_user_profile(token: str) -> None:
@@ -116,15 +140,15 @@ def ensure_user_profile(token: str) -> None:
     attributes = profile.get("attributes")
     if not isinstance(attributes, list):
         attributes = []
-    by_name = {attribute.get("name"): attribute for attribute in attributes if isinstance(attribute, dict)}
-    for attribute_name in (
-        "edrlab.account_id",
-        "edrlab.lifecycle",
-        "edrlab.linked_subject",
-        "edrlab.organization",
-        "edrlab.schema_version",
-        "edrlab.last_control_plane_mutation_at",
-    ):
+    by_name: dict[str, dict[str, Any]] = {}
+    for attribute in attributes:
+        if not isinstance(attribute, dict) or not isinstance(attribute.get("name"), str):
+            continue
+        name = attribute["name"]
+        if name in by_name:
+            raise RuntimeError(f"Duplicate Keycloak user-profile attribute: {name}")
+        by_name[name] = attribute
+    for attribute_name in EDRLAB_USER_ATTRIBUTES:
         definition = by_name.get(attribute_name)
         if definition is None:
             definition = {"name": attribute_name}
@@ -207,7 +231,12 @@ def ensure_client(token: str, payload: dict[str, Any]) -> str:
         api_json("POST", token, f"realms/{KEYCLOAK_REALM}/clients", payload, expected={201, 204})
         existing = find_client(token, client_id)
     else:
-        api_json("PUT", token, f"realms/{KEYCLOAK_REALM}/clients/{existing['id']}", payload, expected={200, 204})
+        full_client = api_get(token, f"realms/{KEYCLOAK_REALM}/clients/{existing['id']}")
+        if not isinstance(full_client, dict):
+            raise RuntimeError(f"Unexpected Keycloak client response: {client_id}")
+        merged = merge_client_representation(full_client, payload)
+        if merged != full_client:
+            api_json("PUT", token, f"realms/{KEYCLOAK_REALM}/clients/{existing['id']}", merged, expected={200, 204})
     if not existing or not isinstance(existing.get("id"), str):
         raise RuntimeError(f"Unable to resolve Keycloak client: {client_id}")
     return existing["id"]
@@ -315,9 +344,14 @@ def ensure_audience_mapper(token: str, backoffice_uuid: str) -> None:
     existing = api_get(token, path)
     if not isinstance(existing, list):
         raise RuntimeError("Unexpected protocol mapper response")
-    match = next((item for item in existing if item.get("name") == mapper["name"]), None)
+    matches = [item for item in existing if isinstance(item, dict) and item.get("name") == mapper["name"]]
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Keycloak protocol mappers named {mapper['name']}")
+    match = matches[0] if matches else None
     if match and isinstance(match.get("id"), str):
-        api_json("PUT", token, f"{path}/{match['id']}", {**mapper, "id": match["id"]}, expected={200, 204})
+        merged = merge_protocol_mapper_representation(match, mapper)
+        if merged != match:
+            api_json("PUT", token, f"{path}/{match['id']}", merged, expected={200, 204})
     else:
         api_json("POST", token, path, mapper, expected={201, 204})
 
@@ -330,7 +364,101 @@ def ensure_user(
     first_name: str,
     last_name: str,
 ) -> dict[str, Any]:
-    payload = {
+    payload = fixture_user_payload(username, email, first_name, last_name)
+    user = find_user(token, username)
+    email_user = find_user_by_email(token, email)
+    if user is not None and email_user is not None and user.get("id") != email_user.get("id"):
+        raise RuntimeError(f"Keycloak fixture user {username} conflicts with existing email {email}")
+    if user is None:
+        user = email_user
+    created = False
+    if user is None:
+        api_json("POST", token, f"realms/{KEYCLOAK_REALM}/users", payload, expected={201, 204})
+        user = find_user(token, username)
+        created = True
+    else:
+        full_user = api_get(token, f"realms/{KEYCLOAK_REALM}/users/{user['id']}")
+        if not isinstance(full_user, dict):
+            raise RuntimeError(f"Unexpected Keycloak user response: {username}")
+        merged = merge_fixture_user_representation(full_user, payload)
+        if merged != full_user:
+            api_json("PUT", token, f"realms/{KEYCLOAK_REALM}/users/{user['id']}", merged, expected={200, 204})
+            refreshed = api_get(token, f"realms/{KEYCLOAK_REALM}/users/{user['id']}")
+            if isinstance(refreshed, dict):
+                user = refreshed
+        else:
+            user = full_user
+    if not user or not isinstance(user.get("id"), str):
+        raise RuntimeError(f"Unable to resolve Keycloak user: {username}")
+    if created or RESET_FIXTURE_PASSWORDS:
+        api_json(
+            "PUT",
+            token,
+            f"realms/{KEYCLOAK_REALM}/users/{user['id']}/reset-password",
+            {"type": "password", "value": password, "temporary": False},
+            expected={200, 204},
+        )
+    return user
+
+
+def merge_realm_representation(existing: dict[str, Any], desired: dict[str, Any]) -> dict[str, Any]:
+    merged = copy.deepcopy(existing)
+    for key in (
+        "realm",
+        "enabled",
+        "displayName",
+        "eventsEnabled",
+        "eventsExpiration",
+        "adminEventsEnabled",
+        "adminEventsDetailsEnabled",
+    ):
+        if key in desired:
+            merged[key] = desired[key]
+    merged["enabledEventTypes"] = _merged_unique_strings(existing.get("enabledEventTypes"), desired.get("enabledEventTypes"))
+    return merged
+
+
+def merge_client_representation(existing: dict[str, Any], desired: dict[str, Any]) -> dict[str, Any]:
+    merged = copy.deepcopy(existing)
+    for key in (
+        "clientId",
+        "name",
+        "enabled",
+        "protocol",
+        "publicClient",
+        "clientAuthenticatorType",
+        "secret",
+        "standardFlowEnabled",
+        "implicitFlowEnabled",
+        "directAccessGrantsEnabled",
+        "serviceAccountsEnabled",
+        "bearerOnly",
+        "consentRequired",
+    ):
+        if key in desired:
+            merged[key] = desired[key]
+    for key in ("redirectUris", "webOrigins"):
+        if key in desired:
+            merged[key] = _merged_unique_strings(existing.get(key), desired.get(key))
+    if isinstance(desired.get("attributes"), dict):
+        merged["attributes"] = {**_dict(existing.get("attributes")), **_dict(desired.get("attributes"))}
+    return merged
+
+
+def merge_protocol_mapper_representation(existing: dict[str, Any], desired: dict[str, Any]) -> dict[str, Any]:
+    merged = copy.deepcopy(existing)
+    for key in ("name", "protocol", "protocolMapper", "consentRequired"):
+        if key in desired:
+            merged[key] = desired[key]
+    if isinstance(desired.get("config"), dict):
+        merged["config"] = {**_dict(existing.get("config")), **_dict(desired.get("config"))}
+    if isinstance(existing.get("id"), str):
+        merged["id"] = existing["id"]
+    return merged
+
+
+def fixture_user_payload(username: str, email: str, first_name: str, last_name: str) -> dict[str, Any]:
+    return {
         "username": username,
         "enabled": True,
         "email": email,
@@ -339,25 +467,22 @@ def ensure_user(
         "lastName": last_name,
         "requiredActions": [],
     }
-    user = find_user(token, username)
-    if user is None:
-        api_json("POST", token, f"realms/{KEYCLOAK_REALM}/users", payload, expected={201, 204})
-        user = find_user(token, username)
-    else:
-        full_user = api_get(token, f"realms/{KEYCLOAK_REALM}/users/{user['id']}")
-        if isinstance(full_user, dict) and isinstance(full_user.get("attributes"), dict):
-            payload["attributes"] = full_user["attributes"]
-        api_json("PUT", token, f"realms/{KEYCLOAK_REALM}/users/{user['id']}", payload, expected={200, 204})
-    if not user or not isinstance(user.get("id"), str):
-        raise RuntimeError(f"Unable to resolve Keycloak user: {username}")
-    api_json(
-        "PUT",
-        token,
-        f"realms/{KEYCLOAK_REALM}/users/{user['id']}/reset-password",
-        {"type": "password", "value": password, "temporary": False},
-        expected={200, 204},
-    )
-    return user
+
+
+def merge_fixture_user_representation(existing: dict[str, Any], desired: dict[str, Any]) -> dict[str, Any]:
+    if is_iam_managed_user(existing):
+        return copy.deepcopy(existing)
+    merged = copy.deepcopy(existing)
+    for key in ("username", "enabled", "email", "emailVerified", "firstName", "lastName", "requiredActions"):
+        if key in desired:
+            merged[key] = copy.deepcopy(desired[key])
+    if isinstance(existing.get("attributes"), dict):
+        merged["attributes"] = copy.deepcopy(existing["attributes"])
+    return merged
+
+
+def is_iam_managed_user(user: dict[str, Any]) -> bool:
+    return bool(_attribute_values(user).get("edrlab.account_id"))
 
 
 def write_bootstrap_output(super_admin: dict[str, Any]) -> None:
@@ -374,17 +499,89 @@ def write_bootstrap_output(super_admin: dict[str, Any]) -> None:
 def find_client(token: str, client_id: str) -> dict[str, Any] | None:
     encoded = urllib.parse.quote(client_id)
     response = api_get(token, f"realms/{KEYCLOAK_REALM}/clients?clientId={encoded}")
-    if isinstance(response, list) and response:
-        return response[0]
+    if not isinstance(response, list):
+        raise RuntimeError("Unexpected Keycloak client search response")
+    matches = [item for item in response if isinstance(item, dict) and item.get("clientId") == client_id]
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Keycloak clients share clientId {client_id}")
+    if matches:
+        return matches[0]
     return None
 
 
 def find_user(token: str, username: str) -> dict[str, Any] | None:
     encoded = urllib.parse.quote(username)
     response = api_get(token, f"realms/{KEYCLOAK_REALM}/users?username={encoded}&exact=true")
-    if isinstance(response, list) and response:
-        return response[0]
+    if not isinstance(response, list):
+        raise RuntimeError("Unexpected Keycloak username search response")
+    matches = [item for item in response if isinstance(item, dict) and item.get("username") == username]
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Keycloak users share username {username}")
+    if matches:
+        return matches[0]
     return None
+
+
+def find_user_by_email(token: str, email: str) -> dict[str, Any] | None:
+    encoded = urllib.parse.quote(email)
+    response = api_get(token, f"realms/{KEYCLOAK_REALM}/users?email={encoded}&exact=true")
+    if not isinstance(response, list):
+        raise RuntimeError("Unexpected Keycloak email search response")
+    matches = [
+        item
+        for item in response
+        if isinstance(item, dict) and _string(item.get("email")).lower() == email.lower()
+    ]
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Keycloak users share email {email}")
+    if matches:
+        return matches[0]
+    return None
+
+
+def _dict(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items() if isinstance(key, str)}
+
+
+def _string(value: Any) -> str:
+    return value if isinstance(value, str) else ""
+
+
+def _string_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return [stripped] if stripped else []
+    if not isinstance(value, list):
+        return []
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            continue
+        stripped = item.strip()
+        if stripped:
+            result.append(stripped)
+    return result
+
+
+def _merged_unique_strings(*values: Any) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        for item in _string_list(value):
+            if item in seen:
+                continue
+            seen.add(item)
+            result.append(item)
+    return result
+
+
+def _attribute_values(representation: dict[str, Any]) -> dict[str, list[str]]:
+    attrs = representation.get("attributes")
+    if not isinstance(attrs, dict):
+        return {}
+    return {str(key): _string_list(value) for key, value in attrs.items() if isinstance(key, str)}
 
 
 def api_get(token: str, path: str, *, ok_missing: bool = False) -> Any:

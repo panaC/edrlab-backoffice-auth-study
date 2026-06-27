@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from edrlab_access_control.audit import AuditWriter
+from edrlab_access_control import keycloak_bootstrap
 from edrlab_access_control.config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
 from edrlab_access_control.demo_service import DemoHandler
 from edrlab_access_control.iam_api import IamServer
@@ -800,6 +801,103 @@ class HttpContractTests(unittest.TestCase):
         thread.start()
         self.servers.append(server)
         return server, f"http://127.0.0.1:{server.server_port}"
+
+
+class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
+    def test_client_merge_preserves_existing_unowned_configuration(self) -> None:
+        existing = {
+            "id": "client-uuid",
+            "clientId": "edrlab-backoffice",
+            "name": "Custom Existing Name",
+            "redirectUris": ["https://admin.example.test/callback"],
+            "webOrigins": ["https://admin.example.test"],
+            "attributes": {
+                "custom.attribute": "keep",
+                "post.logout.redirect.uris": "https://admin.example.test/logout",
+            },
+            "optionalClientScopes": ["profile"],
+        }
+        desired = {
+            "clientId": "edrlab-backoffice",
+            "name": "EDRLab Backoffice MVP",
+            "enabled": True,
+            "protocol": "openid-connect",
+            "redirectUris": ["http://localhost:9999/callback"],
+            "webOrigins": ["+"],
+            "attributes": {
+                "pkce.code.challenge.method": "S256",
+                "post.logout.redirect.uris": "http://localhost:9999/callback",
+            },
+        }
+
+        merged = keycloak_bootstrap.merge_client_representation(existing, desired)
+
+        self.assertEqual(merged["id"], "client-uuid")
+        self.assertEqual(merged["optionalClientScopes"], ["profile"])
+        self.assertEqual(
+            merged["redirectUris"],
+            ["https://admin.example.test/callback", "http://localhost:9999/callback"],
+        )
+        self.assertEqual(merged["webOrigins"], ["https://admin.example.test", "+"])
+        self.assertEqual(merged["attributes"]["custom.attribute"], "keep")
+        self.assertEqual(merged["attributes"]["pkce.code.challenge.method"], "S256")
+        self.assertEqual(merged["attributes"]["post.logout.redirect.uris"], "http://localhost:9999/callback")
+
+    def test_fixture_user_merge_preserves_iam_managed_user(self) -> None:
+        existing = {
+            "id": "super-sub",
+            "username": "mvp-super-admin",
+            "enabled": False,
+            "email": "renamed-super-admin@example.test",
+            "emailVerified": False,
+            "firstName": "Renamed",
+            "lastName": "Admin",
+            "requiredActions": ["UPDATE_PASSWORD"],
+            "attributes": {
+                "edrlab.account_id": ["acc_bootstrap_super_admin"],
+                "edrlab.lifecycle": ["disabled"],
+                "edrlab.linked_subject": ["super-sub"],
+                "edrlab.organization": ["EDRLab"],
+                "edrlab.schema_version": ["iam-schema-v1"],
+            },
+        }
+        desired = keycloak_bootstrap.fixture_user_payload(
+            "mvp-super-admin",
+            "super-admin@example.test",
+            "Initial",
+            "Super Admin",
+        )
+
+        merged = keycloak_bootstrap.merge_fixture_user_representation(existing, desired)
+
+        self.assertEqual(merged, existing)
+
+    def test_fixture_user_merge_updates_unmanaged_fixture_without_dropping_attributes(self) -> None:
+        existing = {
+            "id": "fixture-user",
+            "username": "mvp-member",
+            "enabled": False,
+            "email": "old@example.test",
+            "emailVerified": False,
+            "firstName": "Old",
+            "lastName": "Name",
+            "requiredActions": ["VERIFY_EMAIL"],
+            "attributes": {"custom.attribute": ["keep"]},
+        }
+        desired = keycloak_bootstrap.fixture_user_payload(
+            "mvp-member",
+            "mvp-member@example.test",
+            "MVP",
+            "Member",
+        )
+
+        merged = keycloak_bootstrap.merge_fixture_user_representation(existing, desired)
+
+        self.assertEqual(merged["email"], "mvp-member@example.test")
+        self.assertTrue(merged["enabled"])
+        self.assertTrue(merged["emailVerified"])
+        self.assertEqual(merged["requiredActions"], [])
+        self.assertEqual(merged["attributes"], {"custom.attribute": ["keep"]})
 
 
 class FakeKeycloakAdminClient:

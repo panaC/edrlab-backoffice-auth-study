@@ -68,6 +68,7 @@ The main variables are:
 | `KEYCLOAK_SERVICE_CLIENT_ID` / `KEYCLOAK_SERVICE_CLIENT_SECRET` | Confidential service client used by `access-check-demo-service` with OAuth client credentials. |
 | `KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID` / `KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_SECRET` | Confidential Keycloak service-account client used by the IAM API to read and mutate managed IAM state through Keycloak Admin REST. |
 | `KEYCLOAK_SUPER_ADMIN_USERNAME` / `KEYCLOAK_SUPER_ADMIN_PASSWORD` | Local non-production super-admin user used by Docker smoke verification of admin API calls. |
+| `KEYCLOAK_BOOTSTRAP_RESET_FIXTURE_PASSWORDS` | Optional local recovery switch. Set to `true` only when the Keycloak bootstrap should reset existing non-production fixture user passwords. |
 | `KEYCLOAK_SMOKE_USERNAME` / `KEYCLOAK_SMOKE_EMAIL` / `KEYCLOAK_SMOKE_PASSWORD` | Local non-production user used by the Docker smoke verification. |
 | `BOOTSTRAP_SUPER_ADMIN_EMAIL` | First `super-admin` email used by the bootstrap process. |
 | `BOOTSTRAP_SUPER_ADMIN_NAME` | First `super-admin` display name. |

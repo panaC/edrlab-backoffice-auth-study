@@ -10,6 +10,7 @@ This repository is a study repository, not a released software package. Changelo
 
 - Documented and implemented the `POST /iam/onboarding/activate` caller flow so activation uses bearer-token evidence and rejects unsafe client-supplied onboarding claims.
 - Hardened account-management scope so `member` accounts can use only self-read endpoints and cannot call `/iam/accounts*` management routes on their own account.
+- Made the scripted Keycloak bootstrap safer on existing state by merging managed realm/client/mapper fields, preserving IAM-managed fixture users, and making fixture password resets opt-in.
 - Clarified the recommended MVP onboarding provisioning scenario: IAM-created invited account, controlled Keycloak user provisioning, Keycloak actions email for first-login setup, and bearer-based IAM activation by the invited user.
 - Documented the minimum Keycloak first-login action email configuration for MVP onboarding, including SMTP, public-registration posture, required actions for members and privileged accounts, and `execute-actions-email` payloads.
 - Switched the Docker MVP IAM state backend from local `state.json` to Keycloak Admin REST, including managed `edrlab.*` User Profile attributes, account-type client roles, service-role metadata, and Keycloak-backed authorization checks.
