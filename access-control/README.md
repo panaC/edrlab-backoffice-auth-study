@@ -29,7 +29,7 @@ This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 r
 
 | Item | Included |
 | --- | --- |
-| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed EDRLab User Profile attributes, account-type roles, service-role metadata, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
+| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed EDRLab User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
 | IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
 | Demo protected service | `GET /access-check-demo`, returning JSON `OK` or `KO`, obtaining a client-credentials service token, and calling `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
@@ -193,7 +193,7 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 - Onboarding activation now uses bearer-derived identity evidence and rejects request-body attempts to provide `subject`, `emailVerified`, `acr`, or other authorization-significant fields.
 - Indeterminate Keycloak state read failures are fail-closed and create local audit events with `operation=iam.request.indeterminate` or `authorization.check.indeterminate`.
 - The runtime does not include the Admin Console UI yet.
-- Direct Keycloak drift detection is represented by invariant checks in this runtime. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
+- Direct Keycloak drift detection is represented by invariant checks in this runtime, including rejection of direct protected-service role mappings on users. Member service-role assignments are stored in IAM Control Plane-managed attributes. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
 - The smoke-test user, realm, clients, redirect URI, and secrets are local runtime fixtures only.
 - High availability, multi-replica Keycloak operation, advanced audit search/export, and real business protected-service integration remain outside the accepted MVP scope unless explicitly added.
 

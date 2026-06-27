@@ -49,6 +49,7 @@ EDRLAB_USER_ATTRIBUTES = (
     "edrlab.lifecycle",
     "edrlab.linked_subject",
     "edrlab.organization",
+    "edrlab.assigned_service_roles",
     "edrlab.schema_version",
     "edrlab.last_control_plane_mutation_at",
 )

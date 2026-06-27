@@ -28,6 +28,7 @@ EDRLAB_ATTRS = {
     "edrlab.lifecycle",
     "edrlab.linked_subject",
     "edrlab.organization",
+    "edrlab.assigned_service_roles",
     "edrlab.schema_version",
     "edrlab.last_control_plane_mutation_at",
 }
@@ -117,17 +118,20 @@ class KeycloakStateStore:
             return None
         user_id = _required_string(user, "id")
         account_type, account_type_violations, account_type_roles = self._account_type_for_user(user_id)
-        service_role_ids = self._service_roles_for_user(user_id)
+        direct_service_role_ids = self._service_roles_for_user(user_id)
+        assigned_service_role_ids, assigned_service_role_violations = _assigned_service_roles(attrs)
         lifecycle = _attr(attrs, "edrlab.lifecycle") or ""
-        violations = list(account_type_violations)
+        violations = [*account_type_violations, *assigned_service_role_violations]
         enabled = user.get("enabled") is True
         if lifecycle in {"disabled", "archived"} and enabled:
             violations.append("disabled_or_archived_user_enabled")
         if lifecycle in {"invited", "active"} and not enabled:
             violations.append("invited_or_active_user_disabled")
-        if account_type in {"admin", "super-admin"} and service_role_ids:
+        if direct_service_role_ids:
+            violations.append("direct_service_role_mapping_drift")
+        if account_type in {"admin", "super-admin"} and assigned_service_role_ids:
             violations.append("privileged_account_has_service_roles")
-        missing_roles = [role_id for role_id in service_role_ids if role_id not in service_roles]
+        missing_roles = [role_id for role_id in assigned_service_role_ids if role_id not in service_roles]
         if missing_roles:
             violations.append("assigned_service_role_missing")
 
@@ -139,10 +143,11 @@ class KeycloakStateStore:
             "accountType": account_type,
             "lifecycle": lifecycle,
             "linkedSubject": _attr(attrs, "edrlab.linked_subject"),
-            "serviceRoles": sorted(service_role_ids),
+            "serviceRoles": assigned_service_role_ids,
             "schemaVersion": _attr(attrs, "edrlab.schema_version") or SCHEMA_VERSION,
             "_keycloakUserId": user_id,
             "_keycloakAccountTypeRoles": sorted(account_type_roles),
+            "_directServiceRoles": direct_service_role_ids,
         }
         if violations:
             account["_invariantViolations"] = sorted(set(violations))
@@ -265,6 +270,7 @@ class KeycloakStateStore:
         _set_attr(attrs, "edrlab.lifecycle", _required_string(account, "lifecycle"))
         _set_attr(attrs, "edrlab.linked_subject", account.get("linkedSubject"))
         _set_attr(attrs, "edrlab.organization", _required_string(account, "organization"))
+        _set_attr(attrs, "edrlab.assigned_service_roles", _assigned_service_roles_json(account.get("serviceRoles")))
         _set_attr(attrs, "edrlab.schema_version", _string(account.get("schemaVersion")) or SCHEMA_VERSION)
         _set_attr(attrs, "edrlab.last_control_plane_mutation_at", _now())
         first_name, last_name = _name_parts(_required_string(account, "name"), user)
@@ -306,27 +312,23 @@ class KeycloakStateStore:
         account: dict[str, Any],
         service_roles: dict[str, dict[str, Any]],
     ) -> None:
-        desired_by_service: dict[str, set[str]] = {service_id: set() for service_id in self.service_client_ids}
         for role_id in account.get("serviceRoles", []):
             role = service_roles.get(role_id)
             if not role:
                 raise RuntimeError(f"Cannot assign unknown Keycloak service role: {role_id}")
             service_id = _required_string(role, "serviceId")
-            desired_by_service.setdefault(service_id, set()).add(_role_name_from_role_id(role_id, service_id))
+            if service_id not in self.service_client_ids:
+                raise RuntimeError(f"Cannot assign unsupported Keycloak service role: {role_id}")
 
-        for service_id, desired_names in desired_by_service.items():
+        for service_id in self.service_client_ids:
             current_roles = self.client.get_user_client_roles(user_id, service_id)
             current_names = {
                 _string(role.get("name"))
                 for role in current_roles
                 if _attr(_attributes(role), "edrlab.role_id") or _string(role.get("name"))
             }
-            to_add = sorted(desired_names - current_names)
-            to_remove = sorted(current_names - desired_names)
-            if to_remove:
-                self.client.remove_user_client_roles(user_id, service_id, to_remove)
-            if to_add:
-                self.client.add_user_client_roles(user_id, service_id, to_add)
+            if current_names:
+                self.client.remove_user_client_roles(user_id, service_id, sorted(current_names))
 
 
 class KeycloakAdminClient:
@@ -622,6 +624,31 @@ def _set_attr(attrs: dict[str, list[str]], name: str, value: Any) -> None:
         attrs[name] = [value.strip()]
     else:
         attrs.pop(name, None)
+
+
+def _assigned_service_roles(attrs: dict[str, list[str]]) -> tuple[list[str], list[str]]:
+    raw = _attr(attrs, "edrlab.assigned_service_roles")
+    if raw is None:
+        return [], []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return [], ["invalid_assigned_service_roles"]
+    if not isinstance(parsed, list):
+        return [], ["invalid_assigned_service_roles"]
+    role_ids: list[str] = []
+    for item in parsed:
+        if not isinstance(item, str) or not item.strip():
+            return [], ["invalid_assigned_service_roles"]
+        role_ids.append(item.strip())
+    return sorted(set(role_ids)), []
+
+
+def _assigned_service_roles_json(value: Any) -> str:
+    if not isinstance(value, list):
+        return "[]"
+    role_ids = sorted(item.strip() for item in value if isinstance(item, str) and item.strip())
+    return json.dumps(role_ids, separators=(",", ":"))
 
 
 def _string(value: Any) -> str:

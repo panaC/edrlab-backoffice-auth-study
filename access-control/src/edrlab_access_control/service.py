@@ -486,6 +486,7 @@ class AccessControlService:
         service_id = self._required_string(payload, "serviceId")
         required_role = self._required_string(payload, "requiredRole")
         subject = self._parse_subject_token(subject_token)
+        account: dict[str, Any] | None = None
         try:
             state = self.store.load()
             role = state["serviceRoles"].get(required_role)
@@ -507,6 +508,20 @@ class AccessControlService:
             if required_role in account.get("serviceRoles", []):
                 return self._allow(correlation_id, service_id, required_role, account)
             return self._deny(correlation_id, service_id, required_role, "not_authorized", account)
+        except ApiError as exc:
+            if exc.code == "iam_state_drift":
+                return self._deny(correlation_id, service_id, required_role, "drift_detected", account)
+            self._audit(
+                "authorization.check.indeterminate",
+                "service",
+                service_id,
+                "rejected",
+                correlation_id,
+                "protected-service",
+                exc.code,
+                client_id=DEFAULT_SERVICE_ID,
+            )
+            raise
         except Exception:
             self._audit(
                 "authorization.check.indeterminate",

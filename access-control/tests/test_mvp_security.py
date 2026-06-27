@@ -910,6 +910,7 @@ class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
                 "edrlab.lifecycle": ["disabled"],
                 "edrlab.linked_subject": ["super-sub"],
                 "edrlab.organization": ["EDRLab"],
+                "edrlab.assigned_service_roles": ["[]"],
                 "edrlab.schema_version": ["iam-schema-v1"],
             },
         }
@@ -1085,6 +1086,7 @@ class KeycloakStateStoreTests(unittest.TestCase):
                 "edrlab.lifecycle": ["active"],
                 "edrlab.linked_subject": ["super-sub"],
                 "edrlab.organization": ["EDRLab"],
+                "edrlab.assigned_service_roles": ["[]"],
                 "edrlab.schema_version": ["iam-schema-v1"],
             },
             {"edrlab-backoffice": {"account-type-super-admin"}},
@@ -1124,10 +1126,17 @@ class KeycloakStateStoreTests(unittest.TestCase):
         self.assertIsNotNone(user)
         assert user is not None
         self.assertEqual(user["attributes"]["edrlab.lifecycle"], ["invited"])
+        self.assertEqual(json.loads(user["attributes"]["edrlab.assigned_service_roles"][0]), [])
         self.assertIn("account-type-member", self.client.assignments[user["id"]]["edrlab-backoffice"])
 
         self.service.assign_service_role("acc-super", account_id, DEFAULT_SERVICE_ROLE_ID, "corr-assign")
-        self.assertIn("consult", self.client.assignments[user["id"]][DEFAULT_SERVICE_ID])
+        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        assert user is not None
+        self.assertEqual(
+            json.loads(user["attributes"]["edrlab.assigned_service_roles"][0]),
+            [DEFAULT_SERVICE_ROLE_ID],
+        )
+        self.assertNotIn("consult", self.client.assignments[user["id"]].get(DEFAULT_SERVICE_ID, set()))
 
         activated = self.service.activate_onboarding_from_bearer("Bearer member-token", {}, "corr-activate")
         user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
@@ -1154,6 +1163,72 @@ class KeycloakStateStoreTests(unittest.TestCase):
 
         self.assertEqual(raised.exception.status, 503)
         self.assertEqual(raised.exception.code, "iam_state_drift")
+
+    def test_direct_keycloak_service_role_addition_is_drift_and_denied(self) -> None:
+        self.client.add_user(
+            "drift-member-sub",
+            "drift-member@example.test",
+            {
+                "edrlab.account_id": ["acc-drift-member"],
+                "edrlab.lifecycle": ["active"],
+                "edrlab.linked_subject": ["drift-member-sub"],
+                "edrlab.organization": ["EDRLab"],
+                "edrlab.assigned_service_roles": ["[]"],
+                "edrlab.schema_version": ["iam-schema-v1"],
+            },
+            {
+                "edrlab-backoffice": {"account-type-member"},
+                DEFAULT_SERVICE_ID: {"consult"},
+            },
+            first_name="Drift",
+            last_name="Member",
+        )
+        self.subject_tokens["drift-member-token"] = SubjectEvidence(subject="drift-member-sub")
+
+        decision = self.service.authorization_check(
+            {
+                "subjectToken": "drift-member-token",
+                "serviceId": DEFAULT_SERVICE_ID,
+                "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+            },
+            "corr-direct-role-drift",
+        )
+
+        self.assertEqual(decision["decision"], "deny")
+        self.assertEqual(decision["reason"], "drift_detected")
+
+    def test_direct_keycloak_service_role_mapping_is_drift_even_when_canonical_assignment_exists(self) -> None:
+        self.client.add_user(
+            "assigned-plus-direct-sub",
+            "assigned-plus-direct@example.test",
+            {
+                "edrlab.account_id": ["acc-assigned-plus-direct"],
+                "edrlab.lifecycle": ["active"],
+                "edrlab.linked_subject": ["assigned-plus-direct-sub"],
+                "edrlab.organization": ["EDRLab"],
+                "edrlab.assigned_service_roles": [json.dumps([DEFAULT_SERVICE_ROLE_ID])],
+                "edrlab.schema_version": ["iam-schema-v1"],
+            },
+            {
+                "edrlab-backoffice": {"account-type-member"},
+                DEFAULT_SERVICE_ID: {"consult"},
+            },
+            first_name="Assigned",
+            last_name="Direct",
+        )
+        self.subject_tokens["assigned-plus-direct-token"] = SubjectEvidence(subject="assigned-plus-direct-sub")
+
+        decision = self.service.authorization_check(
+            {
+                "subjectToken": "assigned-plus-direct-token",
+                "serviceId": DEFAULT_SERVICE_ID,
+                "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+            },
+            "corr-direct-role-plus-canonical-drift",
+        )
+
+        self.assertEqual(decision["decision"], "deny")
+        self.assertEqual(decision["reason"], "drift_detected")
 
 
 if __name__ == "__main__":

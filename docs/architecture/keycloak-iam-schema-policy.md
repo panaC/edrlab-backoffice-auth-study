@@ -50,6 +50,7 @@ The MVP Keycloak User Profile must declare these custom EDRLab attributes:
 | `edrlab.lifecycle` | Backoffice lifecycle state. | Written only through authorized lifecycle operations. | Enum: `invited`, `active`, `disabled`, `archived`. |
 | `edrlab.linked_subject` | Immutable subject link created during safe onboarding. | Empty before activation; written only by onboarding activation; immutable afterwards. | Empty or exactly the resolved Keycloak subject for the account. |
 | `edrlab.organization` | Required account profile field. | Written only through authorized account creation or profile update. | Non-empty string in MVP account creation. |
+| `edrlab.assigned_service_roles` | Canonical member service-role assignments. | Written only by the IAM Control Plane API when member service-access roles are assigned, removed, or otherwise persisted. | JSON array of service-access role IDs. For `member` accounts, authorization uses this managed attribute rather than Keycloak user role mappings; any protected-service client-role mapping directly assigned to a user is treated as direct-admin drift (`FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
 | `edrlab.schema_version` | Schema evolution marker. | Written by bootstrap, migration, or IAM Control Plane API mutation. | Current MVP value: `iam-schema-v1`. |
 | `edrlab.last_control_plane_mutation_at` | Drift and reconciliation support. | Written by the IAM Control Plane API after accepted mutations. | Server timestamp; advisory, not sole proof of authorization. |
 
@@ -128,6 +129,7 @@ Minimum invariant checks:
 - `edrlab.linked_subject` is empty before activation and immutable after activation;
 - exactly one `edrlab-backoffice` account-type role exists;
 - service-access roles are assigned only to `member` accounts;
+- no user has direct protected-service client-role mappings; member service-role assignments are read from `edrlab.assigned_service_roles`;
 - assigned service-access roles exist and are `active`;
 - role metadata schema version is recognized;
 - `edrlab.last_control_plane_mutation_at` and local audit/correlation evidence are consistent enough for the operation being evaluated.
