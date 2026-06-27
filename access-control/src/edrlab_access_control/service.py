@@ -155,53 +155,59 @@ class AccessControlService:
 
     def create_account(self, actor_id: str | None, payload: dict[str, Any], correlation_id: str) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
-        target_type = payload.get("accountType")
-        if target_type not in {"member", "admin"}:
-            raise ApiError(422, "invalid_account_type", "Unprocessable Entity", "Only member or admin creation is allowed.")
-        if actor["accountType"] == "admin" and target_type != "member":
-            raise ApiError(403, "forbidden", "Forbidden", "Admins may create member accounts only.")
-        if actor["accountType"] != "super-admin" and actor["accountType"] != "admin":
-            raise ApiError(403, "forbidden", "Forbidden", "Actor cannot create accounts.")
+        operation = "account.create"
+        target_id = "unresolved"
+        try:
+            target_type = payload.get("accountType")
+            if target_type not in {"member", "admin"}:
+                raise ApiError(422, "invalid_account_type", "Unprocessable Entity", "Only member or admin creation is allowed.")
+            if actor["accountType"] == "admin" and target_type != "member":
+                raise ApiError(403, "forbidden", "Forbidden", "Admins may create member accounts only.")
+            if actor["accountType"] != "super-admin" and actor["accountType"] != "admin":
+                raise ApiError(403, "forbidden", "Forbidden", "Actor cannot create accounts.")
 
-        email = self._required_string(payload, "email")
-        organization = self._required_string(payload, "organization")
-        name = self._required_string(payload, "name")
+            email = self._required_string(payload, "email")
+            organization = self._required_string(payload, "organization")
+            name = self._required_string(payload, "name")
 
-        def mutate(state: dict[str, Any]) -> dict[str, Any]:
-            duplicate = [
-                account
-                for account in state["accounts"].values()
-                if account.get("email", "").lower() == email.lower()
-                and account.get("lifecycle") != "archived"
-            ]
-            if duplicate:
-                raise ApiError(409, "duplicate_account_email", "Conflict", "A non-archived account already uses this email.")
-            account_id = f"acc_{uuid.uuid4().hex[:16]}"
-            account = {
-                "accountId": account_id,
-                "email": email,
-                "organization": organization,
-                "name": name,
-                "accountType": target_type,
-                "lifecycle": "invited",
-                "linkedSubject": None,
-                "serviceRoles": [],
-                "schemaVersion": "iam-schema-v1",
-            }
-            state["accounts"][account_id] = account
-            self._audit(
-                "account.create",
-                "account",
-                account_id,
-                "changed",
-                correlation_id,
-                actor["accountType"],
-                "created_invited_account",
-                actor["accountId"],
-            )
-            return self._public_account(account)
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                duplicate = [
+                    account
+                    for account in state["accounts"].values()
+                    if account.get("email", "").lower() == email.lower()
+                    and account.get("lifecycle") != "archived"
+                ]
+                if duplicate:
+                    raise ApiError(409, "duplicate_account_email", "Conflict", "A non-archived account already uses this email.")
+                account_id = f"acc_{uuid.uuid4().hex[:16]}"
+                account = {
+                    "accountId": account_id,
+                    "email": email,
+                    "organization": organization,
+                    "name": name,
+                    "accountType": target_type,
+                    "lifecycle": "invited",
+                    "linkedSubject": None,
+                    "serviceRoles": [],
+                    "schemaVersion": "iam-schema-v1",
+                }
+                state["accounts"][account_id] = account
+                self._audit(
+                    operation,
+                    "account",
+                    account_id,
+                    "changed",
+                    correlation_id,
+                    actor["accountType"],
+                    "created_invited_account",
+                    actor["accountId"],
+                )
+                return self._public_account(account)
 
-        return self.store.transact(mutate)
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "account", target_id, correlation_id, actor, exc.code)
+            raise
 
     def update_profile(
         self,
@@ -211,58 +217,70 @@ class AccessControlService:
         correlation_id: str,
     ) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
-        self._require_account_manager(actor)
-        if PROTECTED_PROFILE_FIELDS.intersection(payload):
-            raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected account fields cannot be changed here.")
+        operation = "account.profile.update"
+        try:
+            self._require_account_manager(actor)
+            if PROTECTED_PROFILE_FIELDS.intersection(payload):
+                raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected account fields cannot be changed here.")
 
-        def mutate(state: dict[str, Any]) -> dict[str, Any]:
-            account = self._require_account_from_state(state, account_id)
-            self._assert_account_invariants(account)
-            if not self._can_manage(actor, account):
-                raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
-            for field in ("email", "organization", "name"):
-                if field in payload:
-                    account[field] = self._required_string(payload, field)
-            self._audit(
-                "account.profile.update",
-                "account",
-                account_id,
-                "changed",
-                correlation_id,
-                actor["accountType"],
-                "profile_updated",
-                actor["accountId"],
-            )
-            return self._public_account(account)
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                account = self._require_account_from_state(state, account_id)
+                self._assert_account_invariants(account)
+                if not self._can_manage(actor, account):
+                    raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
+                before = {field: account.get(field) for field in ("email", "organization", "name")}
+                for field in ("email", "organization", "name"):
+                    if field in payload:
+                        account[field] = self._required_string(payload, field)
+                changed = any(account.get(field) != before[field] for field in before)
+                self._audit(
+                    operation,
+                    "account",
+                    account_id,
+                    "changed" if changed else "no_change",
+                    correlation_id,
+                    actor["accountType"],
+                    "profile_updated",
+                    actor["accountId"],
+                )
+                return self._public_account(account)
 
-        return self.store.transact(mutate)
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "account", account_id, correlation_id, actor, exc.code)
+            raise
 
     def lifecycle(self, actor_id: str | None, account_id: str, action: str, correlation_id: str) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
-        self._require_account_manager(actor)
+        operation = f"account.{action}" if action in {"disable", "restore", "archive"} else "account.lifecycle"
+        try:
+            self._require_account_manager(actor)
 
-        def mutate(state: dict[str, Any]) -> dict[str, Any]:
-            account = self._require_account_from_state(state, account_id)
-            self._assert_account_invariants(account)
-            if not self._can_manage(actor, account):
-                raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
-            old = account["lifecycle"]
-            new = self._next_lifecycle(old, action)
-            outcome = "no_change" if old == new else "changed"
-            account["lifecycle"] = new
-            self._audit(
-                f"account.{action}",
-                "account",
-                account_id,
-                outcome,
-                correlation_id,
-                actor["accountType"],
-                f"{old}_to_{new}",
-                actor["accountId"],
-            )
-            return self._public_account(account)
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                account = self._require_account_from_state(state, account_id)
+                self._assert_account_invariants(account)
+                if not self._can_manage(actor, account):
+                    raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
+                old = account["lifecycle"]
+                new = self._next_lifecycle(old, action)
+                outcome = "no_change" if old == new else "changed"
+                account["lifecycle"] = new
+                self._audit(
+                    operation,
+                    "account",
+                    account_id,
+                    outcome,
+                    correlation_id,
+                    actor["accountType"],
+                    f"{old}_to_{new}",
+                    actor["accountId"],
+                )
+                return self._public_account(account)
 
-        return self.store.transact(mutate)
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "account", account_id, correlation_id, actor, exc.code)
+            raise
 
     def activate_onboarding_from_bearer(
         self,
@@ -271,13 +289,34 @@ class AccessControlService:
         correlation_id: str,
     ) -> dict[str, Any]:
         if ONBOARDING_PROTECTED_FIELDS.intersection(payload):
+            self._audit(
+                "onboarding.activate",
+                "account",
+                "unresolved",
+                "rejected",
+                correlation_id,
+                "authenticated-subject",
+                "protected_onboarding_field",
+            )
             raise ApiError(
                 422,
                 "protected_onboarding_field",
                 "Unprocessable Entity",
                 "Onboarding identity evidence must come from the validated bearer token.",
             )
-        evidence = self._subject_evidence_from_bearer(authorization_header)
+        try:
+            evidence = self._subject_evidence_from_bearer(authorization_header)
+        except ApiError as exc:
+            self._audit(
+                "onboarding.activate",
+                "account",
+                "unresolved",
+                "rejected",
+                correlation_id,
+                "authenticated-subject",
+                exc.code,
+            )
+            raise
         return self._activate_onboarding_from_evidence(evidence, correlation_id)
 
     def _activate_onboarding_from_evidence(
@@ -393,36 +432,93 @@ class AccessControlService:
 
     def create_service_role(self, actor_id: str | None, payload: dict[str, Any], correlation_id: str) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
-        if actor["accountType"] != "super-admin":
-            raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can create service roles.")
-        role_id = self._required_string(payload, "roleId")
-        service_id = self._required_string(payload, "serviceId")
-        description = str(payload.get("description", ""))
+        operation = "service_role.create"
+        target_id = "unresolved"
+        try:
+            if actor["accountType"] != "super-admin":
+                raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can create service roles.")
+            role_id = self._required_string(payload, "roleId")
+            target_id = role_id
+            service_id = self._required_string(payload, "serviceId")
+            description = str(payload.get("description", ""))
 
-        def mutate(state: dict[str, Any]) -> dict[str, Any]:
-            if role_id in state["serviceRoles"]:
-                raise ApiError(409, "role_exists", "Conflict", "Service role already exists.")
-            role = {
-                "roleId": role_id,
-                "serviceId": service_id,
-                "status": "active",
-                "description": description,
-                "schemaVersion": "iam-schema-v1",
-            }
-            state["serviceRoles"][role_id] = role
-            self._audit(
-                "service_role.create",
-                "service-role",
-                role_id,
-                "changed",
-                correlation_id,
-                actor["accountType"],
-                "created_service_role",
-                actor["accountId"],
-            )
-            return role
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                if role_id in state["serviceRoles"]:
+                    raise ApiError(409, "role_exists", "Conflict", "Service role already exists.")
+                role = {
+                    "roleId": role_id,
+                    "serviceId": service_id,
+                    "status": "active",
+                    "description": description,
+                    "schemaVersion": "iam-schema-v1",
+                }
+                state["serviceRoles"][role_id] = role
+                self._audit(
+                    operation,
+                    "service-role",
+                    role_id,
+                    "changed",
+                    correlation_id,
+                    actor["accountType"],
+                    "created_service_role",
+                    actor["accountId"],
+                )
+                return role
 
-        return self.store.transact(mutate)
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "service-role", target_id, correlation_id, actor, exc.code)
+            raise
+
+    def update_service_role(
+        self,
+        actor_id: str | None,
+        role_id: str,
+        payload: dict[str, Any],
+        correlation_id: str,
+    ) -> dict[str, Any]:
+        actor = self._require_actor(actor_id)
+        operation = "service_role.update"
+        try:
+            if actor["accountType"] != "super-admin":
+                raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can update service roles.")
+            unsupported = set(payload) - {"description", "roleId", "serviceId"}
+            if unsupported:
+                raise ApiError(422, "validation_error", "Unprocessable Entity", "Unsupported service-role update field.")
+
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                role = state["serviceRoles"].get(role_id)
+                if not role:
+                    raise ApiError(404, "not_found", "Not Found", "Service role not found.")
+                protected_field_changed = (
+                    payload.get("roleId", role_id) != role_id
+                    or payload.get("serviceId", role.get("serviceId")) != role.get("serviceId")
+                )
+                if protected_field_changed:
+                    raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected service-role fields cannot be changed here.")
+                before = dict(role)
+                if "description" in payload:
+                    description = payload["description"]
+                    if not isinstance(description, str):
+                        raise ApiError(422, "validation_error", "Unprocessable Entity", "description must be a string.")
+                    role["description"] = description
+                changed = before != role
+                self._audit(
+                    operation,
+                    "service-role",
+                    role_id,
+                    "changed" if changed else "no_change",
+                    correlation_id,
+                    actor["accountType"],
+                    "service_role_updated",
+                    actor["accountId"],
+                )
+                return role
+
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "service-role", role_id, correlation_id, actor, exc.code)
+            raise
 
     def service_role_lifecycle(
         self,
@@ -432,36 +528,41 @@ class AccessControlService:
         correlation_id: str,
     ) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
-        if actor["accountType"] != "super-admin":
-            raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can change service-role lifecycle.")
+        operation = f"service_role.{action}" if action in {"disable", "archive"} else "service_role.lifecycle"
+        try:
+            if actor["accountType"] != "super-admin":
+                raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can change service-role lifecycle.")
 
-        def mutate(state: dict[str, Any]) -> dict[str, Any]:
-            role = state["serviceRoles"].get(role_id)
-            if not role:
-                raise ApiError(404, "not_found", "Not Found", "Service role not found.")
-            old = role["status"]
-            if action == "disable":
-                new = "disabled" if old == "active" else old
-            elif action == "archive":
-                if old == "active":
-                    raise ApiError(422, "invalid_transition", "Unprocessable Entity", "Disable a service role before archival.")
-                new = "archived"
-            else:
-                raise ApiError(404, "not_found", "Not Found", "Unsupported lifecycle action.")
-            role["status"] = new
-            self._audit(
-                f"service_role.{action}",
-                "service-role",
-                role_id,
-                "no_change" if old == new else "changed",
-                correlation_id,
-                actor["accountType"],
-                f"{old}_to_{new}",
-                actor["accountId"],
-            )
-            return role
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                role = state["serviceRoles"].get(role_id)
+                if not role:
+                    raise ApiError(404, "not_found", "Not Found", "Service role not found.")
+                old = role["status"]
+                if action == "disable":
+                    new = "disabled" if old == "active" else old
+                elif action == "archive":
+                    if old == "active":
+                        raise ApiError(422, "invalid_transition", "Unprocessable Entity", "Disable a service role before archival.")
+                    new = "archived"
+                else:
+                    raise ApiError(404, "not_found", "Not Found", "Unsupported lifecycle action.")
+                role["status"] = new
+                self._audit(
+                    operation,
+                    "service-role",
+                    role_id,
+                    "no_change" if old == new else "changed",
+                    correlation_id,
+                    actor["accountType"],
+                    f"{old}_to_{new}",
+                    actor["accountId"],
+                )
+                return role
 
-        return self.store.transact(mutate)
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "service-role", role_id, correlation_id, actor, exc.code)
+            raise
 
     def assign_service_role(
         self,
@@ -587,39 +688,43 @@ class AccessControlService:
         assign: bool,
     ) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
-        if actor["accountType"] not in {"admin", "super-admin"}:
-            raise ApiError(403, "forbidden", "Forbidden", "Actor cannot change role assignments.")
+        operation = "service_role.assign" if assign else "service_role.remove"
+        try:
+            if actor["accountType"] not in {"admin", "super-admin"}:
+                raise ApiError(403, "forbidden", "Forbidden", "Actor cannot change role assignments.")
 
-        def mutate(state: dict[str, Any]) -> dict[str, Any]:
-            account = self._require_account_from_state(state, account_id)
-            self._assert_account_invariants(account)
-            if not self._can_manage(actor, account) or account["accountType"] != "member":
-                raise ApiError(403, "forbidden", "Forbidden", "Service roles can be assigned only to managed member accounts.")
-            role = state["serviceRoles"].get(role_id)
-            if not role or role.get("status") != "active":
-                raise ApiError(422, "role_not_active", "Unprocessable Entity", "Only active service roles may be assigned.")
-            roles = set(account.get("serviceRoles", []))
-            before = set(roles)
-            if assign:
-                roles.add(role_id)
-            else:
-                roles.discard(role_id)
-            account["serviceRoles"] = sorted(roles)
-            changed = before != roles
-            operation = "service_role.assign" if assign else "service_role.remove"
-            self._audit(
-                operation,
-                "account",
-                account_id,
-                "changed" if changed else "no_change",
-                correlation_id,
-                actor["accountType"],
-                role_id,
-                actor["accountId"],
-            )
-            return self._public_account(account)
+            def mutate(state: dict[str, Any]) -> dict[str, Any]:
+                account = self._require_account_from_state(state, account_id)
+                self._assert_account_invariants(account)
+                if not self._can_manage(actor, account) or account["accountType"] != "member":
+                    raise ApiError(403, "forbidden", "Forbidden", "Service roles can be assigned only to managed member accounts.")
+                role = state["serviceRoles"].get(role_id)
+                if not role or role.get("status") != "active":
+                    raise ApiError(422, "role_not_active", "Unprocessable Entity", "Only active service roles may be assigned.")
+                roles = set(account.get("serviceRoles", []))
+                before = set(roles)
+                if assign:
+                    roles.add(role_id)
+                else:
+                    roles.discard(role_id)
+                account["serviceRoles"] = sorted(roles)
+                changed = before != roles
+                self._audit(
+                    operation,
+                    "account",
+                    account_id,
+                    "changed" if changed else "no_change",
+                    correlation_id,
+                    actor["accountType"],
+                    role_id,
+                    actor["accountId"],
+                )
+                return self._public_account(account)
 
-        return self.store.transact(mutate)
+            return self.store.transact(mutate)
+        except ApiError as exc:
+            self._audit_rejected_mutation(operation, "account", account_id, correlation_id, actor, exc.code)
+            raise
 
     def _ensure_default_role(self, state: dict[str, Any], correlation_id: str) -> None:
         role = state["serviceRoles"].get(DEFAULT_SERVICE_ROLE_ID)
@@ -708,6 +813,26 @@ class AccessControlService:
                 actor_account_id=actor_account_id,
                 client_id=client_id,
             )
+        )
+
+    def _audit_rejected_mutation(
+        self,
+        operation: str,
+        target_type: str,
+        target_id: str,
+        correlation_id: str,
+        actor: dict[str, Any],
+        reason_code: str,
+    ) -> None:
+        self._audit(
+            operation,
+            target_type,
+            target_id,
+            "rejected",
+            correlation_id,
+            actor["accountType"],
+            reason_code,
+            actor["accountId"],
         )
 
     def _require_actor(self, actor_id: str | None) -> dict[str, Any]:

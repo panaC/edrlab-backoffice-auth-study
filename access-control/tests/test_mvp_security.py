@@ -135,6 +135,91 @@ class MvpSecurityTests(unittest.TestCase):
             )
         self.assertEqual(super_admin_attempt.exception.status, 422)
 
+    def test_rejected_business_rule_mutations_are_audited(self) -> None:
+        admin = self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "audited-admin@example.test",
+                "organization": "EDRLab",
+                "name": "Audited Admin",
+                "accountType": "admin",
+            },
+            "corr-create-audited-admin",
+        )
+        self._add_subject_token("audited-admin-token", "audited-admin-sub", "audited-admin@example.test", acr="edrlab-privileged")
+        self.service.activate_onboarding_from_bearer(
+            "Bearer audited-admin-token",
+            {},
+            "corr-activate-audited-admin",
+        )
+        member = self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "audited-member@example.test",
+                "organization": "EDRLab",
+                "name": "Audited Member",
+                "accountType": "member",
+            },
+            "corr-create-audited-member",
+        )
+        self._add_subject_token("audited-member-token", "audited-member-sub", "audited-member@example.test")
+        self.service.activate_onboarding_from_bearer(
+            "Bearer audited-member-token",
+            {},
+            "corr-activate-audited-member",
+        )
+
+        with self.assertRaises(ApiError):
+            self.service.create_account(
+                admin["accountId"],
+                {
+                    "email": "forbidden-admin@example.test",
+                    "organization": "EDRLab",
+                    "name": "Forbidden Admin",
+                    "accountType": "admin",
+                },
+                "corr-rejected-account-create",
+            )
+        with self.assertRaises(ApiError):
+            self.service.lifecycle(
+                self.super_admin_id,
+                member["accountId"],
+                "archive",
+                "corr-rejected-lifecycle",
+            )
+        self.service.service_role_lifecycle(
+            self.super_admin_id,
+            DEFAULT_SERVICE_ROLE_ID,
+            "disable",
+            "corr-disable-default-role",
+        )
+        with self.assertRaises(ApiError):
+            self.service.assign_service_role(
+                self.super_admin_id,
+                member["accountId"],
+                DEFAULT_SERVICE_ROLE_ID,
+                "corr-rejected-role-assignment",
+            )
+
+        self._assert_rejected_audit_event(
+            "account.create",
+            "unresolved",
+            "corr-rejected-account-create",
+            "forbidden",
+        )
+        self._assert_rejected_audit_event(
+            "account.archive",
+            member["accountId"],
+            "corr-rejected-lifecycle",
+            "invalid_transition",
+        )
+        self._assert_rejected_audit_event(
+            "service_role.assign",
+            member["accountId"],
+            "corr-rejected-role-assignment",
+            "role_not_active",
+        )
+
     def test_privileged_onboarding_requires_privileged_acr(self) -> None:
         admin = self.service.create_account(
             self.super_admin_id,
@@ -272,6 +357,28 @@ class MvpSecurityTests(unittest.TestCase):
             for line in self.audit_path.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
+
+    def _audit_events(self) -> list[dict[str, object]]:
+        return [json.loads(line) for line in self._audit_lines()]
+
+    def _assert_rejected_audit_event(
+        self,
+        operation: str,
+        target_id: str,
+        correlation_id: str,
+        reason_code: str,
+    ) -> None:
+        self.assertTrue(
+            any(
+                event.get("operation") == operation
+                and event.get("targetId") == target_id
+                and event.get("outcome") == "rejected"
+                and event.get("correlationId") == correlation_id
+                and event.get("reasonCode") == reason_code
+                for event in self._audit_events()
+            ),
+            f"missing rejected audit event for {operation} {correlation_id}",
+        )
 
     def _add_subject_token(
         self,
@@ -438,6 +545,35 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(body["accountType"], "member")
+
+    def test_super_admin_bearer_can_patch_service_role(self) -> None:
+        status, body = self._json_request(
+            "PATCH",
+            f"/iam/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+            headers={
+                "Authorization": "Bearer dev-sub:super-sub",
+                "X-Correlation-Id": "corr-update-service-role",
+            },
+            body={"description": "Updated MVP access-check demo consultation role."},
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body["roleId"], DEFAULT_SERVICE_ROLE_ID)
+        self.assertEqual(body["serviceId"], DEFAULT_SERVICE_ID)
+        self.assertEqual(body["description"], "Updated MVP access-check demo consultation role.")
+        events = [
+            json.loads(line)
+            for line in self.audit_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        self.assertTrue(
+            any(
+                event["operation"] == "service_role.update"
+                and event["targetId"] == DEFAULT_SERVICE_ROLE_ID
+                and event["correlationId"] == "corr-update-service-role"
+                for event in events
+            )
+        )
 
     def test_member_bearer_can_use_self_endpoints(self) -> None:
         status, body = self._json_request(

@@ -125,6 +125,9 @@ class IamHandler(BaseHTTPRequestHandler):
             if method == "GET":
                 actor_id = self._require_actor_id(corr)
                 return self.service.get_service_role(actor_id, match.group(1), corr)
+            if method == "PATCH":
+                actor_id = self._require_actor_id(corr)
+                return self.service.update_service_role(actor_id, match.group(1), read_json(self), corr)
         if match := ROLE_LIFECYCLE_PATH.match(path):
             if method == "POST":
                 actor_id = self._require_actor_id(corr)
