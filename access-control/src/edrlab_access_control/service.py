@@ -137,6 +137,7 @@ class AccessControlService:
 
     def list_accounts(self, actor_id: str | None, correlation_id: str) -> list[dict[str, Any]]:
         actor = self._require_actor(actor_id)
+        self._require_account_manager(actor)
         state = self.store.load()
         return [
             self._public_account(account)
@@ -146,6 +147,7 @@ class AccessControlService:
 
     def get_account(self, actor_id: str | None, account_id: str, correlation_id: str) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
+        self._require_account_manager(actor)
         account = self._require_account(account_id)
         if not self._can_manage(actor, account):
             raise ApiError(404, "not_found", "Not Found", "Account is not visible in the actor scope.")
@@ -209,6 +211,7 @@ class AccessControlService:
         correlation_id: str,
     ) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
+        self._require_account_manager(actor)
         if PROTECTED_PROFILE_FIELDS.intersection(payload):
             raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected account fields cannot be changed here.")
 
@@ -236,6 +239,7 @@ class AccessControlService:
 
     def lifecycle(self, actor_id: str | None, account_id: str, action: str, correlation_id: str) -> dict[str, Any]:
         actor = self._require_actor(actor_id)
+        self._require_account_manager(actor)
 
         def mutate(state: dict[str, Any]) -> dict[str, Any]:
             account = self._require_account_from_state(state, account_id)
@@ -682,6 +686,10 @@ class AccessControlService:
             raise ApiError(403, "actor_inactive", "Forbidden", "Actor account is not active.")
         return actor
 
+    def _require_account_manager(self, actor: dict[str, Any]) -> None:
+        if actor["accountType"] not in {"admin", "super-admin"}:
+            raise ApiError(403, "forbidden", "Forbidden", "Actor cannot manage accounts.")
+
     def _require_account(self, account_id: str) -> dict[str, Any]:
         return self._require_account_from_state(self.store.load(), account_id)
 
@@ -706,7 +714,7 @@ class AccessControlService:
             return target.get("accountType") == "member"
         if actor["accountType"] == "super-admin":
             return target.get("accountType") in {"admin", "member"}
-        return actor["accountId"] == target.get("accountId")
+        return False
 
     def _next_lifecycle(self, current: str, action: str) -> str:
         if action == "disable":

@@ -429,6 +429,50 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body["accountType"], "member")
 
+    def test_member_bearer_can_use_self_endpoints(self) -> None:
+        status, body = self._json_request(
+            "GET",
+            "/iam/me",
+            headers={"Authorization": "Bearer dev-sub:member-sub"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(body["accountId"], self.member["accountId"])
+
+        status, body = self._json_request(
+            "GET",
+            "/iam/me/services",
+            headers={"Authorization": "Bearer dev-sub:member-sub"},
+        )
+        self.assertEqual(status, 200)
+        self.assertIn("services", body)
+
+    def test_member_bearer_cannot_use_account_management_endpoints_on_self(self) -> None:
+        cases: list[tuple[str, str, dict[str, object] | None]] = [
+            ("GET", "/iam/accounts", None),
+            ("GET", f"/iam/accounts/{self.member['accountId']}", None),
+            ("PATCH", f"/iam/accounts/{self.member['accountId']}/profile", {"name": "Changed"}),
+            ("POST", f"/iam/accounts/{self.member['accountId']}/disable", None),
+            ("POST", f"/iam/accounts/{self.member['accountId']}/restore", None),
+            ("POST", f"/iam/accounts/{self.member['accountId']}/archive", None),
+        ]
+        for method, path, body in cases:
+            with self.subTest(method=method, path=path):
+                with self.assertRaises(urllib.error.HTTPError) as raised:
+                    self._json_request(
+                        method,
+                        path,
+                        headers={"Authorization": "Bearer dev-sub:member-sub"},
+                        body=body,
+                    )
+                self.assertEqual(raised.exception.code, 403)
+
+        _, profile = self._json_request(
+            "GET",
+            "/iam/me",
+            headers={"Authorization": "Bearer dev-sub:member-sub"},
+        )
+        self.assertEqual(profile["name"], "Member")
+
     def test_onboarding_requires_bearer(self) -> None:
         with self.assertRaises(urllib.error.HTTPError) as raised:
             self._json_request("POST", "/iam/onboarding/activate", body={})
