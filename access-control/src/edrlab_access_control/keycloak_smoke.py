@@ -53,7 +53,12 @@ def main() -> None:
     email = required_claim(id_claims, "email")
     if email.lower() != SMOKE_EMAIL.lower() or id_claims.get("email_verified") is not True:
         raise RuntimeError("Keycloak token did not carry the expected verified smoke-test email")
-    account = ensure_local_member_account(subject, email, admin_token_response["access_token"])
+    account = ensure_local_member_account(
+        subject,
+        email,
+        admin_token_response["access_token"],
+        token_response["access_token"],
+    )
     demo_status, demo_body = request_json(
         "GET",
         f"{DEMO_BASE_URL}/access-check-demo",
@@ -169,7 +174,12 @@ def login_with_authorization_code(username: str, password: str) -> dict[str, Any
     return token_body
 
 
-def ensure_local_member_account(subject: str, email: str, admin_access_token: str) -> dict[str, Any]:
+def ensure_local_member_account(
+    subject: str,
+    email: str,
+    admin_access_token: str,
+    user_access_token: str,
+) -> dict[str, Any]:
     account = find_account_by_email(email, admin_access_token)
     if account is None:
         _, account = request_json(
@@ -188,7 +198,8 @@ def ensure_local_member_account(subject: str, email: str, admin_access_token: st
     _, activated = request_json(
         "POST",
         f"{IAM_API_BASE_URL}/iam/onboarding/activate",
-        body={"email": email, "subject": subject, "emailVerified": True},
+        actor_token=user_access_token,
+        body={},
         expected={200},
     )
     return activated

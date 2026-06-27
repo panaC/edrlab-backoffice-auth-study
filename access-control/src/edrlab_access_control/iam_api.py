@@ -105,7 +105,11 @@ class IamHandler(BaseHTTPRequestHandler):
                 return self.service.lifecycle(actor_id, match.group(1), match.group(2), corr)
 
         if method == "POST" and path == "/iam/onboarding/activate":
-            return self.service.activate_onboarding(read_json(self), corr)
+            return self.service.activate_onboarding_from_bearer(
+                self.headers.get("Authorization", ""),
+                read_json(self),
+                corr,
+            )
 
         if method == "GET" and path == "/iam/service-roles":
             actor_id = self._require_actor_id(corr)

@@ -6,7 +6,7 @@ from typing import Any
 from .audit import AuditWriter, build_event
 from .config import DEFAULT_PRIVILEGED_ACR, DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID, privileged_acr
 from .store import FileStateStore
-from .tokens import SubjectTokenValidator, TokenValidationError, subject_token_validator_from_env
+from .tokens import SubjectEvidence, SubjectTokenValidator, TokenValidationError, subject_token_validator_from_env
 
 
 ACCOUNT_TYPES = {"member", "admin", "super-admin"}
@@ -14,6 +14,18 @@ LIFECYCLES = {"invited", "active", "disabled", "archived"}
 ROLE_STATUSES = {"active", "disabled", "archived"}
 PROTECTED_PROFILE_FIELDS = {
     "accountId",
+    "accountType",
+    "lifecycle",
+    "linkedSubject",
+    "serviceRoles",
+}
+ONBOARDING_PROTECTED_FIELDS = {
+    "subject",
+    "sub",
+    "email",
+    "emailVerified",
+    "email_verified",
+    "acr",
     "accountType",
     "lifecycle",
     "linkedSubject",
@@ -246,11 +258,42 @@ class AccessControlService:
 
         return self.store.transact(mutate)
 
-    def activate_onboarding(self, payload: dict[str, Any], correlation_id: str) -> dict[str, Any]:
-        subject = self._required_string(payload, "subject")
-        email = self._required_string(payload, "email")
-        email_verified = payload.get("emailVerified") is True
-        acr = payload.get("acr")
+    def activate_onboarding_from_bearer(
+        self,
+        authorization_header: str,
+        payload: dict[str, Any],
+        correlation_id: str,
+    ) -> dict[str, Any]:
+        if ONBOARDING_PROTECTED_FIELDS.intersection(payload):
+            raise ApiError(
+                422,
+                "protected_onboarding_field",
+                "Unprocessable Entity",
+                "Onboarding identity evidence must come from the validated bearer token.",
+            )
+        evidence = self._subject_evidence_from_bearer(authorization_header)
+        return self._activate_onboarding_from_evidence(evidence, correlation_id)
+
+    def _activate_onboarding_from_evidence(
+        self,
+        evidence: SubjectEvidence,
+        correlation_id: str,
+    ) -> dict[str, Any]:
+        subject = evidence.subject
+        email = evidence.email.strip() if isinstance(evidence.email, str) and evidence.email.strip() else ""
+        if not email:
+            self._audit(
+                "onboarding.activate",
+                "account",
+                "unresolved",
+                "rejected",
+                correlation_id,
+                "authenticated-subject",
+                "email_not_verified",
+            )
+            raise ApiError(403, "email_not_verified", "Forbidden", "Onboarding requires a verified email.")
+        email_verified = evidence.email_verified is True
+        acr = evidence.acr
 
         def mutate(state: dict[str, Any]) -> dict[str, Any]:
             active_same_subject = [
@@ -701,6 +744,13 @@ class AccessControlService:
     def _parse_subject_token(self, subject_token: str) -> str:
         try:
             return self.subject_token_validator.validate(subject_token).subject
+        except TokenValidationError as exc:
+            raise ApiError(exc.status, exc.code, exc.title, exc.detail) from exc
+
+    def _subject_evidence_from_bearer(self, authorization_header: str) -> SubjectEvidence:
+        subject_token = self._bearer_subject_token(authorization_header)
+        try:
+            return self.subject_token_validator.validate(subject_token)
         except TokenValidationError as exc:
             raise ApiError(exc.status, exc.code, exc.title, exc.detail) from exc
 

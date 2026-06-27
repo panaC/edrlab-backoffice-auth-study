@@ -22,8 +22,21 @@ from edrlab_access_control.tokens import (
     OidcIntrospectionSubjectTokenValidator,
     OidcServiceTokenAuthenticator,
     SharedSecretServiceAuthenticator,
+    SubjectEvidence,
+    SubjectTokenValidator,
     TokenValidationError,
 )
+
+
+class StaticSubjectTokenValidator(SubjectTokenValidator):
+    def __init__(self, evidence_by_token: dict[str, SubjectEvidence]) -> None:
+        self.evidence_by_token = evidence_by_token
+
+    def validate(self, token: str) -> SubjectEvidence:
+        evidence = self.evidence_by_token.get(token)
+        if evidence is None:
+            raise TokenValidationError(401, "invalid_subject_token", "Unauthorized", "Subject token is invalid.")
+        return evidence
 
 
 class MvpSecurityTests(unittest.TestCase):
@@ -32,7 +45,15 @@ class MvpSecurityTests(unittest.TestCase):
         root = Path(self.tmp.name)
         self.state_path = root / "state.json"
         self.audit_path = root / "audit.jsonl"
-        self.service = AccessControlService(FileStateStore(self.state_path), AuditWriter(self.audit_path))
+        self.subject_tokens: dict[str, SubjectEvidence] = {
+            "dev-sub:member-sub": SubjectEvidence(subject="member-sub"),
+            "dev-sub:missing-subject": SubjectEvidence(subject="missing-subject"),
+        }
+        self.service = AccessControlService(
+            FileStateStore(self.state_path),
+            AuditWriter(self.audit_path),
+            StaticSubjectTokenValidator(self.subject_tokens),
+        )
         self.bootstrap = self.service.bootstrap_first_super_admin(
             email="super-admin@example.test",
             name="Initial Super Admin",
@@ -72,13 +93,10 @@ class MvpSecurityTests(unittest.TestCase):
             },
             "corr-admin",
         )
-        self.service.activate_onboarding(
-            {
-                "email": "admin@example.test",
-                "subject": "admin-sub",
-                "emailVerified": True,
-                "acr": "edrlab-privileged",
-            },
+        self._add_subject_token("admin-token", "admin-sub", "admin@example.test", acr="edrlab-privileged")
+        self.service.activate_onboarding_from_bearer(
+            "Bearer admin-token",
+            {},
             "corr-admin-activate",
         )
         with self.assertRaises(ApiError) as admin_attempt:
@@ -119,23 +137,17 @@ class MvpSecurityTests(unittest.TestCase):
             "corr-create-priv-admin",
         )
         with self.assertRaises(ApiError) as missing_acr:
-            self.service.activate_onboarding(
-                {
-                    "email": "priv-admin@example.test",
-                    "subject": "priv-admin-sub",
-                    "emailVerified": True,
-                    "acr": "edrlab-normal",
-                },
+            self._add_subject_token("priv-admin-normal-token", "priv-admin-sub", "priv-admin@example.test", acr="edrlab-normal")
+            self.service.activate_onboarding_from_bearer(
+                "Bearer priv-admin-normal-token",
+                {},
                 "corr-deny-priv-admin",
             )
         self.assertEqual(missing_acr.exception.status, 403)
-        activated = self.service.activate_onboarding(
-            {
-                "email": "priv-admin@example.test",
-                "subject": "priv-admin-sub",
-                "emailVerified": True,
-                "acr": "edrlab-privileged",
-            },
+        self._add_subject_token("priv-admin-token", "priv-admin-sub", "priv-admin@example.test", acr="edrlab-privileged")
+        activated = self.service.activate_onboarding_from_bearer(
+            "Bearer priv-admin-token",
+            {},
             "corr-allow-priv-admin",
         )
         self.assertEqual(activated["accountId"], admin["accountId"])
@@ -158,12 +170,10 @@ class MvpSecurityTests(unittest.TestCase):
             DEFAULT_SERVICE_ROLE_ID,
             "corr-assign-role",
         )
-        self.service.activate_onboarding(
-            {
-                "email": "member@example.test",
-                "subject": "member-sub",
-                "emailVerified": True,
-            },
+        self._add_subject_token("member-token", "member-sub", "member@example.test")
+        self.service.activate_onboarding_from_bearer(
+            "Bearer member-token",
+            {},
             "corr-activate-member",
         )
         allow = self.service.authorization_check(
@@ -220,13 +230,10 @@ class MvpSecurityTests(unittest.TestCase):
             },
             "corr-create-services-admin",
         )
-        self.service.activate_onboarding(
-            {
-                "email": "services-admin@example.test",
-                "subject": "services-admin-sub",
-                "emailVerified": True,
-                "acr": "edrlab-privileged",
-            },
+        self._add_subject_token("services-admin-token", "services-admin-sub", "services-admin@example.test", acr="edrlab-privileged")
+        self.service.activate_onboarding_from_bearer(
+            "Bearer services-admin-token",
+            {},
             "corr-activate-services-admin",
         )
         services = self.service.get_effective_services(admin["accountId"], "corr-services")
@@ -255,6 +262,22 @@ class MvpSecurityTests(unittest.TestCase):
             for line in self.audit_path.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
+
+    def _add_subject_token(
+        self,
+        token: str,
+        subject: str,
+        email: str,
+        *,
+        email_verified: bool = True,
+        acr: str | None = None,
+    ) -> None:
+        self.subject_tokens[token] = SubjectEvidence(
+            subject=subject,
+            email=email,
+            email_verified=email_verified,
+            acr=acr,
+        )
 
 
 class StubIamHandler(BaseHTTPRequestHandler):
@@ -309,9 +332,18 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         root = Path(self.tmp.name)
         self.old_dev_header = os.environ.get("IAM_ALLOW_DEV_ACTOR_HEADER")
         os.environ.pop("IAM_ALLOW_DEV_ACTOR_HEADER", None)
+        self.subject_tokens: dict[str, SubjectEvidence] = {
+            "dev-sub:member-sub": SubjectEvidence(
+                subject="member-sub",
+                email="member@example.test",
+                email_verified=True,
+            ),
+            "dev-sub:super-sub": SubjectEvidence(subject="super-sub"),
+        }
         self.service = AccessControlService(
             FileStateStore(root / "state.json"),
             AuditWriter(root / "audit.jsonl"),
+            StaticSubjectTokenValidator(self.subject_tokens),
         )
         bootstrap = self.service.bootstrap_first_super_admin(
             email="super-admin@example.test",
@@ -330,8 +362,9 @@ class IamHttpAuthenticationTests(unittest.TestCase):
             },
             "corr-create-member",
         )
-        self.service.activate_onboarding(
-            {"email": "member@example.test", "subject": "member-sub", "emailVerified": True},
+        self.service.activate_onboarding_from_bearer(
+            "Bearer dev-sub:member-sub",
+            {},
             "corr-activate-member",
         )
         self.server = IamServer(
@@ -395,6 +428,54 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body["accountType"], "member")
 
+    def test_onboarding_requires_bearer(self) -> None:
+        with self.assertRaises(urllib.error.HTTPError) as raised:
+            self._json_request("POST", "/iam/onboarding/activate", body={})
+        self.assertEqual(raised.exception.code, 401)
+
+    def test_onboarding_rejects_client_supplied_identity_claims(self) -> None:
+        with self.assertRaises(urllib.error.HTTPError) as raised:
+            self._json_request(
+                "POST",
+                "/iam/onboarding/activate",
+                headers={"Authorization": "Bearer dev-sub:member-sub"},
+                body={
+                    "subject": "forged-sub",
+                    "email": "forged@example.test",
+                    "emailVerified": True,
+                    "acr": "edrlab-privileged",
+                },
+            )
+        self.assertEqual(raised.exception.code, 422)
+
+    def test_onboarding_activates_from_bearer_evidence(self) -> None:
+        self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "new-member@example.test",
+                "organization": "EDRLab",
+                "name": "New Member",
+                "accountType": "member",
+            },
+            "corr-create-new-member",
+        )
+        self.subject_tokens["new-member-token"] = SubjectEvidence(
+            subject="new-member-sub",
+            email="new-member@example.test",
+            email_verified=True,
+        )
+
+        status, body = self._json_request(
+            "POST",
+            "/iam/onboarding/activate",
+            headers={"Authorization": "Bearer new-member-token"},
+            body={},
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body["lifecycle"], "active")
+        self.assertTrue(body["hasLinkedSubject"])
+
     def _json_request(
         self,
         method: str,
@@ -454,6 +535,8 @@ class OidcTokenTests(unittest.TestCase):
             {
                 "misleading-token": {
                     **self._active_response(sub="member-sub"),
+                    "email": "member@example.test",
+                    "email_verified": True,
                     "edrlab_account_type": "super-admin",
                     "realm_access": {"roles": [DEFAULT_SERVICE_ROLE_ID]},
                 }
@@ -475,8 +558,9 @@ class OidcTokenTests(unittest.TestCase):
             },
             "corr-create-member",
         )
-        service.activate_onboarding(
-            {"email": "member@example.test", "subject": "member-sub", "emailVerified": True},
+        service.activate_onboarding_from_bearer(
+            "Bearer misleading-token",
+            {},
             "corr-activate-member",
         )
 

@@ -4,6 +4,14 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-27
+
+### Changed
+
+- Documented and implemented the `POST /iam/onboarding/activate` caller flow so activation uses bearer-token evidence and rejects unsafe client-supplied onboarding claims.
+- Clarified the recommended MVP onboarding provisioning scenario: IAM-created invited account, controlled Keycloak user provisioning, Keycloak actions email for first-login setup, and bearer-based IAM activation by the invited user.
+- Documented the minimum Keycloak first-login action email configuration for MVP onboarding, including SMTP, public-registration posture, required actions for members and privileged accounts, and `execute-actions-email` payloads.
+
 ## 2026-06-26
 
 ### Added
