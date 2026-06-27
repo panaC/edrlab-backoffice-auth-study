@@ -65,7 +65,11 @@ class IamHandler(BaseHTTPRequestHandler):
             problem_response(self, exc.status, exc.code, exc.title, exc.detail, corr)
         except json.JSONDecodeError:
             problem_response(self, 400, "invalid_json", "Invalid JSON", "Request body is not valid JSON.", corr)
-        except Exception:
+        except Exception as exc:
+            try:
+                self.service.audit_indeterminate_request(method, path, corr, exc)
+            except Exception:
+                pass
             problem_response(
                 self,
                 503,

@@ -544,6 +544,24 @@ class AccessControlService:
                 return event
         raise ApiError(404, "not_found", "Not Found", "Audit event not found.")
 
+    def audit_indeterminate_request(
+        self,
+        method: str,
+        path: str,
+        correlation_id: str,
+        exc: BaseException,
+    ) -> None:
+        reason = "keycloak_indeterminate" if _looks_like_keycloak_error(exc) else "unexpected_error"
+        self._audit(
+            "iam.request.indeterminate",
+            "request",
+            f"{method} {path}",
+            "rejected",
+            correlation_id,
+            "iam-api",
+            reason,
+        )
+
     def _change_assignment(
         self,
         actor_id: str | None,
@@ -792,3 +810,15 @@ class AccessControlService:
         if not isinstance(value, str) or not value.strip():
             raise ApiError(422, "validation_error", "Unprocessable Entity", f"{field} is required.")
         return value.strip()
+
+
+def _looks_like_keycloak_error(exc: BaseException) -> bool:
+    if "keycloak" in str(exc).lower():
+        return True
+    traceback = exc.__traceback__
+    while traceback:
+        module = str(traceback.tb_frame.f_globals.get("__name__", ""))
+        if module.endswith("keycloak_store") or module.endswith("keycloak_bootstrap"):
+            return True
+        traceback = traceback.tb_next
+    return False

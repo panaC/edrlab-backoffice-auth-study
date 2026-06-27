@@ -191,6 +191,7 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 - `FileStateStore` remains available for focused unit tests and non-OIDC local fallback paths. The Docker MVP runtime uses `KeycloakStateStore` as the IAM state backend.
 - Admin Console-to-IAM API calls authenticate with bearer user tokens in the runtime. `X-Actor-Account-Id` is ignored unless `IAM_ALLOW_DEV_ACTOR_HEADER=true` is set explicitly for focused local tests.
 - Onboarding activation now uses bearer-derived identity evidence and rejects request-body attempts to provide `subject`, `emailVerified`, `acr`, or other authorization-significant fields.
+- Indeterminate Keycloak state read failures are fail-closed and create local audit events with `operation=iam.request.indeterminate` or `authorization.check.indeterminate`.
 - The runtime does not include the Admin Console UI yet.
 - Direct Keycloak drift detection is represented by invariant checks in this runtime. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
 - The smoke-test user, realm, clients, redirect URI, and secrets are local runtime fixtures only.

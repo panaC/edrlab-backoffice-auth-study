@@ -329,6 +329,7 @@ The IAM Control Plane API must create local EDRLab audit events for:
 - authenticated-subject link creation and rejected or attempted link mutation;
 - service-access-role creation, update, disablement, archival, assignment, and removal;
 - protected-service authorization denials;
+- indeterminate Keycloak/dependency failures that block authorization checks or sensitive IAM API operations;
 - audit reads;
 - first-super-admin bootstrap;
 - rejected privileged onboarding or missing privileged-authentication evidence.

@@ -41,6 +41,14 @@ class StaticSubjectTokenValidator(SubjectTokenValidator):
         return evidence
 
 
+class FailingStateStore:
+    def load(self) -> dict[str, object]:
+        raise RuntimeError("Unexpected Keycloak users response")
+
+    def transact(self, callback: object) -> object:
+        raise RuntimeError("Unexpected Keycloak users response")
+
+
 class MvpSecurityTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -332,6 +340,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
+        self.audit_path = root / "audit.jsonl"
         self.old_dev_header = os.environ.get("IAM_ALLOW_DEV_ACTOR_HEADER")
         os.environ.pop("IAM_ALLOW_DEV_ACTOR_HEADER", None)
         self.subject_tokens: dict[str, SubjectEvidence] = {
@@ -344,7 +353,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         }
         self.service = AccessControlService(
             FileStateStore(root / "state.json"),
-            AuditWriter(root / "audit.jsonl"),
+            AuditWriter(self.audit_path),
             StaticSubjectTokenValidator(self.subject_tokens),
         )
         bootstrap = self.service.bootstrap_first_super_admin(
@@ -521,6 +530,34 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body["lifecycle"], "active")
         self.assertTrue(body["hasLinkedSubject"])
+
+    def test_unexpected_keycloak_state_error_is_audited(self) -> None:
+        self.service.store = FailingStateStore()  # type: ignore[assignment]
+
+        with self.assertRaises(urllib.error.HTTPError) as raised:
+            self._json_request(
+                "GET",
+                "/iam/accounts",
+                headers={
+                    "Authorization": "Bearer dev-sub:super-sub",
+                    "X-Correlation-Id": "corr-keycloak-failure",
+                },
+            )
+
+        self.assertEqual(raised.exception.code, 503)
+        events = [
+            json.loads(line)
+            for line in self.audit_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        event = events[-1]
+        self.assertEqual(event["operation"], "iam.request.indeterminate")
+        self.assertEqual(event["targetType"], "request")
+        self.assertEqual(event["targetId"], "GET /iam/accounts")
+        self.assertEqual(event["outcome"], "rejected")
+        self.assertEqual(event["actorType"], "iam-api")
+        self.assertEqual(event["reasonCode"], "keycloak_indeterminate")
+        self.assertEqual(event["correlationId"], "corr-keycloak-failure")
 
     def _json_request(
         self,
