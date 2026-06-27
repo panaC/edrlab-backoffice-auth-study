@@ -68,7 +68,7 @@ MVP rule:
 | Path service-role identifier | `{roleId}` is the stable service-access role identifier, for example `access-check-demo:consult`. |
 | Correlation header | `X-Correlation-Id`, optional on request and always present on response. |
 
-The IAM Control Plane API must validate the issuer, audience, expiry, and subject of security tokens before using them for account resolution or service authorization. The feature requirements forbid frontend-only authorization and unmanaged raw-claim authorization shortcuts (`FR-020`, `FR-021`, `FR-033`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+The IAM Control Plane API must validate the issuer, audience, expiry, subject, and expected OAuth client of security tokens before using them for account resolution or service authorization. The feature requirements forbid frontend-only authorization and unmanaged raw-claim authorization shortcuts (`FR-020`, `FR-021`, `FR-033`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
 The Keycloak IAM schema policy is fixed separately: EDRLab IAM user attributes are managed attributes, unmanaged attributes are disabled, account type is exactly one `edrlab-backoffice` client role, and the first service-access role maps to client `access-check-demo-service` role `consult` ([Keycloak IAM schema policy](./keycloak-iam-schema-policy.md)).
 
@@ -165,7 +165,7 @@ Content-Type: application/json
 
 Runtime behavior:
 
-- validate the bearer token issuer, audience, expiry, and subject before account resolution;
+- validate the bearer token issuer, audience, expiry, subject, and expected OAuth client before account resolution;
 - derive `sub`, `email`, `email_verified`, and privileged-authentication evidence such as `acr` from the validated token or trusted IdP evidence;
 - ignore or reject request-body attempts to supply `subject`, `emailVerified`, `acr`, `accountType`, `lifecycle`, `linkedSubject`, or other authorization-significant fields;
 - find exactly one `invited` account with no existing authenticated-subject link and a verified email matching the authenticated subject;

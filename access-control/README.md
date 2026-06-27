@@ -139,7 +139,7 @@ Content-Type: application/json
 {}
 ```
 
-The IAM API validates the bearer token, extracts the authenticated `sub`, `email`, `email_verified`, and privileged-authentication evidence such as `acr`, then applies the safe match rules. The client must not provide `subject`, `emailVerified`, or `acr` as trusted request-body fields.
+The IAM API validates the bearer token issuer, audience, expiry, subject, and expected OAuth client, extracts the authenticated `sub`, `email`, `email_verified`, and privileged-authentication evidence such as `acr`, then applies the safe match rules. The client must not provide `subject`, `emailVerified`, or `acr` as trusted request-body fields.
 
 Expected caller flow:
 

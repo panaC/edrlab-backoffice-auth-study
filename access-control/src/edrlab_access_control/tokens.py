@@ -77,11 +77,14 @@ class OidcIntrospectionSubjectTokenValidator(SubjectTokenValidator):
         subject = _string(response.get("sub"))
         if not subject:
             raise TokenValidationError(401, "invalid_subject_token", "Unauthorized", "Subject token is missing a subject.")
+        token_client = _string(response.get("client_id")) or _string(response.get("azp"))
+        if token_client != self.client_id:
+            raise TokenValidationError(401, "invalid_subject_token", "Unauthorized", "Subject token client is invalid.")
         return SubjectEvidence(
             subject=subject,
             issuer=issuer,
             audience=tuple(_claim_values(response.get("aud"))),
-            client_id=_string(response.get("client_id")) or _string(response.get("azp")),
+            client_id=token_client,
             email=_string(response.get("email")),
             email_verified=response.get("email_verified") if isinstance(response.get("email_verified"), bool) else None,
             acr=_string(response.get("acr")),

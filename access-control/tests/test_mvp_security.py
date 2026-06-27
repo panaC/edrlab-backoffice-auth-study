@@ -563,6 +563,7 @@ class OidcTokenTests(unittest.TestCase):
                 "valid-token": self._active_response(sub="kc-sub"),
                 "wrong-issuer": self._active_response(sub="kc-sub", iss="http://wrong.example.test/realms/mvp"),
                 "wrong-audience": self._active_response(sub="kc-sub", aud="other-service"),
+                "wrong-client": self._active_response(sub="kc-sub", client_id="other-backoffice"),
                 "expired": self._active_response(sub="kc-sub", exp=int(time.time()) - 1),
                 "inactive": {"active": False},
             }
@@ -570,11 +571,23 @@ class OidcTokenTests(unittest.TestCase):
         validator = self._validator(url)
 
         self.assertEqual(validator.validate("valid-token").subject, "kc-sub")
-        for token in ("wrong-issuer", "wrong-audience", "expired", "inactive"):
+        for token in ("wrong-issuer", "wrong-audience", "wrong-client", "expired", "inactive"):
             with self.subTest(token=token):
                 with self.assertRaises(TokenValidationError) as raised:
                     validator.validate(token)
                 self.assertEqual(raised.exception.status, 401)
+
+    def test_oidc_subject_token_accepts_azp_as_token_client(self) -> None:
+        _, url = self._serve_introspection(
+            {
+                "azp-token": {
+                    **self._active_response(sub="kc-sub", client_id=None),
+                    "azp": "edrlab-backoffice",
+                }
+            }
+        )
+
+        self.assertEqual(self._validator(url).validate("azp-token").client_id, "edrlab-backoffice")
 
     def test_raw_oidc_claims_do_not_grant_local_service_access(self) -> None:
         _, url = self._serve_introspection(
@@ -657,7 +670,7 @@ class OidcTokenTests(unittest.TestCase):
     def _validator(self, url: str) -> OidcIntrospectionSubjectTokenValidator:
         return OidcIntrospectionSubjectTokenValidator(
             f"{url}/introspect",
-            "client-id",
+            "edrlab-backoffice",
             "client-secret",
             self.issuer,
             self.audience,
@@ -671,16 +684,18 @@ class OidcTokenTests(unittest.TestCase):
         iss: str | None = None,
         aud: str | list[str] | None = None,
         exp: int | None = None,
-        client_id: str = "edrlab-backoffice",
+        client_id: str | None = "edrlab-backoffice",
     ) -> dict[str, object]:
-        return {
+        response: dict[str, object] = {
             "active": True,
             "iss": iss or self.issuer,
             "aud": aud or [self.audience],
             "exp": exp or int(time.time()) + 60,
             "sub": sub,
-            "client_id": client_id,
         }
+        if client_id is not None:
+            response["client_id"] = client_id
+        return response
 
     def _serve_introspection(self, responses: dict[str, dict[str, object]]) -> tuple[ThreadingHTTPServer, str]:
         server = ThreadingHTTPServer(("127.0.0.1", 0), StubIntrospectionHandler)
