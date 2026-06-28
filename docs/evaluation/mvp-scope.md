@@ -1,218 +1,152 @@
 # MVP Scope - Keycloak IAM Control Plane API
 
 Status: Accepted
-Phase: Phase 5 - Review and Decision
+Phase: Phase 6 - Production MVP
 Scope: Evaluation
-Last reviewed: 2026-06-26
+Last reviewed: 2026-06-28
 
 ## Contents
 
 - [Purpose](#purpose)
-- [Decision Status](#decision-status)
-- [Closed Scope Decisions](#closed-scope-decisions)
+- [Executive Summary](#executive-summary)
 - [MVP Boundary](#mvp-boundary)
-- [Account Operations](#account-operations)
-- [Lifecycle](#lifecycle)
-- [Service-Access Roles](#service-access-roles)
-- [Protected Services](#protected-services)
-- [Audit](#audit)
-- [Privileged Onboarding](#privileged-onboarding)
+- [Current MVP State](#current-mvp-state)
+- [Included Capabilities](#included-capabilities)
 - [Out of Scope](#out-of-scope)
-- [Phase 6 Input Status](#phase-6-input-status)
+- [Production Readiness Gaps](#production-readiness-gaps)
+- [Source of Truth Map](#source-of-truth-map)
 - [References](#references)
 
 ## Purpose
 
-This document defines the accepted functional MVP scope for the Keycloak IAM plus EDRLab Admin Console and IAM Control Plane API architecture. ADR 0004 adopts that architecture for constrained MVP design, and ADR 0005 authorizes Phase 6 production MVP implementation inside this scope ([ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+This document is the short scope and status page for the accepted Keycloak IAM plus EDRLab IAM Control Plane API MVP. It states what belongs in the MVP, what is explicitly outside it, what is already represented by the Phase 6 runtime, and which items still block production trust ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
-The scope is limited to the access-control capability described in the feature requirements: account management, lifecycle, service-access roles, protected-service authorization, audit, and privileged onboarding ([Feature requirements](../../FEATURE-REQUIREMENTS.md#goal), [README - Core Features](../../README.md#core-features)).
+It is a scope summary, not the detailed API contract, runtime runbook, security test plan, Keycloak schema policy, or audit-storage specification. Those details remain in the linked source documents listed in [Source of Truth Map](#source-of-truth-map).
 
-## Decision Status
+## Executive Summary
 
-This is the accepted functional MVP scope for Phase 6 production MVP implementation. It remains a scope boundary, not a complete implementation plan; Phase 6 implementation must still produce code, tests, runtime configuration, migration scripts, and operations evidence inside this boundary ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+The MVP is authorized for `Phase 6 - Production MVP` inside the boundary accepted by ADR 0005: self-hosted Keycloak, an EDRLab IAM Control Plane API, the first synthetic protected service `access-check-demo-service`, the first service role `access-check-demo:consult`, local append-only audit storage, and executable MVP security evidence ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)).
 
-Current decision: accepted by user decision on 2026-06-26 and authorized for Phase 6 by ADR 0005.
+The MVP covers the minimum access-control loop from the feature requirements: controlled backoffice account creation, safe onboarding activation, immutable account types, service-access-role assignment, server-side protected-service authorization, fail-closed denials, and local business audit ([Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [README - Core Features](../../README.md#core-features)).
 
-## Closed Scope Decisions
+The Phase 6 runtime slice already provides Dockerized Keycloak, an IAM API, the demo protected service, append-only JSONL audit storage, first-`super-admin` bootstrap, Linux scripts, Docker tests, and a Keycloak smoke verification path. It is still documented as an early Phase 6 runtime and does not yet include the Admin Console UI, full Keycloak IAM schema migration, or production operations hardening ([Access-Control MVP Runtime](../../access-control/README.md#purpose), [Access-Control MVP Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts)).
 
-| Topic | Decision |
-| --- | --- |
-| First protected service | The first MVP protected service is `access-check-demo-service`. It is a synthetic service used only to verify whether the current user has access. |
-| Initial service-access role | The first service-access role is `access-check-demo:consult`. It covers only `access-check-demo-service` and grants consultation-style access. |
-| Access-check response contract | Authorized access returns HTTP `200` with JSON body `{"result":"OK","authorized":true}`. Authenticated but unauthorized access returns HTTP `403` with JSON body `{"result":"KO","authorized":false}`. Missing or invalid authentication returns HTTP `401` with JSON body `{"result":"KO","authorized":false}`. If the authorization result cannot be safely determined, the service fails closed with HTTP `503` and JSON body `{"result":"KO","authorized":false}`. |
-| Actor and operation matrix | Use the account, lifecycle, service-role, protected-service, audit, and onboarding rules already defined in this document. |
-| Required account fields | The MVP requires the already-defined account fields: stable internal account identifier, `email`, `organization`, and `name`. No additional mandatory profile fields are specified for the MVP. |
-| First `super-admin` bootstrap | The first `super-admin` is bootstrapped during MVP build or initialization, not through public registration, self-service, or routine business administration. The exact initialization mechanism is a Phase 6 implementation detail, but it must be controlled and auditable. |
-| Audit consultation | The MVP uses the simplest useful super-admin-only audit consultation: chronological audit list, basic event detail, and read audit logging. Audit export and advanced search/filtering are not part of the initial MVP scope unless explicitly added later. |
-| Audit storage | The MVP uses local durable file-backed audit storage, append-only, with one complete JSON event object per physical line. |
-| Keycloak IAM schema | The MVP uses managed Keycloak User Profile attributes, disables unmanaged attributes, models account type and service access with client roles, and treats direct Keycloak business mutation as drift. |
-| MVP exclusions | The exclusions in [Out of Scope](#out-of-scope) are confirmed for the MVP. |
-
-These decisions come from user direction on 2026-06-26 and refine the MVP gate defined in the Phase 5 review note ([Phase 5 review note](./phase-5-review-note.md#minimum-conditions-to-authorize-an-mvp)).
+Production readiness still requires concrete operations evidence before production data is trusted, including Keycloak ownership by `super-admin`, backup/restore evidence, secrets handling, monitoring, incident handling, rollback notes, and completion of the accepted security-test gate ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision), [MVP Security Test Plan](./security-test-plan.md#acceptance-criteria)).
 
 ## MVP Boundary
 
-The MVP includes the smallest complete access-control loop:
-
-1. create invited backoffice accounts through authorized administration workflows;
-2. activate accounts only through safe onboarding;
-3. manage lifecycle states without hard deletion;
-4. manage service-access roles and assign them only to members;
-5. let the MVP protected access-check service ask for server-side authorization decisions;
-6. record durable EDRLab business audit events for sensitive operations and authorization denials;
-7. require privileged-authentication evidence for `admin` and `super-admin` onboarding.
-
-This boundary follows ADR 0004: Keycloak is the IAM source, while EDRLab business administration and authorization checks go through the EDRLab Admin Console and IAM Control Plane API rather than unmanaged Keycloak Admin Console edits ([ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
-
-## Account Operations
-
-| Operation | MVP scope | Requirement trace |
+| Area | In the MVP | Detailed source |
 | --- | --- | --- |
-| Account creation | `admin` can create `member` accounts. `super-admin` can create `admin` and `member` accounts. Created accounts start as `invited`. | `FR-007`, `FR-008`, `FR-012`, `FR-017`, `FR-018`, `FR-040`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Account listing and reading | `admin` can list and read `member` accounts. `super-admin` can list and read `admin` and `member` accounts. `member` can read only their own profile. | `FR-017`, `FR-018`, `FR-019`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Profile update | `admin` can update `member` profile data. `super-admin` can update `admin` and `member` profile data. Members cannot update their own profile in the MVP. | `FR-017`, `FR-018`, `FR-019`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Minimum profile fields | Account creation captures at least `email`, `organization`, and `name`, plus a stable internal account identifier. | `FR-009`, `FR-040`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Authenticated-subject link display | The Admin Console may display whether a subject link exists, but the link is created only by onboarding and is immutable after creation. | `FR-010`, `FR-039`, `FR-043`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Account-type mutation | Not allowed. Account type is fixed at account creation and cannot be changed, merged, or elevated. | `FR-001`, `FR-026`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Hard deletion | Not allowed. Accounts are retained, including archived accounts. | `FR-014`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Architecture boundary | Self-hosted Keycloak stores the accepted IAM state, while EDRLab business administration and authorization checks go through the Admin Console and IAM Control Plane API. | [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md) |
+| IAM API | REST API under `/iam` for self-profile, accounts, onboarding, service roles, assignments, `authorization/check`, and audit reads. | [IAM Control Plane API contract](../architecture/iam-control-plane-api-contract.md#endpoints) |
+| Account model | Backoffice accounts use fixed account types `super-admin`, `admin`, and `member`; account types are not mutable after creation. | [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Onboarding | Invited accounts activate only through safe bearer-token-derived onboarding evidence; privileged accounts also require accepted privileged-authentication evidence. | [Feature requirements `FR-043` and `FR-044`](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control MVP Runtime - Onboarding Activation](../../access-control/README.md#onboarding-activation) |
+| First protected service | The first protected service is `access-check-demo-service`, a synthetic service that verifies the current user's access and returns JSON `OK` or `KO`. | [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision), [IAM Control Plane API contract](../architecture/iam-control-plane-api-contract.md#authorization) |
+| First service role | The first service-access role is `access-check-demo:consult`; member service access is consultation-style only. | [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision), [Feature requirements `FR-023`](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Authorization behavior | Protected services call `POST /iam/authorization/check`; the path has accepted timeout, retry, cache, fail-closed, access-stop, audit, and metrics behavior. | [Authorization Check Runtime Behavior](../architecture/authorization-check-behavior.md) |
+| Audit | Local EDRLab audit is durable, file-backed, append-only, one JSON event object per physical line, with super-admin API consultation and no initial export. | [Audit Storage Policy](../architecture/audit-storage.md) |
+| Keycloak schema | The MVP uses managed Keycloak User Profile attributes, disables unmanaged attributes, uses account-type and service-access client roles, and treats unmanaged business mutation as drift. | [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md) |
+| Security evidence | The MVP security gate covers frontend-bypass rejection, raw-claim rejection, token validation, subject-link immutability, fail-closed behavior, drift denial, and audit evidence. | [MVP Security Test Plan](./security-test-plan.md) |
 
-Routine creation of new `super-admin` accounts is not in the MVP account-management scope. The first `super-admin` is a bootstrap concern and must be handled by a controlled bootstrap procedure rather than normal self-service or routine admin workflow (`FR-008`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+## Current MVP State
 
-## Lifecycle
-
-The MVP lifecycle state machine is:
-
-```mermaid
-flowchart LR
-  Invited["invited"] -->|"safe onboarding activation"| Active["active"]
-  Active -->|"disable"| Disabled["disabled"]
-  Disabled -->|"restore"| Active
-  Disabled -->|"archive"| Archived["archived"]
-```
-
-| Transition or rule | MVP scope | Requirement trace |
+| Item | State | Notes |
 | --- | --- | --- |
-| `created -> invited` | All normal account creation creates an `invited` account. | `FR-012`, `FR-040`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| `invited -> active` | Allowed only through safe onboarding. `admin` and `super-admin` onboarding also requires privileged-authentication evidence. | `FR-012`, `FR-034`, `FR-043`, `FR-044`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md) |
-| `active -> disabled` | Authorized account managers can disable accounts in their management scope. Disabled accounts cannot receive protected-service access. | `FR-013`, `FR-015`, `FR-017`, `FR-018`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| `disabled -> active` | Authorized account managers can restore disabled accounts in their management scope. | `FR-013`, `FR-017`, `FR-018`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| `disabled -> archived` | Authorized account managers can archive disabled accounts in their management scope. | `FR-013`, `FR-017`, `FR-018`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| `archived -> active` | Not allowed in the initial policy. | `FR-013`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| return to `invited` | Not allowed once an account has left `invited`. | `FR-031`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+| Scope authorization | Done | ADR 0005 authorizes Phase 6 production MVP implementation only inside the accepted MVP boundary ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
+| Runtime slice | In place | The `access-control/` runtime includes Docker Compose, Keycloak, IAM API, demo service, bootstrap, audit storage, Linux scripts, Docker tests, and smoke verification ([Access-Control MVP Runtime](../../access-control/README.md#what-this-slice-includes)). |
+| Keycloak-backed IAM state | In place for the runtime slice | The Docker runtime uses `IAM_STATE_BACKEND=keycloak`; account type, lifecycle, subject link, organization, schema marker, service-role metadata, and member role assignments are read from and written to Keycloak through the IAM Control Plane API ([Access-Control MVP Runtime - Run](../../access-control/README.md#run)). |
+| IAM API contract | Accepted | Endpoint families, actors, authentication model, authorization rules, error contract, idempotence, and audit expectations are fixed in the API contract ([IAM Control Plane API contract](../architecture/iam-control-plane-api-contract.md)). |
+| Security tests | Partially complete as runtime evidence | Docker-only tests exist for the runtime slice, while production readiness still depends on satisfying or explicitly accepting every test-plan gap before declaring the MVP production-ready ([Access-Control MVP Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes), [MVP Security Test Plan - Acceptance Criteria](./security-test-plan.md#acceptance-criteria)). |
+| Admin Console UI | Not included yet | The runtime documentation explicitly states that the Admin Console UI is not included yet ([Access-Control MVP Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts)). |
+| Full schema migration and drift workflow | Not complete | The runtime represents drift with invariant checks, while full migration reporting, reconciliation workflow, and production direct-admin governance remain outside the current slice ([Access-Control MVP Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts), [Keycloak IAM Schema Policy - Phase 6 Implementation Inputs](../architecture/keycloak-iam-schema-policy.md#phase-6-implementation-inputs)). |
+| Operations hardening | Not complete | ADR 0005 requires concrete runbooks, backup/restore evidence, monitoring, secrets handling, incident handling, and rollback notes before production data is trusted ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision)). |
 
-Protected-service access requires `active` state. `invited`, `disabled`, and `archived` accounts must be denied, and already-issued access must stop within the accepted access-stop behavior decided before Phase 6 (`FR-015`, `FR-016`, `FR-020`, `FR-021`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+## Included Capabilities
 
-## Service-Access Roles
+### Account Management
 
-| Capability | MVP scope | Requirement trace |
-| --- | --- | --- |
-| Role catalog management | `super-admin` can create, list, read, update, disable, and archive service-access roles. Hard deletion is not allowed. | `FR-004`, `FR-032`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Role purpose | A service-access role represents access to protected backend service coverage. It must not grant account-management responsibility. The initial MVP role is `access-check-demo:consult`. | User decision, 2026-06-26; `FR-002`, `FR-022`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Minimal member permission | MVP member access is consultation-style service access only. More granular or stronger permission models are out of scope until justified by a real protected-service need. | `FR-023`, `FR-030`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Assignment | `admin` and `super-admin` can assign or remove active service-access roles for `member` accounts only. | `FR-003`, `FR-004`, `FR-005`, `FR-017`, `FR-018`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Invited member assignment | A role may be assigned to an `invited` member, but it grants no protected-service access until the member becomes `active`. | `FR-041`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Privileged account assignment | Service-access roles are not assigned to `admin` or `super-admin` accounts. Active `admin` accounts receive covered service access automatically, and active `super-admin` accounts receive it through inherited admin capability. | `FR-002`, `FR-003`, `FR-004`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Inactive role behavior | Disabled or archived service-access roles cannot be assigned and cannot authorize protected-service access. | `FR-032`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+The MVP includes controlled creation, listing, reading, profile update, disablement, restoration, and archival for `member` accounts by `admin`, and for `admin` and `member` accounts by `super-admin`, within the management scopes defined by the feature requirements and API contract ([Feature requirements `FR-017` and `FR-018`](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API contract - Accounts](../architecture/iam-control-plane-api-contract.md#accounts)).
 
-The MVP should use a service-level role model, not a fine-grained permission matrix. Keycloak representation is fixed by the accepted schema policy: account type uses exactly one client role on `edrlab-backoffice`, and the first service-access role uses client `access-check-demo-service` with role `consult`, exposed by the IAM Control Plane API as `access-check-demo:consult` ([Keycloak IAM schema policy](../architecture/keycloak-iam-schema-policy.md)). That keeps the first implementation aligned with the simplicity constraint while still allowing later refinement when a concrete protected-service need appears (`FR-023`, `FR-030`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+Accounts start as `invited`, require at least `email`, `organization`, `name`, and a stable internal account identifier, and are retained rather than hard-deleted in the initial policy ([Feature requirements `FR-009`, `FR-014`, and `FR-040`](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
-## Protected Services
+### Onboarding and Bootstrap
 
-| Capability | MVP scope | Requirement trace |
-| --- | --- | --- |
-| Effective service listing | The IAM Control Plane API exposes the current user's effective protected-service access for UI use, following the `GET /me/services` shape validated in `WP-014`. | [Keycloak WP-014 result](../poc/keycloak-wp014-result.md), [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) |
-| Authorization check | Protected backend services authorize server-side by calling the IAM Control Plane API `authorization/check` contract unless a later decision explicitly changes the contract. | `FR-020`, `FR-021`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html) |
-| Allow rules | Active `admin` and `super-admin` accounts are allowed for active service-role-covered protected services. Active `member` accounts are allowed only when an active assigned service-access role covers the requested service. | `FR-003`, `FR-004`, `FR-005`, `FR-020`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Deny rules | Deny when the account is not `active`, no applicable active service-access role exists, the protected service is unknown or inactive, direct-admin drift makes the state unsafe, or the result cannot be safely determined. | `FR-015`, `FR-020`, `FR-021`, `FR-032`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Keycloak WP-015 result](../poc/keycloak-wp015-result.md) |
-| First protected-service integration | The MVP scope includes `access-check-demo-service` as a synthetic protected access-check service and release blocker. Its only purpose is to verify whether the current authenticated user is authorized for `access-check-demo:consult` and return `OK` or `KO` with an HTTP status. Additional protected services can be represented in the catalog only when they are explicitly named and tested for `authorization/check`. | User decision, 2026-06-26; `FR-020`, `FR-021`, `FR-022`, `FR-030`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Phase 5 review note](./phase-5-review-note.md#minimum-conditions-to-authorize-an-mvp) |
+The MVP includes safe onboarding activation through `POST /iam/onboarding/activate`, where the IAM API derives identity evidence from the authenticated user's bearer token and activates only when the accepted match rules pass ([IAM Control Plane API contract - Onboarding](../architecture/iam-control-plane-api-contract.md#onboarding), [Access-Control MVP Runtime - Onboarding Activation](../../access-control/README.md#onboarding-activation)).
 
-The first MVP protected service is therefore not a business backend. It is a synthetic protected access-check service. It must still behave like a protected backend service for the authorization path: it must not authorize from frontend state or raw token claims, and it must return `KO` when authorization cannot be safely determined (`FR-020`, `FR-021`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+The first `super-admin` is handled by a controlled bootstrap process outside the public IAM API. The process is idempotent and audited, and it may seed the first `super-admin` only when no valid `super-admin` exists ([IAM Control Plane API contract - Bootstrap Process](../architecture/iam-control-plane-api-contract.md#bootstrap-process), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision)).
 
-The response contract is intentionally small and uses JSON for both `OK` and `KO` outcomes:
+### Service-Access Roles
 
-| Case | HTTP status | JSON body |
-| --- | --- | --- |
-| Authorized for `access-check-demo-service` | `200` | `{"result":"OK","authorized":true}` |
-| Authenticated but not authorized | `403` | `{"result":"KO","authorized":false}` |
-| Missing or invalid authentication | `401` | `{"result":"KO","authorized":false}` |
-| Authorization cannot be safely determined | `503` | `{"result":"KO","authorized":false}` |
+The MVP includes service-access-role listing for `admin` and `super-admin`, catalog mutation by `super-admin`, and assignment or removal of active service-access roles for `member` accounts only ([Feature requirements `FR-002`, `FR-003`, `FR-004`, and `FR-032`](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API contract - Service-Access Roles](../architecture/iam-control-plane-api-contract.md#service-access-roles)).
 
-The route family, JSON media type, service-to-control-plane authentication model, timeout, retry, cache, and access-stop behavior are accepted in the IAM Control Plane API contract and `authorization/check` behavior notes. Phase 6 must implement them so the protected-service path fails closed when authorization cannot be determined safely (`FR-016`, `FR-020`, `FR-021`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API contract](../architecture/iam-control-plane-api-contract.md), [Authorization Check Runtime Behavior](../architecture/authorization-check-behavior.md)).
+Service-access roles must not be assigned to `admin` or `super-admin` accounts. Active `admin` accounts receive covered service access automatically, and active `super-admin` accounts receive that access through inherited admin capability ([Feature requirements `FR-002`, `FR-003`, and `FR-004`](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
-## Audit
+### Protected-Service Authorization
 
-The MVP requires local EDRLab business audit records. Keycloak events are useful supplemental provider evidence, but they do not replace local business audit for EDRLab decisions, denials, audit reads/exports, drift, and rationale ([Keycloak WP-016 result](../poc/keycloak-wp016-result.md), [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), `FR-027`, `FR-028`, `FR-035`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+The MVP includes `access-check-demo-service` as the first protected-service integration. It calls `POST /iam/authorization/check` using service-to-service authentication and maps IAM decisions to `OK` or `KO` JSON responses ([IAM Control Plane API contract - Authorization](../architecture/iam-control-plane-api-contract.md#authorization), [Access-Control MVP Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes)).
 
-| Audit area | MVP scope | Requirement trace |
-| --- | --- | --- |
-| Account events | Audit account creation, profile update, activation, disablement, restoration, archival, and attempted disallowed lifecycle changes. | `FR-027`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Subject-link and onboarding events | Audit authenticated-subject link creation, rejected or attempted link mutation, failed onboarding activation, and privileged-onboarding denial. | `FR-027`, `FR-039`, `FR-043`, `FR-044`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Service-role events | Audit service-access-role creation, update, disablement, archival, assignment, removal, and protected-service access configuration changes. | `FR-027`, `FR-032`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Authorization events | Audit protected-service authorization denials. Allowed checks may be logged for diagnostics, but denial audit is required by the MVP scope. | `FR-027`, `FR-020`, `FR-021`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Audit consultation | `super-admin` can consult a chronological audit list and basic event detail. Audit reads create audit events. `admin` and `member` cannot consult audit records. Audit export is out of scope for the initial MVP unless explicitly added later. | User decision, 2026-06-26; `FR-028`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Retention and mutation | Audit records are append-only and retained indefinitely in the initial policy. Any later retention, privacy, or deletion policy change requires explicit review. | `FR-035`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Audit storage policy](../architecture/audit-storage.md) |
-| Recovery and login reset | Any EDRLab-side recovery or login-reset event exposed by the MVP must be audited. Identity-provider-owned recovery remains outside the access-control capability unless the IAM Control Plane API participates in the workflow. | `FR-025`, `FR-027`, `FR-042`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
+Protected-service authorization is server-side and fail-closed. The accepted behavior defines timeout, retry, no positive cache, optional short deny cache, no indeterminate cache, next-check access stop, audit, and metrics expectations ([Authorization Check Runtime Behavior](../architecture/authorization-check-behavior.md)).
 
-The durable audit storage technology is selected for the MVP as local file-backed append-only storage with one JSON event object per line. Export, advanced search, tamper-evidence, exact file path, rotation, permissions, backup mechanism, and encryption-at-rest mechanism remain outside the functional MVP scope or Phase 6 implementation details as described in the accepted audit storage policy ([Audit storage policy](../architecture/audit-storage.md), [Phase 5 review note](./phase-5-review-note.md#minimum-conditions-to-authorize-an-mvp)).
+### Audit and Security Evidence
 
-## Privileged Onboarding
+The MVP includes local EDRLab business audit events for account lifecycle, onboarding, subject-link, role, authorization denial, audit-read, bootstrap, rejected privileged onboarding, and indeterminate dependency scenarios ([IAM Control Plane API contract - Audit](../architecture/iam-control-plane-api-contract.md#audit), [Audit Storage Policy](../architecture/audit-storage.md)).
 
-| Flow | MVP scope | Requirement trace |
-| --- | --- | --- |
-| Member onboarding | The IAM Control Plane API may activate an invited `member` only when exactly one invited account has no existing subject link and its account email matches a verified email from the authenticated identity. | `FR-036`, `FR-037`, `FR-039`, `FR-043`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Admin onboarding | The same safe match is required, plus privileged-authentication evidence. OTP step-up with ACR/LoA is accepted for the current direction. | `FR-034`, `FR-043`, `FR-044`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md), [Keycloak WP-013 result](../poc/keycloak-wp013-result.md) |
-| Super-admin bootstrap and onboarding | First `super-admin` setup is a controlled bootstrap concern. Any project-approved `super-admin` onboarding must require privileged-authentication evidence and must not become public or self-service registration. | `FR-006`, `FR-007`, `FR-008`, `FR-034`, `FR-043`, `FR-044`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Unsafe onboarding | Missing match, duplicate match, unverified email, existing subject link, missing privileged evidence, stale privileged evidence, or subject mismatch must deny activation and authorization. | `FR-036`, `FR-037`, `FR-039`, `FR-044`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Keycloak WP-013 result](../poc/keycloak-wp013-result.md) |
-| Subject-link changes | Not allowed after creation. If a link is wrong or unusable, the account is disabled or archived and a new account is created where lifecycle policy allows. | `FR-039`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-
-OTP enrollment, reset, recovery, monitoring, rate limiting, and audit safeguards are Phase 6 implementation and operations tasks using the accepted Keycloak built-in mechanisms. WebAuthn/passkeys remain future hardening, not an MVP blocker in the accepted current direction ([ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Phase 5 review note](./phase-5-review-note.md#production-risks-remaining)).
+The MVP includes an accepted security regression test plan. The production-readiness gate passes only when the required tests are implemented or explicitly deferred with accepted risk, and the implemented tests prove server-side rejection, no unauthorized mutation, fail-closed behavior, drift handling, and audit evidence ([MVP Security Test Plan - Acceptance Criteria](./security-test-plan.md#acceptance-criteria)).
 
 ## Out of Scope
 
-| Out of scope for MVP | Reason |
+| Out of scope for this MVP | Rationale |
 | --- | --- |
-| Public signup, public customer identity, social login, and consumer identity flows. | The capability is limited to backoffice users (`FR-006`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
-| Company-wide workforce IAM replacement. | The repository scope excludes a complete company-wide IAM replacement ([README - Initial Scope](../../README.md#initial-scope)). |
-| Member self-service beyond read-only own-profile consultation. | Members cannot update their own profile, assign roles, manage accounts, or consult audit records (`FR-019`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
-| Routine business administration directly in Keycloak Admin Console. | ADR 0004 keeps business administration behind the EDRLab Admin Console and IAM Control Plane API; direct Keycloak admin remains technical or break-glass governance work ([ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md)). |
-| Account-type changes, member-to-admin conversion, account merge, or subject-link rebinding. | These violate fixed account type and immutable subject-link requirements (`FR-001`, `FR-026`, `FR-039`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
-| Hard deletion of accounts, service-access roles, or audit records. | Initial policy retains accounts, forbids service-role hard deletion, and keeps audit append-only (`FR-014`, `FR-032`, `FR-035`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
-| Fine-grained per-action permission matrix beyond consultation-style member service access. | The initial policy keeps member access minimal until real service needs justify more detail (`FR-023`, `FR-030`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
-| Real business protected backend service integration. | The initial MVP protected service is `access-check-demo-service`, a synthetic access-check service only. |
-| Audit export and advanced audit search/filtering. | The MVP keeps audit consultation to the simplest useful super-admin-only list and detail view; reads are audited. |
-| WebAuthn/passkeys as a mandatory MVP prerequisite. | ADR 0003 accepts OTP MFA for the current direction and defers WebAuthn/passkeys as future hardening ([ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md)). |
-| Production high availability, multi-replica Keycloak operation, or broad production infrastructure design beyond the single MVP runtime. | Minimum runtime and operations evidence belongs to Phase 6, but high-availability and broader infrastructure design are outside this functional MVP scope unless explicitly added ([Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)). |
+| Public signup, public customer identity, social login, and consumer identity flows | The access-control capability is limited to backoffice users ([Feature requirements `FR-006`](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| Company-wide workforce IAM replacement | The repository scope excludes a full workforce IAM replacement ([README - Initial Scope](../../README.md#initial-scope)). |
+| Member self-service beyond read-only own-profile consultation | Members cannot update their own profile, manage accounts, assign roles, or consult audit records ([Feature requirements `FR-019`](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| Account-type mutation, member-to-admin conversion, account merge, or subject-link rebinding | These actions violate fixed account type, privilege-escalation, and immutable subject-link requirements ([Feature requirements `FR-001`, `FR-026`, and `FR-039`](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| Hard deletion of accounts, service roles, or audit records | The initial policy retains accounts, forbids service-role hard deletion, and keeps audit append-only ([Feature requirements `FR-014`, `FR-032`, and `FR-035`](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| Routine business administration directly in Keycloak Admin Console | Business administration goes through the EDRLab Admin Console and IAM Control Plane API; unmanaged Keycloak mutation is drift ([ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md)). |
+| Real business protected-service integration | The first MVP protected service is the synthetic `access-check-demo-service`; real business protected services require explicit later scope and testing ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision)). |
+| Fine-grained per-action permission matrix beyond consultation-style member access | The first member permission is consultation-style access; more granular permissions require a concrete protected-service need ([Feature requirements `FR-023` and `FR-030`](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| Audit export and advanced audit search/filtering | The MVP keeps audit consultation to chronological list and basic detail, with no initial export ([Audit Storage Policy](../architecture/audit-storage.md)). |
+| WebAuthn/passkeys as a mandatory MVP prerequisite | OTP safeguards are accepted for the current MVP direction; WebAuthn/passkeys remain future hardening ([ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
+| Production high availability and multi-replica Keycloak operation | High availability is outside the accepted MVP scope unless explicitly added later ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#consequences)). |
 
-## Phase 6 Input Status
+## Production Readiness Gaps
 
-| Input | Status | Notes |
+| Gap | Required before production trust | Source |
 | --- | --- | --- |
-| First protected-service identity and role | Closed for scope | User decision on 2026-06-26: use `access-check-demo-service` with service role `access-check-demo:consult`. The service returns JSON `OK` or `KO` outcomes with the HTTP statuses defined above. Exact route and transport details belong to the IAM Control Plane API contract gate. |
-| MVP scope acceptance | Closed | Accepted by user decision on 2026-06-26 and authorized for Phase 6 by ADR 0005. |
-| IAM Control Plane API contract | Closed | Accepted in the IAM Control Plane API contract ([IAM Control Plane API contract](../architecture/iam-control-plane-api-contract.md)). |
-| Protected-service timeout, retry, cache, and access-stop delay | Closed | Accepted in the authorization-check behavior note ([Authorization Check Runtime Behavior](../architecture/authorization-check-behavior.md)). |
-| Durable audit storage | Closed for MVP storage choice | User decision on 2026-06-26: use local file-backed append-only storage with one JSON event object per line. Phase 6 still needs exact file path, rotation, permissions, backup mechanism, restore test, and encryption-at-rest choices ([Audit storage policy](../architecture/audit-storage.md)). |
-| Keycloak IAM schema policy | Closed for MVP schema choice | User decision on 2026-06-26: use managed attributes, disable unmanaged attributes, use account-type and service-access client roles, enforce IAM Control Plane API-only mutation, and require strict migration ([Keycloak IAM schema policy](../architecture/keycloak-iam-schema-policy.md)). |
-| Direct Keycloak admin governance | Accepted post-MVP deferral | User decision on 2026-06-26: define detailed governance post-MVP. MVP still forbids routine direct Keycloak business administration and treats unmanaged mutation as drift (`FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
-| First-super-admin bootstrap procedure | Closed for MVP direction | User decision on 2026-06-26: keep bootstrap simple for the MVP. Phase 6 must implement an idempotent, audited initialization process outside the public API. |
+| Admin Console UI | Build or integrate the business UI that uses the accepted IAM API rather than relying on direct Keycloak business administration. | [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [Access-Control MVP Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts) |
+| Keycloak schema migration | Provide exact User Profile JSON, service-account grants, migration or bootstrap scripts, dry-run behavior, and drift reconciliation evidence. | [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision) |
+| Operations evidence | Produce runbooks and evidence for backup/restore, secrets handling, monitoring, incident handling, rollback, and accountable Keycloak ownership by `super-admin`. | [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision) |
+| OTP operational safeguards | Configure and verify the MVP OTP path, including required actions, recovery-code or reset posture, brute-force safeguards, and audit-relevant operations where the IAM boundary participates. | [ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md#decision) |
+| Security evidence closure | Run and retain the executable evidence required by the MVP security test plan, or explicitly defer any missing test with accepted Phase 6 risk. | [MVP Security Test Plan - Acceptance Criteria](./security-test-plan.md#acceptance-criteria), [Access-Control MVP Runtime - Evidence](../../access-control/README.md#evidence) |
+| Runtime limitations review | Decide which early-runtime shortcuts are acceptable for the MVP, which must be removed, and which remain test-only or non-production-only. | [Access-Control MVP Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp) |
+
+## Source of Truth Map
+
+| Need | Source |
+| --- | --- |
+| Feature requirements and actor rules | [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md) |
+| MVP authorization and accepted residual risks | [ADR 0005 - Authorize Phase 6 Production MVP](../decisions/0005-authorize-phase-6-production-mvp.md) |
+| Accepted architecture direction | [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP Design](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) |
+| IAM routes, actors, errors, idempotence, and audit contract | [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md) |
+| `authorization/check` timeout, retry, cache, fail-closed, access-stop, audit, and metrics behavior | [Authorization Check Runtime Behavior](../architecture/authorization-check-behavior.md) |
+| Audit storage rules | [Audit Storage Policy](../architecture/audit-storage.md) |
+| Keycloak state model and drift policy | [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md) |
+| Security regression test gate | [MVP Security Test Plan](./security-test-plan.md) |
+| Executable Phase 6 runtime and commands | [Access-Control MVP Runtime](../../access-control/README.md) |
+| Phase boundaries | [Project Governance](../../PROJECT-GOVERNANCE.md) |
 
 ## References
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [README - Core Features](../../README.md#core-features)
 - [README - Initial Scope](../../README.md#initial-scope)
-- [Project Governance - Phase 5](../../PROJECT-GOVERNANCE.md#phase-5---review-and-decision)
 - [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)
 - [ADR 0003 - Accept OTP for Privileged Authentication](../decisions/0003-accept-otp-for-privileged-authentication.md)
 - [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP Design](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md)
 - [ADR 0005 - Authorize Phase 6 Production MVP](../decisions/0005-authorize-phase-6-production-mvp.md)
-- [Phase 5 Review Note](./phase-5-review-note.md)
 - [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md)
 - [Authorization Check Runtime Behavior](../architecture/authorization-check-behavior.md)
 - [Audit Storage Policy](../architecture/audit-storage.md)
 - [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md)
-- [Keycloak WP-013 Result - Privileged Authentication Evidence](../poc/keycloak-wp013-result.md)
-- [Keycloak WP-014 Result - Service Access Authorization](../poc/keycloak-wp014-result.md)
-- [Keycloak WP-015 Result - Direct Admin Drift and Shortcut Rejection](../poc/keycloak-wp015-result.md)
-- [Keycloak WP-016 Result - Audit and Operations Review](../poc/keycloak-wp016-result.md)
-- [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+- [MVP Security Test Plan](./security-test-plan.md)
+- [Access-Control MVP Runtime](../../access-control/README.md)

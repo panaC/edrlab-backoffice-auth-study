@@ -4,6 +4,12 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-28
+
+### Changed
+
+- Rationalized `docs/evaluation/mvp-scope.md` into a shorter Phase 6 MVP scope and readiness map, moving detailed API, authorization, audit, Keycloak schema, runtime, and security-test content behind source links, and updated the documentation map entry.
+
 ## 2026-06-27
 
 ### Changed
