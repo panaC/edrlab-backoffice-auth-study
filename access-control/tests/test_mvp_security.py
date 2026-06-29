@@ -302,6 +302,64 @@ class MvpSecurityTests(unittest.TestCase):
             "already_active_same_subject",
         )
 
+    def test_different_subject_onboarding_cannot_rebind_link_and_is_audited(self) -> None:
+        member = self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "subject-rebind@example.test",
+                "organization": "MVP Organization",
+                "name": "Subject Rebind",
+                "accountType": "member",
+            },
+            "corr-create-subject-rebind",
+        )
+        self._add_subject_token(
+            "subject-rebind-first-token",
+            "subject-rebind-first-sub",
+            "subject-rebind@example.test",
+        )
+        self._add_subject_token(
+            "subject-rebind-second-token",
+            "subject-rebind-second-sub",
+            "subject-rebind@example.test",
+        )
+
+        activated = self.service.activate_onboarding_from_bearer(
+            "Bearer subject-rebind-first-token",
+            {},
+            "corr-first-subject-rebind",
+        )
+        with self.assertRaises(ApiError) as rejected:
+            self.service.activate_onboarding_from_bearer(
+                "Bearer subject-rebind-second-token",
+                {},
+                "corr-second-subject-rebind",
+            )
+
+        self.assertEqual(activated["accountId"], member["accountId"])
+        self.assertEqual(rejected.exception.status, 409)
+        self.assertEqual(rejected.exception.code, "unsafe_onboarding_match")
+        state = json.loads(self.state_path.read_text(encoding="utf-8"))
+        stored = state["accounts"][member["accountId"]]
+        self.assertEqual(stored["lifecycle"], "active")
+        self.assertEqual(stored["linkedSubject"], "subject-rebind-first-sub")
+        self._assert_audit_event(
+            "onboarding.activate",
+            member["accountId"],
+            "corr-first-subject-rebind",
+            "changed",
+            "safe_activation",
+        )
+        self._assert_audit_event(
+            "onboarding.activate",
+            "unresolved",
+            "corr-second-subject-rebind",
+            "rejected",
+            "unsafe_match_count",
+        )
+        for line in self._audit_lines():
+            self.assertNotIn("subject-rebind-second-token", line)
+
     def test_onboarding_repeat_requires_account_to_still_be_active(self) -> None:
         for lifecycle_action, expected_lifecycle in (("disable", "disabled"), ("archive", "archived")):
             with self.subTest(expected_lifecycle=expected_lifecycle):
@@ -414,6 +472,139 @@ class MvpSecurityTests(unittest.TestCase):
             "corr-deny-after-disable",
         )
         self.assertEqual(deny_after_disable["decision"], "deny")
+
+    def test_authorization_check_denies_unknown_service_or_role_ids(self) -> None:
+        cases = (
+            (
+                "unknown-service",
+                "unknown-service:consult",
+                "corr-deny-unknown-service",
+            ),
+            (
+                DEFAULT_SERVICE_ID,
+                f"{DEFAULT_SERVICE_ID}:unknown-role",
+                "corr-deny-unknown-role",
+            ),
+        )
+        for service_id, required_role, correlation_id in cases:
+            with self.subTest(service_id=service_id, required_role=required_role):
+                decision = self.service.authorization_check(
+                    {
+                        "subjectToken": "dev-sub:member-sub",
+                        "serviceId": service_id,
+                        "requiredRole": required_role,
+                    },
+                    correlation_id,
+                )
+
+                self.assertEqual(decision["decision"], "deny")
+                self.assertEqual(decision["reason"], "role_not_active")
+                self._assert_audit_event(
+                    "authorization.check.denied",
+                    service_id,
+                    correlation_id,
+                    "rejected",
+                    "role_not_active",
+                )
+
+    def test_authorization_check_denies_inactive_and_archived_accounts(self) -> None:
+        for action, expected_lifecycle in (("disable", "disabled"), ("archive", "archived")):
+            with self.subTest(expected_lifecycle=expected_lifecycle):
+                member = self.service.create_account(
+                    self.super_admin_id,
+                    {
+                        "email": f"{expected_lifecycle}-authz@example.test",
+                        "organization": "MVP Organization",
+                        "name": f"{expected_lifecycle.title()} Authz",
+                        "accountType": "member",
+                    },
+                    f"corr-create-{expected_lifecycle}-authz",
+                )
+                self.service.assign_service_role(
+                    self.super_admin_id,
+                    member["accountId"],
+                    DEFAULT_SERVICE_ROLE_ID,
+                    f"corr-assign-{expected_lifecycle}-authz",
+                )
+                subject = f"{expected_lifecycle}-authz-sub"
+                token = f"{expected_lifecycle}-authz-token"
+                self._add_subject_token(token, subject, member["email"])
+                self.service.activate_onboarding_from_bearer(
+                    f"Bearer {token}",
+                    {},
+                    f"corr-activate-{expected_lifecycle}-authz",
+                )
+                self.service.lifecycle(
+                    self.super_admin_id,
+                    member["accountId"],
+                    "disable",
+                    f"corr-disable-{expected_lifecycle}-authz",
+                )
+                if action == "archive":
+                    self.service.lifecycle(
+                        self.super_admin_id,
+                        member["accountId"],
+                        "archive",
+                        f"corr-archive-{expected_lifecycle}-authz",
+                    )
+
+                decision = self.service.authorization_check(
+                    {
+                        "subjectToken": token,
+                        "serviceId": DEFAULT_SERVICE_ID,
+                        "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+                    },
+                    f"corr-deny-{expected_lifecycle}-authz",
+                )
+
+                self.assertEqual(decision["decision"], "deny")
+                self.assertEqual(decision["reason"], "account_not_active")
+                self._assert_audit_event(
+                    "authorization.check.denied",
+                    DEFAULT_SERVICE_ID,
+                    f"corr-deny-{expected_lifecycle}-authz",
+                    "rejected",
+                    "account_not_active",
+                )
+
+    def test_authorization_check_denies_disabled_and_archived_service_roles(self) -> None:
+        for action, expected_status in (("disable", "disabled"), ("archive", "archived")):
+            with self.subTest(expected_status=expected_status):
+                if action == "archive":
+                    self.service.service_role_lifecycle(
+                        self.super_admin_id,
+                        DEFAULT_SERVICE_ROLE_ID,
+                        "disable",
+                        "corr-disable-role-before-archive",
+                    )
+                self.service.service_role_lifecycle(
+                    self.super_admin_id,
+                    DEFAULT_SERVICE_ROLE_ID,
+                    action,
+                    f"corr-{action}-role",
+                )
+
+                state = json.loads(self.state_path.read_text(encoding="utf-8"))
+                role = state["serviceRoles"][DEFAULT_SERVICE_ROLE_ID]
+                self.assertEqual(role["status"], expected_status)
+                decision = self.service.authorization_check(
+                    {
+                        "subjectToken": "dev-sub:member-sub",
+                        "serviceId": DEFAULT_SERVICE_ID,
+                        "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+                    },
+                    f"corr-deny-{expected_status}-role",
+                )
+
+                self.assertEqual(decision["decision"], "deny")
+                self.assertEqual(decision["reason"], "role_not_active")
+                self._assert_audit_event(
+                    "authorization.check.denied",
+                    DEFAULT_SERVICE_ID,
+                    f"corr-deny-{expected_status}-role",
+                    "rejected",
+                    "role_not_active",
+                )
 
     def test_role_removal_allows_inactive_role_cleanup_and_idempotent_retry(self) -> None:
         member = self.service.create_account(

@@ -13,6 +13,9 @@ This repository is a study repository, not a released software package. Changelo
 - Added `SEC-DRIFT-002` regression evidence for direct Keycloak lifecycle drift, including fail-closed authorization denial and `drift_detected` audit assertions.
 - Added `SEC-CLAIM-003` regression evidence that an admin-looking OIDC token for a disabled account fails closed against canonical IAM lifecycle state.
 - Added `SEC-FE-002` regression evidence that client-supplied hidden or admin fields cannot mutate protected account, service-role, lifecycle, or assignment state.
+- Added `SEC-SUBJECT-003` regression evidence that different-subject onboarding cannot rebind an existing subject link and leaves rejected audit evidence.
+- Added `SEC-FAIL-004` regression evidence for fail-closed `authorization/check` decisions on unknown service or role IDs, inactive accounts, and inactive service roles.
+- Added `SEC-TOKEN-003` closure notes confirming the Phase 6 Docker MVP delegates invalid-signature and unsupported-algorithm rejection to Keycloak introspection rather than a local JWT-validation path.
 
 ### Changed
 
