@@ -13,6 +13,7 @@ Last reviewed: 2026-06-29
 - [Roles](#roles)
 - [Edit Permissions](#edit-permissions)
 - [Invariant Checks](#invariant-checks)
+- [Proposed Subject-Link Drift Evidence](#proposed-subject-link-drift-evidence)
 - [Migration Policy](#migration-policy)
 - [Token and Claim Boundary](#token-and-claim-boundary)
 - [References](#references)
@@ -134,6 +135,23 @@ Minimum invariant checks:
 - `iam.last_control_plane_mutation_at` and local audit/correlation evidence are consistent enough for the operation being evaluated.
 
 Known invalid state returns deny or blocks the operation. Unreadable, incomplete, or incoherent state returns indeterminate `503` for authorization checks and blocks sensitive admin operations, following the accepted authorization-check behavior ([Authorization Check Behavior](./authorization-check-behavior.md)).
+
+## Proposed Subject-Link Drift Evidence
+
+Status: Proposed, not implemented.
+
+To close `SEC-DRIFT-004`, the runtime could add an EDRLab-controlled append-only subject-link ledger outside Keycloak. On first accepted subject linking, through first-`super-admin` bootstrap or onboarding activation, the IAM Control Plane API would append evidence keyed by `accountId` with a digest of the accepted Keycloak subject. Sensitive paths would compare the current `iam.linked_subject` value from Keycloak with the ledger digest and treat mismatches as `iam_state_drift` ([MVP Security Test Plan - Test Tracker](../evaluation/security-test-plan.md#test-tracker), [Audit Storage Architecture](./audit-storage.md#proposed-subject-link-ledger)).
+
+This proposal avoids relying on Keycloak alone to prove subject-link immutability. Direct Keycloak administration can mutate `iam.linked_subject`, so a second Keycloak attribute would only detect partial or accidental edits. A control-plane ledger outside Keycloak would give the IAM API a separate baseline for the accepted immutable link while keeping direct Keycloak business mutation classified as drift under this schema policy.
+
+The proposed behavior is detection and fail-closed denial, not auto-repair. If direct Keycloak administration changes `iam.linked_subject`, sensitive admin operations should fail closed and `authorization/check` should deny with `drift_detected` until a reviewed reconciliation or migration procedure exists.
+
+Open questions before acceptance:
+
+- whether the digest should be plain SHA-256 over `realm:subject` or HMAC-SHA-256 with a runtime secret;
+- whether missing ledger evidence for existing active accounts is drift, indeterminate state, or a migration blocker;
+- whether the ledger should be a separate JSONL file or part of the existing audit stream with a purpose-built index;
+- what backup, restore, and secret-rotation rules apply if HMAC is used.
 
 ## Migration Policy
 

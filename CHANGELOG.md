@@ -36,6 +36,7 @@ This repository is a study repository, not a released software package. Changelo
 - Added SEC-SUBJECT-002 regression evidence for repeat onboarding activation idempotence and `no_change` onboarding audit events.
 - Aligned the documented audit `actorType` schema with runtime events by adding `authenticated-subject` for onboarding and `iam-api` for IAM dependency-failure audit records.
 - Aligned IAM API JSON body validation with the contract so non-object JSON request bodies return `422 validation_error` instead of a generic `503`.
+- Documented a proposal for closing `SEC-DRIFT-004` with an EDRLab-controlled append-only subject-link ledger outside Keycloak, while keeping the tracker row open until runtime evidence exists.
 
 
 Older entries are archived in [CHANGELOG.archive.md](./CHANGELOG.archive.md). Do not read the archive by default; use it only for historical lookup.

@@ -14,6 +14,7 @@ Last reviewed: 2026-06-29
 - [Retention](#retention)
 - [Read and Export](#read-and-export)
 - [Correlation](#correlation)
+- [Proposed Subject-Link Ledger](#proposed-subject-link-ledger)
 - [Backup and Restore](#backup-and-restore)
 - [Confidentiality](#confidentiality)
 - [Operational Limits](#operational-limits)
@@ -86,6 +87,16 @@ Every audit event includes `correlationId`. The IAM Control Plane API accepts `X
 `correlationId` is operational evidence, not authorization evidence. It helps join related records; it does not prove that a caller was authorized.
 
 `keycloakEventRef` is optional and supplemental. It can link a local EDRLab business event to a Keycloak provider event, but the local file-backed audit event remains the project audit record.
+
+## Proposed Subject-Link Ledger
+
+Status: Proposed, not implemented.
+
+`SEC-DRIFT-004` may require audit-adjacent evidence that is optimized for runtime lookup, not only human audit review. The proposed design is an EDRLab-controlled append-only subject-link ledger outside Keycloak, written by the IAM Control Plane API when first-`super-admin` bootstrap or onboarding activation accepts a subject link ([MVP Security Test Plan - Test Tracker](../evaluation/security-test-plan.md#test-tracker), [Keycloak IAM Schema Policy - Proposed Subject-Link Drift Evidence](./keycloak-iam-schema-policy.md#proposed-subject-link-drift-evidence)).
+
+The proposed ledger would remain JSONL and append-only, with one object per physical line. Each record would be keyed by `accountId`, include a `subjectDigest` rather than a raw bearer token or raw subject token, and include `correlationId` so reviewers can join it to the corresponding bootstrap or onboarding audit event. A runtime reader could build a compact `accountId -> subjectDigest` index and compare it with the current Keycloak `iam.linked_subject` during sensitive operations.
+
+This proposal is not part of the accepted MVP storage behavior yet. Before acceptance, the project must decide whether the digest is plain SHA-256 or HMAC-SHA-256, how HMAC secrets are backed up and rotated if used, how existing active accounts without ledger rows are handled, and whether the ledger file is exposed through audit-read APIs or remains internal operational evidence only.
 
 ## Backup and Restore
 

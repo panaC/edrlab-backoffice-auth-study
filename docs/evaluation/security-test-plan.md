@@ -53,7 +53,7 @@ and the evidence workflow in the
 | `SEC-DRIFT-001` | `Implemented` | Direct protected-service role mapping in Keycloak is detected and denied. | Covered by direct service-role drift tests. |
 | `SEC-DRIFT-002` | `Open` | Direct lifecycle change in Keycloak is treated as drift. | Add lifecycle-drift test and audit assertion. |
 | `SEC-DRIFT-003` | `Implemented` | Missing, multiple, or elevated account-type roles block access. | Covered by account-type drift tests. |
-| `SEC-DRIFT-004` | `Open` | Direct `iam.linked_subject` change is drift. | Add subject-link drift test and audit assertion. |
+| `SEC-DRIFT-004` | `Open` | Direct `iam.linked_subject` change is drift. | Proposed EDRLab-controlled append-only subject-link ledger outside Keycloak; no runtime ledger or executable drift test yet. |
 | `SEC-AUDIT-001` | `Partial` | Required events exist for allow, deny, reject, indeterminate, drift, bootstrap, onboarding, role, lifecycle, and audit-read scenarios. | Several event classes covered; full matrix-wide audit evidence remains open. |
 | `SEC-AUDIT-002` | `Implemented` | Audit file remains one JSON object per physical line. | Covered by audit JSONL format test. |
 | `SEC-AUDIT-003` | `Partial` | Audit contains no tokens, OTP values, passwords, recovery codes, client secrets, private keys, raw session IDs, or raw subject tokens. | Raw subject-token absence covered; full forbidden-value list remains open. |

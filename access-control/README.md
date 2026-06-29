@@ -199,6 +199,7 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 - Indeterminate Keycloak state read failures are fail-closed and create local audit events with `operation=iam.request.indeterminate` or `authorization.check.indeterminate`.
 - The runtime does not include the Admin Console UI yet.
 - Direct Keycloak drift detection is represented by invariant checks in this runtime, including rejection of direct protected-service role mappings on users. Member service-role assignments are stored in IAM Control Plane-managed attributes. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
+- Subject-link drift detection for direct `iam.linked_subject` edits is proposed but not implemented. The proposed direction is an EDRLab-controlled append-only subject-link ledger outside Keycloak; until accepted and tested, `SEC-DRIFT-004` remains open.
 - The smoke-test user, realm, clients, redirect URI, and secrets are local runtime fixtures only.
 - High availability, multi-replica Keycloak operation, advanced audit search/export, and real business protected-service integration remain outside the accepted MVP scope unless explicitly added.
 
