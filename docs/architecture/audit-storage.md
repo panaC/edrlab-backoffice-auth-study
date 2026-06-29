@@ -48,21 +48,6 @@ Each physical line in the audit file is one complete JSON object. The applicatio
 
 The event object uses the minimum event fields exposed by the MVP audit API ([IAM Control Plane API Contract - Audit](./iam-control-plane-api-contract.md#audit)):
 
-| Field | Required in MVP? | Notes |
-| --- | --- | --- |
-| `eventId` | Yes | Stable audit event identifier. |
-| `occurredAt` | Yes | Server-side event timestamp. |
-| `actorType` | Yes | `member`, `admin`, `super-admin`, `protected-service`, or `bootstrap-process`. |
-| `actorAccountId` | When applicable | Present for linked human-account actors. |
-| `clientId` | When applicable | Present for service actors. |
-| `operation` | Yes | Stable operation name, such as `account.disable` or `authorization.check.denied`. |
-| `targetType` | Yes | Target resource type. |
-| `targetId` | Yes | Target resource identifier. |
-| `outcome` | Yes | `changed`, `no_change`, or `rejected`. |
-| `reasonCode` | When useful | Stable machine-readable reason. |
-| `correlationId` | Yes | Shared across API response, technical logs, Keycloak event references, and protected-service calls. |
-| `keycloakEventRef` | Optional | Supplemental Keycloak event reference where useful. |
-
 Example line:
 
 ```json

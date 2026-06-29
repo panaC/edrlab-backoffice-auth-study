@@ -284,7 +284,7 @@ Audit events include at minimum:
 | --- | --- |
 | `eventId` | Stable audit event identifier. |
 | `occurredAt` | Server-side event timestamp. |
-| `actorType` | `member`, `admin`, `super-admin`, `protected-service`, or `bootstrap-process`. |
+| `actorType` | `member`, `admin`, `super-admin`, `protected-service`, `bootstrap-process`, `authenticated-subject`, or `iam-api`. |
 | `actorAccountId` | Present for linked account actors. |
 | `clientId` | Present for service actors. |
 | `operation` | Operation name, such as `account.disable` or `authorization.check.denied`. |
@@ -294,6 +294,13 @@ Audit events include at minimum:
 | `reasonCode` | Stable machine-readable reason where useful. |
 | `correlationId` | Correlation ID shared across API response, logs, Keycloak event references, and protected-service calls. |
 | `keycloakEventRef` | Optional Keycloak event reference when useful. |
+
+Audit-only actor types have narrow meanings:
+
+- `authenticated-subject` is used for onboarding events where the caller has valid browser authentication evidence, but the IAM API has not yet resolved the subject to an active linked account.
+- `iam-api` is used when the IAM Control Plane API records its own fail-closed internal or dependency outcome, such as an indeterminate Keycloak read for a sensitive operation.
+- `protected-service`: service client calling POST /iam/authorization/check.
+- `bootstrap-process`: controlled initialization process seeding the first super-admin.
 
 `X-Correlation-Id` exists to connect a user action across Admin Console, IAM Control Plane API, Keycloak calls, protected-service calls, logs, and audit. It is not authorization evidence. When a client supplies it, the IAM Control Plane API validates and normalizes it; when absent, the API generates one. The API returns the value in `X-Correlation-Id`, includes it in Problem Details, and stores it in audit events.
 
