@@ -248,6 +248,60 @@ class MvpSecurityTests(unittest.TestCase):
         self.assertEqual(activated["accountId"], admin["accountId"])
         self.assertEqual(activated["lifecycle"], "active")
 
+    def test_repeat_onboarding_activation_is_idempotent_and_audited(self) -> None:
+        member = self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "repeat-onboarding@example.test",
+                "organization": "MVP Organization",
+                "name": "Repeat Onboarding",
+                "accountType": "member",
+            },
+            "corr-create-repeat-onboarding",
+        )
+        self._add_subject_token(
+            "repeat-onboarding-token",
+            "repeat-onboarding-sub",
+            "repeat-onboarding@example.test",
+        )
+
+        first = self.service.activate_onboarding_from_bearer(
+            "Bearer repeat-onboarding-token",
+            {},
+            "corr-first-repeat-onboarding",
+        )
+        second = self.service.activate_onboarding_from_bearer(
+            "Bearer repeat-onboarding-token",
+            {},
+            "corr-second-repeat-onboarding",
+        )
+
+        self.assertEqual(first["accountId"], member["accountId"])
+        self.assertEqual(first["lifecycle"], "active")
+        self.assertTrue(first["hasLinkedSubject"])
+        self.assertEqual(second["accountId"], member["accountId"])
+        self.assertEqual(second["lifecycle"], "active")
+        self.assertTrue(second["hasLinkedSubject"])
+        state = json.loads(self.state_path.read_text(encoding="utf-8"))
+        stored = state["accounts"][member["accountId"]]
+        self.assertEqual(stored["lifecycle"], "active")
+        self.assertEqual(stored["linkedSubject"], "repeat-onboarding-sub")
+
+        self._assert_audit_event(
+            "onboarding.activate",
+            member["accountId"],
+            "corr-first-repeat-onboarding",
+            "changed",
+            "safe_activation",
+        )
+        self._assert_audit_event(
+            "onboarding.activate",
+            member["accountId"],
+            "corr-second-repeat-onboarding",
+            "no_change",
+            "already_active_same_subject",
+        )
+
     def test_onboarding_repeat_requires_account_to_still_be_active(self) -> None:
         for lifecycle_action, expected_lifecycle in (("disable", "disabled"), ("archive", "archived")):
             with self.subTest(expected_lifecycle=expected_lifecycle):
@@ -466,6 +520,26 @@ class MvpSecurityTests(unittest.TestCase):
 
     def _audit_events(self) -> list[dict[str, object]]:
         return [json.loads(line) for line in self._audit_lines()]
+
+    def _assert_audit_event(
+        self,
+        operation: str,
+        target_id: str,
+        correlation_id: str,
+        outcome: str,
+        reason_code: str,
+    ) -> None:
+        self.assertTrue(
+            any(
+                event.get("operation") == operation
+                and event.get("targetId") == target_id
+                and event.get("outcome") == outcome
+                and event.get("correlationId") == correlation_id
+                and event.get("reasonCode") == reason_code
+                for event in self._audit_events()
+            ),
+            f"missing audit event for {operation} {correlation_id}",
+        )
 
     def _assert_rejected_audit_event(
         self,
