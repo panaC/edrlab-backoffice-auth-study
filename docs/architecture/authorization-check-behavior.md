@@ -1,9 +1,9 @@
-# Authorization Check Runtime Behavior
+# Authorization Check Behavior
 
 Status: Accepted
-Phase: Phase 5 - Review and Decision
+Phase: Phase 6 - Production MVP
 Scope: Architecture
-Last reviewed: 2026-06-26
+Last reviewed: 2026-06-29
 
 ## Contents
 
@@ -15,12 +15,11 @@ Last reviewed: 2026-06-26
 - [Access-Stop Delay](#access-stop-delay)
 - [Audit and Metrics](#audit-and-metrics)
 - [HTTP and Cache Headers](#http-and-cache-headers)
-- [Phase 6 Implementation Inputs](#phase-6-implementation-inputs)
 - [References](#references)
 
 ## Purpose
 
-This document fixes the MVP runtime behavior for `POST /iam/authorization/check`, including timeout, retry, cache, fail-closed handling, acceptable access-stop delay, audit, and metrics. It refines the accepted IAM Control Plane API contract and MVP scope, and now constrains Phase 6 implementation ([IAM Control Plane API contract](./iam-control-plane-api-contract.md), [MVP scope](../evaluation/mvp-scope.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+This document defines the MVP architecture behavior for `POST /iam/authorization/check`, including timeout, retry, cache, fail-closed handling, acceptable access-stop delay, audit, and metrics. Endpoint schemas live in the runtime API reference; the accepted MVP boundary lives in the MVP scope document ([Access-Control API Reference](../../access-control/docs/api.md#authorization), [MVP scope](../evaluation/mvp-scope.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
 Protected services must enforce authorization server-side and deny when access cannot be safely determined (`FR-020`, `FR-021`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)).
 
@@ -98,7 +97,7 @@ Durable audit events are required for:
 
 Allow decisions do not require durable business audit in the MVP. They must still produce technical logs and metrics with `X-Correlation-Id`, because the team needs latency and reliability evidence before production hardening.
 
-The durable audit events produced by deny and indeterminate outcomes use the accepted local file-backed append-only storage policy, with one JSON event object per physical line ([Audit Storage Policy](./audit-storage.md)).
+The durable audit events produced by deny and indeterminate outcomes use the accepted local file-backed append-only storage architecture, with one JSON event object per physical line ([Audit Storage Architecture](./audit-storage.md)).
 
 Required MVP metrics:
 
@@ -125,23 +124,13 @@ RFC 9111 defines the `no-store` response directive as an instruction that a cach
 
 The IAM API may include `Retry-After` on `503` responses when it has a useful retry hint, but protected services must still fail closed for the current request.
 
-## Phase 6 Implementation Inputs
-
-| Input | Status |
-| --- | --- |
-| Exact jitter range | Open implementation detail. Recommended starting point: `25-100 ms`. |
-| Metrics backend | Open Phase 6 implementation detail. |
-| Alert thresholds | Open operations decision. Phase 5 accepts metrics names, not alert levels. |
-| Load test target | Open validation item before production hardening. No formal SLO is accepted in Phase 5. |
-
 ## References
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
-- [MVP Scope - Keycloak IAM Control Plane API](../evaluation/mvp-scope.md)
-- [IAM Control Plane API Contract](./iam-control-plane-api-contract.md)
-- [Audit Storage Policy](./audit-storage.md)
+- [MVP Scope - Access-Control Production MVP](../evaluation/mvp-scope.md)
+- [Access-Control API Reference](../../access-control/docs/api.md)
+- [Audit Storage Architecture](./audit-storage.md)
 - [Keycloak IAM Schema Policy](./keycloak-iam-schema-policy.md)
-- [ADR 0005 - Authorize Phase 6 Production MVP](../decisions/0005-authorize-phase-6-production-mvp.md)
 - [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)
 - [RFC 9110 - HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110)
 - [RFC 9111 - HTTP Caching](https://www.rfc-editor.org/rfc/rfc9111)

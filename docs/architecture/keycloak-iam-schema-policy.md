@@ -1,9 +1,9 @@
 # Keycloak IAM Schema Policy
 
 Status: Accepted
-Phase: Phase 5 - Review and Decision
+Phase: Phase 6 - Production MVP
 Scope: Architecture
-Last reviewed: 2026-06-27
+Last reviewed: 2026-06-29
 
 ## Contents
 
@@ -15,12 +15,11 @@ Last reviewed: 2026-06-27
 - [Invariant Checks](#invariant-checks)
 - [Migration Policy](#migration-policy)
 - [Token and Claim Boundary](#token-and-claim-boundary)
-- [Phase 6 Implementation Inputs](#phase-6-implementation-inputs)
 - [References](#references)
 
 ## Purpose
 
-This document fixes the accepted Keycloak IAM schema policy for the MVP: managed attributes, role representation, edit permissions, drift handling, and migration rules. It turns the `WP-010` mapping and the `WP-011` through `WP-016` runtime findings into a Phase 6 design constraint ([Keycloak WP-010 result](../poc/keycloak-wp010-result.md), [runtime result](../poc/keycloak-wp011-016-runtime-result.md#surprises), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+This document defines the accepted Keycloak IAM schema policy for the MVP: managed attributes, role representation, edit permissions, drift handling, and migration rules. It turns the `WP-010` mapping and the `WP-011` through `WP-016` runtime findings into a Phase 6 architecture constraint ([Keycloak WP-010 result](../poc/keycloak-wp010-result.md), [runtime result](../poc/keycloak-wp011-016-runtime-result.md#surprises), [MVP scope](../evaluation/mvp-scope.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
 The policy keeps Keycloak as the IAM-state holder for the accepted architecture, but only through the EDRLab IAM Control Plane API. Direct Keycloak Admin Console or Admin REST mutations of EDRLab business IAM state remain drift unless they are explicitly tied to an approved control-plane technical actor and local EDRLab audit evidence (`FR-026`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Keycloak WP-015 result](../poc/keycloak-wp015-result.md)).
 
@@ -134,7 +133,7 @@ Minimum invariant checks:
 - role metadata schema version is recognized;
 - `edrlab.last_control_plane_mutation_at` and local audit/correlation evidence are consistent enough for the operation being evaluated.
 
-Known invalid state returns deny or blocks the operation. Unreadable, incomplete, or incoherent state returns indeterminate `503` for authorization checks and blocks sensitive admin operations, following the accepted authorization-check behavior ([Authorization Check Runtime Behavior](./authorization-check-behavior.md)).
+Known invalid state returns deny or blocks the operation. Unreadable, incomplete, or incoherent state returns indeterminate `503` for authorization checks and blocks sensitive admin operations, following the accepted authorization-check behavior ([Authorization Check Behavior](./authorization-check-behavior.md)).
 
 ## Migration Policy
 
@@ -156,27 +155,15 @@ Unmanaged `edrlab.*` attributes found during migration are either mapped to decl
 
 Account-type roles and service-access roles may appear in Keycloak tokens only as display hints, diagnostics, or integration evidence. They are not the final authorization authority for protected backend services.
 
-Protected backend services must call `POST /iam/authorization/check`. The IAM Control Plane API reads current Keycloak state, applies invariant checks, handles drift, and returns the decision. This preserves the anti-bypass rule that frontend state, raw token claims, and protected-service local guesses do not decide business access (`FR-020`, `FR-021`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API contract](./iam-control-plane-api-contract.md)).
-
-## Phase 6 Implementation Inputs
-
-| Input | Status |
-| --- | --- |
-| Exact Keycloak User Profile JSON | Implemented for the local `access-control/` Docker MVP bootstrap for the managed `edrlab.*` attributes above. Production deployment still needs review of display names, validations, and operator permissions. |
-| Exact technical service-account grants | Implemented for the local `access-control/` Docker MVP with an `edrlab-iam-control-plane` service account granted the Admin REST roles needed to read users, mutate users, and manage client roles. Production deployment still needs least-privilege and credential-rotation review. |
-| Exact human operator read-only or break-glass grants | Phase 6 operations/security detail. Formal direct-admin governance is deferred post-MVP, but the MVP must avoid routine business mutation in Keycloak Admin Console ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
-| Migration script and dry-run report format | Open Phase 6 implementation detail. Must follow the strict migration policy above. |
-| Reconciliation workflow for drift | Phase 6 MVP workflow detail for deny, quarantine, or report behavior. Broader direct-admin governance remains post-MVP ([ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md)). |
-| Role metadata serialization details | Implemented for the initial Docker MVP role as Keycloak client-role attributes, including `edrlab.role_id`, `edrlab.role_status`, and `edrlab.schema_version`. Broader role-catalog migration remains open. |
+Protected backend services must call `POST /iam/authorization/check`. The IAM Control Plane API reads current Keycloak state, applies invariant checks, handles drift, and returns the decision. This preserves the anti-bypass rule that frontend state, raw token claims, and protected-service local guesses do not decide business access (`FR-020`, `FR-021`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control API Reference - Authorization](../../access-control/docs/api.md#authorization)).
 
 ## References
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
-- [MVP Scope - Keycloak IAM Control Plane API](../evaluation/mvp-scope.md)
-- [IAM Control Plane API Contract](./iam-control-plane-api-contract.md)
-- [Authorization Check Runtime Behavior](./authorization-check-behavior.md)
+- [MVP Scope - Access-Control Production MVP](../evaluation/mvp-scope.md)
+- [Access-Control API Reference](../../access-control/docs/api.md)
+- [Authorization Check Behavior](./authorization-check-behavior.md)
 - [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP Design](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md)
-- [ADR 0005 - Authorize Phase 6 Production MVP](../decisions/0005-authorize-phase-6-production-mvp.md)
 - [Keycloak WP-010 Result - IAM Mapping Design](../poc/keycloak-wp010-result.md)
 - [Keycloak WP-015 Result - Direct Admin Drift and Shortcut Rejection](../poc/keycloak-wp015-result.md)
 - [Keycloak WP-011 Through WP-016 Runtime Result](../poc/keycloak-wp011-016-runtime-result.md)

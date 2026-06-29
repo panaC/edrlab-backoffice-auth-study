@@ -1,213 +1,90 @@
-# AGENTS.md - Agent Instructions
+# AGENTS.md - MVP Agent Instructions
+
+## Current Mission
+
+Implement the `Phase 6 - Production MVP` for the backoffice access-control capability.
+
+Default work should focus on the approved `access-control/` MVP runtime: code, tests, Docker runtime, bootstrap or migration scripts, operational evidence, and runtime documentation needed by the accepted MVP scope.
 
 ## Read First
 
-Read this file before modifying the repository. Then use:
+Before changing the repository, read the smallest set that applies to the task:
 
-- [README.md](./README.md) for the project brief and immutable feature specification;
-- [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) for the iterative final-solution feature requirements of the access-control capability;
-- [PROJECT-GOVERNANCE.md](./PROJECT-GOVERNANCE.md) for study phases and phase boundaries;
-- [CHANGELOG.md](./CHANGELOG.md) for project history.
+- [docs/evaluation/mvp-scope.md](./docs/evaluation/mvp-scope.md) as the Phase 6 MVP source of truth.
+- [access-control/README.md](./access-control/README.md) as the required runtime runbook for Phase 6 work.
+- [README.md](./README.md) only when changing the project brief, root documentation, or checking project purpose or actor model not covered by MVP scope.
+- [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) only when changing access-control behavior or checking feature scope.
+- [access-control/docs/api.md](./access-control/docs/api.md) when changing IAM HTTP routes, payloads, errors, or endpoint behavior.
+- [docs/architecture/authorization-check-behavior.md](./docs/architecture/authorization-check-behavior.md) when changing `authorization/check` architecture behavior.
+- [docs/architecture/audit-storage.md](./docs/architecture/audit-storage.md) when changing audit storage architecture.
+- [docs/architecture/keycloak-iam-schema-policy.md](./docs/architecture/keycloak-iam-schema-policy.md) when changing managed Keycloak schema or drift policy.
+- [docs/evaluation/security-test-plan.md](./docs/evaluation/security-test-plan.md) when adding or closing MVP security evidence.
+- [docs/agent-policy.md](./docs/agent-policy.md) when adding or changing substantive claims, citations, wiki content, study-document placement, or long-form documentation.
 
-## Current Operating Phase
+## Context Budget Rules
 
-The current phase is `Phase 6 - Production MVP`.
+- Do not read `docs/poc/`, superseded ADRs, superseded architecture notes, historical requirements reviews, or `docs/wiki/` by default.
+- Use [docs/README.md](./docs/README.md) only as a navigation map, not as a required project briefing.
+- When updating [CHANGELOG.md](./CHANGELOG.md), inspect only the current top date section unless historical provenance is explicitly needed; do not read `CHANGELOG.archive.md` by default.
+- Prefer targeted search with `rg` before opening large historical documents.
+- Read historical documents only for provenance, audits of earlier decisions, or when a current source explicitly points to them.
+- For security-test work, start with the tracker table in [docs/evaluation/security-test-plan.md](./docs/evaluation/security-test-plan.md), then inspect the test code or architecture docs only for the specific open row.
 
-Default Phase 6 work: implement the approved production MVP scope authorized by [ADR 0005](./docs/decisions/0005-authorize-phase-6-production-mvp.md), constrained by the accepted MVP scope, IAM Control Plane API contract, `authorization/check` behavior, audit storage policy, Keycloak IAM schema policy, and MVP security test plan. Phase 6 work must turn the accepted design into production-scope code, tests, runtime configuration, migration or bootstrap scripts, operational evidence, and documentation without expanding beyond the approved MVP boundary.
+## Change Gates
 
-User runtime environment:
+Use these gates before editing behavior, code, tests, runtime docs, or architecture docs:
 
-- The user works on Linux. Project runbooks, PoC commands, shell examples, and runtime instructions must target Linux shell usage by default.
-- Avoid Windows-specific or PowerShell examples in project documentation unless the user explicitly asks for them or the example is clearly marked as host-specific.
-- Runtime MVP artifacts should be Docker-based or Docker-documented where applicable, so a reviewer can run the approved MVP services from a clean checkout on Linux using documented commands.
-- Runtime MVP documentation must include prerequisites, environment variables, exact run commands, expected outputs, evidence produced, known shortcuts, stop/reset commands when applicable, and production or MVP limitations.
-- Every runtime PoC must be accompanied by a Docker-based runtime definition. Prefer `compose.yaml` or `docker-compose.yml` for multi-container/runtime orchestration, and add a `Dockerfile` only when a custom image is required.
-- Every runtime PoC must be fully scripted and documented. A reviewer should be able to run it from a clean checkout on Linux using documented commands, without relying on hidden manual console steps.
-- Runtime PoC scripts should cover bootstrap/setup, start, verification, evidence collection, stop, and reset/cleanup when those actions are applicable.
-- Manual UI or console actions are acceptable only for inspection or exploratory evidence. If a core setup or validation step cannot be scripted, mark the scenario as blocked or partially manual, document why, and record the residual risk.
-- Runtime PoC documentation must include prerequisites, environment variables, exact run commands, expected outputs, evidence produced, known shortcuts, stop/reset commands, and non-production limitations.
-- PoC Docker runtime artifacts must stay non-production, clearly named as PoC-only, scoped to the active validation question, and separated from production deployment or infrastructure artifacts.
+| Change type | Must read before edit | Must update or check |
+| --- | --- | --- |
+| Feature behavior, actor permissions, lifecycle, onboarding, or service-access rules | [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) | Name the relevant `FR-*` in the summary or tests. |
+| MVP boundary, exclusions, readiness, or residual risk | [docs/evaluation/mvp-scope.md](./docs/evaluation/mvp-scope.md) | Update scope, gaps, or source map if the boundary changes. |
+| IAM HTTP routes, payloads, errors, auth rules, or endpoint behavior | [access-control/docs/api.md](./access-control/docs/api.md) | Keep code, tests, and API reference in the same change. |
+| Runtime commands, environment variables, evidence, backup, restore, stop, or reset | [access-control/README.md](./access-control/README.md) | Keep the runbook executable from a clean Linux checkout. |
+| `authorization/check` timeout, retry, cache, fail-closed, audit, or metrics semantics | [docs/architecture/authorization-check-behavior.md](./docs/architecture/authorization-check-behavior.md) | Update security tests or the security tracker when evidence changes. |
+| Audit event shape, storage, retention, confidentiality, or read behavior | [docs/architecture/audit-storage.md](./docs/architecture/audit-storage.md) | Update audit tests or tracker rows when behavior changes. |
+| Keycloak managed attributes, roles, migration, service-account grants, or drift policy | [docs/architecture/keycloak-iam-schema-policy.md](./docs/architecture/keycloak-iam-schema-policy.md) | Update bootstrap, migration, drift tests, or runtime docs as applicable. |
+| Security tests, evidence, or tracker status | [docs/evaluation/security-test-plan.md](./docs/evaluation/security-test-plan.md) | Update tracker status/evidence and run or record relevant tests. |
 
-Phase 6 boundaries:
+Behavior changes must name their source document. API drift is not allowed: any route, payload, error code, or authorization rule change must update implementation, tests, and [access-control/docs/api.md](./access-control/docs/api.md) together.
 
-- create or edit production-scope application code, dependencies, services, tests, runtime configuration, Docker artifacts, migration scripts, bootstrap scripts, CI, and development tooling only when needed for the approved MVP scope;
-- create or edit production-oriented documentation under top-level `docs/` when needed for MVP scope, operations, rollout, rollback, security hardening, audit, backup, restore, monitoring, or residual-risk tracking;
-- create or edit decision records under `docs/decisions/` only when a real project, architecture, vendor, product, or production-impacting decision is proposed or accepted;
-- implement the accepted MVP security test plan as executable evidence before claiming MVP production readiness;
-- produce concrete operations evidence before production data is trusted, including Keycloak ownership by `super-admin`, backup/restore notes, secrets handling, monitoring, incident handling, and rollback notes;
-- create or edit the root `FEATURE-REQUIREMENTS.md` only when the user is refining the final-solution access-control feature requirements;
-- keep conceptual IAM wiki pages under `docs/wiki/`;
-- keep project-specific scope debate, requirements refinement, option analysis, solution-choice evaluation, PoC planning, review notes, implementation notes, phase status, and recommendations out of `docs/wiki/`;
-- do not expand beyond the approved MVP scope without an explicit scope change;
-- do not promote temporary PoC artifacts into production code without review, hardening, and acceptance;
-- do not implement real business protected-service integration, advanced audit export/search, WebAuthn/passkeys as mandatory authentication, production high availability, or formal direct-admin governance unless the user explicitly adds them to the MVP scope;
-- do not claim full production completeness where the MVP intentionally defers non-critical capabilities.
+## Operating Rules
 
-## Instruction Priority
+- Follow the user's explicit request first, then this file, then the linked source documents, then existing repository conventions. A user request may change scope, but security and production-readiness claims still require evidence or explicit risk acceptance.
+- Prefer existing `access-control/` patterns over new abstractions or new tooling.
+- Keep changes inside the accepted MVP boundary unless the user explicitly expands scope.
+- Use Linux and Docker-oriented commands in runtime docs and scripts.
+- Check for a suitable existing file before creating a new one.
+- Preserve unrelated user changes. Do not revert work you did not make.
+- Record meaningful project/runtime changes in [CHANGELOG.md](./CHANGELOG.md).
 
-If instructions conflict:
+## MVP Boundary Guard
 
-1. Follow the user's explicit request for the current task.
-2. Follow this `AGENTS.md`.
-3. Follow `PROJECT-GOVERNANCE.md` for phase conduct and boundaries.
-4. Follow `README.md` for project goal, immutable feature specification, constraints, scope, roadmap, and documentation links.
-5. Follow existing repository conventions.
-6. Follow general best practices.
-
-A user request overrides the current phase boundary only when it explicitly changes phase, expands scope, asks for project-instruction changes, asks for project-brief changes, asks for a later-phase artifact, requests a solution choice, requests a review decision, or asks for a Proof of Concept.
-
-## Non-Negotiable Rules
-
-- Check for an existing suitable file before creating a new one.
-- Keep README final-review-facing. Do not use it for project tracking, working notes, open questions, terminology dumps, comparison matrices, option analysis, evaluation scoring, or phase-by-phase progress.
-- `README.md` may be edited for project brief changes. Its immutable feature specification may be edited only when explicitly requested.
-- `AGENTS.md` may be edited when the user asks to refine agent instructions.
-- Root `ABSTRACT.md` and `CHANGELOG.md` may be edited for project summary, project history, phase movement, or release-style documentation.
-- Record meaningful project history in `CHANGELOG.md`, not in `README.md` or ad hoc notes.
-- Do not make vendor, product, architecture, or production recommendations unless explicitly requested.
-- Do not invent citations, RFC numbers, standards, specification names, URLs, product behavior, or business facts.
-- A debate, requirement interpretation, risk analysis, candidate comparison, or recommendation is not valid unless its material claims are sourced or explicitly marked as assumptions/open questions.
-- Every Markdown documentation page under `docs/` or `docs/wiki/` must include source links in the content near the claims they support. Non-index pages must also include a `References` section. A bottom `References` section is required, but not sufficient by itself.
-- Official specifications, standards bodies, official security guidance, and official product documentation are preferred for normative, security, protocol, and product-behavior claims. Reputable technical articles, practitioner write-ups, tutorials, vendor explainers, and marketing pages may be used as secondary or contextual sources when appropriate, but their source type and limits must be clear.
-- Keep Mermaid diagrams simple and directly related to the explanation.
-- Cross-reference overlapping topics instead of duplicating large sections.
-
-## Documentation Rules
-
-The root `FEATURE-REQUIREMENTS.md` file is the dedicated working base for the backoffice access-control and access-management capability. It is not an implementation artifact. Use it as the starting point when the user asks to refine the final-solution feature requirements for this capability. Keep code, dependencies, generated artifacts, deployments, and PoC files out of this document unless the user explicitly expands the phase, asks for a Proof of Concept, or moves the project into Phase 6 production MVP implementation.
-
-Project study documents must be organized by reader task and project artifact type, not by filename prefixes. Use these folders under `docs/`:
-
-```text
-docs/
-  README.md
-  requirements/
-  risks/
-  architecture/
-  evaluation/
-  poc/
-  decisions/
-  wiki/
-```
-
-Use lowercase `kebab-case.md` filenames inside those folders. Do not repeat the folder category as a filename prefix unless it materially improves clarity. Examples: `docs/requirements/project-requirements.md`, `docs/risks/security-risk-register.md`, `docs/architecture/context.md`, `docs/evaluation/criteria.md`, `docs/poc/plans.md`, and `docs/decisions/0001-example.md`.
-
-Use `docs/README.md` as the documentation map. It should explain where each artifact type belongs, list current study documents, and point readers to the right entry point. Create topic folders only when they hold a real document or useful index; do not add placeholder analysis documents.
-
-Decision records belong under `docs/decisions/` and should be numbered ADR-style only when a real project, architecture, vendor, product, or production-impacting decision is being proposed or accepted. Do not use decision records for open analysis, comparison tables, or working notes.
-
-Non-index project study documents outside `docs/decisions/` should start with a compact metadata block:
-
-```text
-Status: Draft | Review | Accepted | Superseded
-Phase: Phase 6 - Production MVP
-Scope: Requirements | Risks | Architecture | Evaluation | PoC
-Last reviewed: YYYY-MM-DD
-```
-
-Conceptual wiki pages under `docs/wiki/` are not required to use this metadata block. Decision records under `docs/decisions/` should use the ADR template from `docs/decisions/README.md`.
-
-Keep the conceptual IAM wiki under `docs/wiki/`. It is for general IAM concepts, terminology, protocol explanations, security concepts, and references. Use the wiki index as an agent-facing reading path only; project-facing documents should link directly to specific supporting wiki pages.
-
-Prefer updating existing documents over creating near-duplicates. If a document debates project scope, records trade-offs, evaluates options, plans a PoC, or describes implementation-oriented behavior, place it under top-level `docs/`, not `docs/wiki/`.
-
-All study and wiki pages must cite sources inline in the relevant content, including tables where practical. Pure navigation indexes may satisfy this with links to the pages they summarize, but any explanatory claim still needs a supporting source. Page-level `References` sections should collect the sources used, not replace inline citations. If a claim comes from the immutable feature specification, cite or link to `README.md`; if it comes from the user, record it as a stated assumption or user-provided requirement.
-
-Use one `#` page title. If a Markdown document has more than two top-level sections (`##`), add a short table of contents or chapter list near the top. Keep the chapter list factual and compact.
-
-## Writing Style
-
-Write for senior software engineers who know backend systems, APIs, databases, distributed systems, security basics, and architecture, but may not know IAM-specific standards.
-
-Work pragmatically, with a targeted, action-oriented style. Read existing context first, identify the most direct useful action, then execute it or answer briefly.
-
-Be precise, practical, evidence-based, technically rigorous, explicit about assumptions and trade-offs, and focused on real system behavior. Use clear definitions, short sections, practical examples, tables where they clarify a decision, simple Mermaid diagrams when useful, common mistakes, security notes, and references.
-
-Prefer short, concrete, human sentences. Avoid long introductions, decorative Markdown, endless option lists, unnecessary tables, generic theory, unsupported claims, vendor bias, unexplained acronyms, beginner-level oversimplification, absolute architecture claims, filler, and repeated explanations.
-
-Do not turn a small task into a full analysis. If a decision is needed, give one or two options at most and name the recommended action. If something is uncertain, state the assumption and move forward carefully.
-
-## Citation Rules
-
-Citation is part of the reasoning, not decoration. Put links next to the claims they support, especially in requirement reasoning, threat/risk analysis, comparison matrices, solution-choice evaluations, PoC plans/results, and recommendation drafts.
-
-Use a bottom `References` section as a source index, but do not rely on it alone. A reader should be able to tell which source supports which claim without guessing.
-
-Source requirements:
-
-- cite only sources that support the relevant statement;
-- verify RFC numbers, specification names, URLs, and product behavior before including them;
-- prefer stable URLs and primary sources for normative claims;
-- omit sources that cannot be verified;
-- cite `README.md` for immutable project needs and clearly label user-provided assumptions when no external source can exist;
-- when using tutorials, blogs, vendor explainers, marketing pages, pricing pages, or practitioner write-ups, treat them as secondary/contextual evidence and avoid using them as the sole support for security, protocol, compliance, or normative claims;
-- when sources disagree, name the disagreement and avoid forcing a conclusion.
-
-Preferred source order for strong claims:
-
-1. official specifications and standards;
-2. official security guidance;
-3. official product documentation;
-4. reputable technical references and practitioner evidence;
-5. vendor explainers, marketing, pricing, and tutorial material for context or vendor-positioning claims.
-
-Baseline references:
-
-- [RFC 6749 - OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749)
-- [RFC 6750 - OAuth 2.0 Bearer Token Usage](https://www.rfc-editor.org/rfc/rfc6750)
-- [RFC 7009 - OAuth 2.0 Token Revocation](https://www.rfc-editor.org/rfc/rfc7009)
-- [RFC 7519 - JSON Web Token](https://www.rfc-editor.org/rfc/rfc7519)
-- [RFC 7636 - Proof Key for Code Exchange](https://www.rfc-editor.org/rfc/rfc7636)
-- [RFC 7662 - OAuth 2.0 Token Introspection](https://www.rfc-editor.org/rfc/rfc7662)
-- [RFC 8414 - OAuth 2.0 Authorization Server Metadata](https://www.rfc-editor.org/rfc/rfc8414)
-- [RFC 9700 - Best Current Practice for OAuth 2.0 Security](https://www.rfc-editor.org/rfc/rfc9700)
-- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
-- [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
-- [OWASP API Security Top 10](https://owasp.org/API-Security/)
-- [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
-- [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
-- [NIST SP 800-63-4 - Digital Identity Guidelines](https://pages.nist.gov/800-63-4/)
+- The MVP source of truth is [docs/evaluation/mvp-scope.md](./docs/evaluation/mvp-scope.md).
+- Stay inside the accepted Phase 6 access-control runtime scope unless the user explicitly changes scope.
+- Do not add real business protected-service integration, advanced audit export/search, mandatory WebAuthn/passkeys, high-availability Keycloak, formal direct-admin governance, public signup, or consumer identity flows.
+- Do not promote PoC or historical artifacts into runtime code without review and acceptance.
+- Do not claim production readiness until security evidence, audit behavior, bootstrap behavior, Keycloak schema or migration behavior, and minimum operations evidence are verified or explicitly risk-accepted.
 
 ## Security Rules
 
-Security guidance must be conservative and evidence-based. Do not recommend:
+- Do not recommend or implement plain-text password storage, custom cryptography, unsigned JWTs, skipped issuer validation, skipped audience validation, frontend-only authorization, or exposed admin APIs without strong authorization.
+- Protected services must authorize server-side through the accepted `authorization/check` boundary and fail closed when access cannot be safely determined.
+- Direct Keycloak business mutations are not a routine administration path. Treat unmanaged business mutation as drift, denial, quarantine, or fail-closed behavior according to the accepted schema policy.
+- Audit records must not store access tokens, refresh tokens, OTP values, passwords, recovery codes, client secrets, private keys, raw session identifiers, or raw subject tokens.
 
-- plain-text password storage;
-- custom cryptography;
-- unsigned JWTs;
-- skipping issuer validation;
-- skipping audience validation;
-- long-lived access tokens without justification;
-- exposed admin APIs without strong authorization;
-- frontend-only authorization checks;
-- Implicit Flow for new browser-based applications.
+## Documentation Rules
 
-When describing risks, explain what can go wrong and how to reduce the risk.
-
-## Repository Hygiene
-
-When modifying the repository:
-
-- preserve project conventions and make small, focused changes;
-- avoid generated files;
-- use targeted edits instead of replacing whole files unless the current content is clearly wrong, incomplete, or the user asks for a restructuring;
-- do not revert existing user changes unless explicitly requested.
+- Keep root [README.md](./README.md) review-facing and edit [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) only when the user is refining final-solution feature requirements.
+- When adding or changing substantive documentation claims, citations, wiki content, study-document placement, or long-form documentation, follow [docs/agent-policy.md](./docs/agent-policy.md).
+- For runtime docs under `access-control/`, include prerequisites, environment variables, exact Linux commands, expected outputs, evidence produced, stop/reset steps, known shortcuts, and MVP or production limitations when relevant.
 
 ## Completion Checks
 
-Before finishing, verify the result rather than restating the workflow:
+Before finishing a change:
 
-- confirm the work follows the current user request;
-- confirm facts align with `README.md`, `PROJECT-GOVERNANCE.md`, and this file;
+- confirm the work matches the latest user request and the accepted MVP boundary;
 - confirm the immutable feature specification was not changed unless explicitly requested;
-- confirm no forbidden implementation files or unnecessary dependencies were added;
-- confirm runtime PoC work includes a Linux-targeted Docker runtime definition, or explicitly records why no runtime PoC was created in that change;
-- confirm runtime PoC work is fully scripted and documented, or explicitly records any unscripted step as a blocker, partial-manual limitation, or residual risk;
-- confirm PoC Docker artifacts are non-production, clearly scoped, and separated from production deployment or infrastructure artifacts;
-- confirm no solution or production recommendation was made unless explicitly requested;
-- confirm meaningful project history was recorded in `CHANGELOG.md` when required;
-- confirm edited `docs/` or `docs/wiki/` pages follow the citation rules: inline citations near claims and useful `References` sections for non-index pages;
-- confirm citations are real, relevant, appropriate, and not merely decorative;
-- confirm unsourced claims are either removed, sourced, or marked as assumptions/open questions;
-- confirm overlapping topics are cross-referenced instead of heavily duplicated;
-- run `git diff --check` or another suitable lightweight validation when files were edited.
+- run relevant tests or explain why they were not run;
+- run `git diff --check` or another suitable lightweight validation after edits;
+- update `CHANGELOG.md` for meaningful project/runtime changes;
+- mention remaining risk, skipped tests, or operational limitations clearly.

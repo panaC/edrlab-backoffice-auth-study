@@ -1,9 +1,14 @@
 # IAM Control Plane API Contract
 
-Status: Accepted
-Phase: Phase 5 - Review and Decision
+Status: Superseded
+Phase: Phase 6 - Production MVP
 Scope: Architecture
-Last reviewed: 2026-06-27
+Last reviewed: 2026-06-29
+
+Superseded for Phase 6 runtime use by
+[access-control/docs/api.md](../../access-control/docs/api.md). This file is
+retained as historical Phase 5 design context; current MVP scope authority lives
+in [MVP scope](../evaluation/mvp-scope.md).
 
 ## Contents
 

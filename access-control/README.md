@@ -5,13 +5,26 @@ Phase: Phase 6 - Production MVP
 Scope: Runtime
 Last reviewed: 2026-06-29
 
+## Agent Brief
+
+- Use this file as the required Phase 6 runtime runbook for Docker start, bootstrap, verification, evidence, backup, restore, stop, and reset.
+- Use Linux shell examples. Do not add PowerShell or Windows runtime commands unless explicitly requested.
+- Run MVP verification through Docker Compose; do not use local Python test execution for this runtime.
+- MVP boundary lives in [docs/evaluation/mvp-scope.md](../docs/evaluation/mvp-scope.md).
+- Endpoint schemas live in [access-control/docs/api.md](./docs/api.md).
+- Security evidence status lives in [docs/evaluation/security-test-plan.md](../docs/evaluation/security-test-plan.md#test-tracker).
+- Treat `.env.local`, generated evidence, and backups as local operational data that must not be committed.
+
 ## Contents
 
+- [Agent Brief](#agent-brief)
 - [Purpose](#purpose)
 - [What This Slice Includes](#what-this-slice-includes)
 - [Prerequisites](#prerequisites)
 - [Environment](#environment)
 - [Run](#run)
+- [Super-Admin Bootstrap](#super-admin-bootstrap)
+- [API Reference](#api-reference)
 - [Onboarding Activation](#onboarding-activation)
 - [Expected Outputs](#expected-outputs)
 - [Evidence](#evidence)
@@ -22,7 +35,7 @@ Last reviewed: 2026-06-29
 
 ## Purpose
 
-This directory contains the Phase 6 executable MVP runtime for the accepted MVP scope: Keycloak, an IAM Control Plane API, an `access-check-demo-service`, append-only local audit storage, idempotent first-`super-admin` bootstrap, Linux scripts, Docker Compose runtime, and executable tests. The runtime follows the accepted MVP boundary in ADR 0005 and the accepted API, audit, authorization-check, schema, and security-test artifacts ([ADR 0005](../docs/decisions/0005-authorize-phase-6-production-mvp.md), [MVP scope](../docs/evaluation/mvp-scope.md), [IAM Control Plane API contract](../docs/architecture/iam-control-plane-api-contract.md), [Authorization Check Runtime Behavior](../docs/architecture/authorization-check-behavior.md), [Audit Storage Policy](../docs/architecture/audit-storage.md), [Keycloak IAM Schema Policy](../docs/architecture/keycloak-iam-schema-policy.md), [MVP Security Test Plan](../docs/evaluation/security-test-plan.md)).
+This directory contains the required Phase 6 runtime runbook for the accepted access-control MVP scope: Keycloak, an IAM Control Plane API, an `access-check-demo-service`, append-only local audit storage, idempotent first-`super-admin` bootstrap, Linux scripts, Docker Compose runtime, and executable tests. The runtime follows the accepted MVP boundary and the supporting API, audit, authorization-check, schema, and security-test artifacts ([MVP scope](../docs/evaluation/mvp-scope.md), [Access-Control API Reference](./docs/api.md), [Authorization Check Behavior](../docs/architecture/authorization-check-behavior.md), [Audit Storage Architecture](../docs/architecture/audit-storage.md), [Keycloak IAM Schema Policy](../docs/architecture/keycloak-iam-schema-policy.md), [MVP Security Test Plan](../docs/evaluation/security-test-plan.md)).
 
 This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 runtime: it now validates the protected-service subject-token path, service-to-service authentication, and Keycloak-backed IAM state through Keycloak/OIDC and Admin REST, but it does not yet include the Admin Console UI, full Keycloak IAM schema migration, or production operations hardening.
 
@@ -94,16 +107,35 @@ In the Docker runtime, `IAM_STATE_BACKEND=keycloak`. Account type, lifecycle, im
 
 The Docker smoke verification obtains a Keycloak access token through Authorization Code + PKCE and calls the demo service with that token. It also checks that an invalid bearer value returns `KO`.
 
+## Super-Admin Bootstrap
+
+The first `super-admin` bootstrap is run with:
+
+```bash
+bash access-control/scripts/bootstrap.sh
+```
+
+The bootstrap uses the `BOOTSTRAP_SUPER_ADMIN_*` environment values from
+`access-control/.env.local`, creates or reuses the managed Keycloak realm state,
+seeds the initial `access-check-demo:consult` service role, and creates the
+first `super-admin` only when no active valid `super-admin` already exists. The
+operation is idempotent and writes local audit/bootstrap evidence as part of the
+runtime state.
+
+## API Reference
+
+Endpoint families, request schemas, response examples, and common error codes are documented in [access-control/docs/api.md](./docs/api.md). This runbook remains the required runtime entry point for starting, verifying, backing up, restoring, stopping, and resetting the Phase 6 MVP.
+
 ## Onboarding Activation
 
-`POST /iam/onboarding/activate` is the transition from a pre-created `invited` account to an `active` linked account. It is called by the invited user after Keycloak authentication, not by an admin activating another account. This follows the accepted onboarding rule that a backoffice account is activated only when the IAM API can safely match one invited account to the authenticated subject's verified email ([Feature requirements `FR-043` and `FR-044`](../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API contract](../docs/architecture/iam-control-plane-api-contract.md#onboarding)).
+`POST /iam/onboarding/activate` is the transition from a pre-created `invited` account to an `active` linked account. It is called by the invited user after Keycloak authentication, not by an admin activating another account. This follows the accepted onboarding rule that a backoffice account is activated only when the IAM API can safely match one invited account to the authenticated subject's verified email ([Feature requirements `FR-043` and `FR-044`](../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control API Reference - Onboarding](./docs/api.md#onboarding)).
 
 Recommended MVP scenario:
 
 1. An admin or super-admin creates the backoffice account through the IAM Control Plane API. The account starts in `invited` state, has `email`, `name`, `organization`, and `accountType`, and has no `linkedSubject`.
 2. The controlled provisioning path creates or updates the matching user in the Keycloak MVP realm with the same email. Public registration remains disabled and routine direct Keycloak business administration remains out of scope for the MVP ([MVP scope - Out of Scope](../docs/evaluation/mvp-scope.md#out-of-scope)).
 3. Keycloak sends the invited user an actions email for first login setup, instead of an EDRLab admin sending a reusable password. Keycloak documents SMTP-based realm email, per-user required actions, `execute-actions-email`, and password-reset/update-password emails ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm), [Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user), [Keycloak Admin REST `execute-actions-email`](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)).
-4. For a `member`, the first-login actions should at least make the user own their credential and satisfy email verification before IAM activation. For an `admin` or `super-admin`, the actions must also satisfy the accepted privileged-authentication evidence requirement, using the MVP OTP direction where applicable ([MVP scope - Privileged Onboarding](../docs/evaluation/mvp-scope.md#privileged-onboarding), [Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)).
+4. For a `member`, the first-login actions should at least make the user own their credential and satisfy email verification before IAM activation. For an `admin` or `super-admin`, the actions must also satisfy the accepted privileged-authentication evidence requirement, using the MVP OTP direction where applicable ([MVP scope - Onboarding and Bootstrap](../docs/evaluation/mvp-scope.md#onboarding-and-bootstrap), [Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)).
 5. The user follows the Keycloak link or signs in through the Admin Console, completes the required Keycloak actions, and returns to the Admin Console with a user access token.
 6. The Admin Console calls `POST /iam/onboarding/activate` with that bearer token. The IAM API activates the account only if the token evidence safely matches exactly one invited account.
 
@@ -152,7 +184,7 @@ Expected caller flow:
 4. If no active linked account is resolved, the Admin Console calls `POST /iam/onboarding/activate` with the same bearer token.
 5. On success, the IAM API returns the activated account profile; subsequent `GET /iam/me` calls resolve normally.
 
-For `admin` and `super-admin` accounts, activation also requires the accepted privileged-authentication evidence. Without it, the route denies activation and leaves the account in `invited` state ([MVP scope - Privileged Onboarding](../docs/evaluation/mvp-scope.md#privileged-onboarding)).
+For `admin` and `super-admin` accounts, activation also requires the accepted privileged-authentication evidence. Without it, the route denies activation and leaves the account in `invited` state ([MVP scope - Onboarding and Bootstrap](../docs/evaluation/mvp-scope.md#onboarding-and-bootstrap)).
 
 ## Expected Outputs
 
@@ -181,7 +213,7 @@ The local MVP stores durable runtime state in two Docker volumes:
 - `edrlab-access-control-mvp_access-control-runtime` for local IAM runtime files, including audit JSONL;
 - `edrlab-access-control-mvp_keycloak-data` for the local Keycloak data directory.
 
-Audit files are durable MVP state and must be included in backup and restore planning before production data is trusted ([Audit Storage Policy](../docs/architecture/audit-storage.md#backup-and-restore), [ADR 0005](../docs/decisions/0005-authorize-phase-6-production-mvp.md#decision)).
+Audit files are durable MVP state and must be included in backup and restore planning before production data is trusted ([Audit Storage Architecture](../docs/architecture/audit-storage.md#backup-and-restore), [MVP scope - Production Readiness Gaps](../docs/evaluation/mvp-scope.md#production-readiness-gaps)).
 
 Create a local backup from the repository root:
 
@@ -234,11 +266,10 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 
 ## References
 
-- [ADR 0005 - Authorize Phase 6 Production MVP](../docs/decisions/0005-authorize-phase-6-production-mvp.md)
-- [MVP Scope - Keycloak IAM Control Plane API](../docs/evaluation/mvp-scope.md)
-- [IAM Control Plane API Contract](../docs/architecture/iam-control-plane-api-contract.md)
-- [Authorization Check Runtime Behavior](../docs/architecture/authorization-check-behavior.md)
-- [Audit Storage Policy](../docs/architecture/audit-storage.md)
+- [MVP Scope - Access-Control Production MVP](../docs/evaluation/mvp-scope.md)
+- [Access-Control API Reference](./docs/api.md)
+- [Authorization Check Behavior](../docs/architecture/authorization-check-behavior.md)
+- [Audit Storage Architecture](../docs/architecture/audit-storage.md)
 - [Keycloak IAM Schema Policy](../docs/architecture/keycloak-iam-schema-policy.md)
 - [MVP Security Test Plan](../docs/evaluation/security-test-plan.md)
 - [Keycloak - Configuring email for a realm](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm)

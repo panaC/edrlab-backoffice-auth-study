@@ -1,8 +1,13 @@
 # 0005 - Authorize Phase 6 Production MVP
 
-Status: Accepted
+Status: Superseded
 Date: 2026-06-26
 Supersedes: none
+Superseded by: [MVP scope](../evaluation/mvp-scope.md) as the current Phase 6 MVP source of truth.
+
+This ADR is retained as historical context. For current Phase 6 scope, runtime
+authority, readiness gaps, and accepted residual-risk tracking, use
+[MVP scope](../evaluation/mvp-scope.md).
 
 ## Context
 

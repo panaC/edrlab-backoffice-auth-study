@@ -1,9 +1,9 @@
-# Audit Storage Policy
+# Audit Storage Architecture
 
 Status: Accepted
-Phase: Phase 5 - Review and Decision
+Phase: Phase 6 - Production MVP
 Scope: Architecture
-Last reviewed: 2026-06-26
+Last reviewed: 2026-06-29
 
 ## Contents
 
@@ -17,12 +17,11 @@ Last reviewed: 2026-06-26
 - [Backup and Restore](#backup-and-restore)
 - [Confidentiality](#confidentiality)
 - [Operational Limits](#operational-limits)
-- [Phase 6 Implementation Inputs](#phase-6-implementation-inputs)
 - [References](#references)
 
 ## Purpose
 
-This document fixes the durable audit storage decision for the MVP: a basic local file-backed audit store, append-only, with one JSON event object per physical line. It closes the Phase 5 audit-storage gate and now constrains Phase 6 implementation, without choosing broader deployment topology ([Phase 5 review note](../evaluation/phase-5-review-note.md#minimum-conditions-to-authorize-an-mvp), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+This document defines the durable audit storage architecture for the MVP: a basic local file-backed audit store, append-only, with one JSON event object per physical line. Concrete runtime commands, paths, backup scripts, and restore scripts belong in the access-control runtime runbook ([MVP scope](../evaluation/mvp-scope.md), [Access-Control runtime runbook](../../access-control/README.md#backup-and-restore), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
 The project still treats local EDRLab audit as the authoritative business audit source. Keycloak events remain supplemental provider evidence and do not replace the local audit records required for account lifecycle, subject-link, service-role, protected-service denial, audit-read, onboarding, bootstrap, and recovery-related events (`FR-027`, `FR-028`, `FR-035`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
@@ -47,7 +46,7 @@ This is intentionally basic. It is accepted because the first MVP needs durable,
 
 Each physical line in the audit file is one complete JSON object. The application must not pretty-print audit events across multiple lines, because chronological line scanning and append-only review depend on one event per line. JSON object members should use unique names, because RFC 8259 notes that duplicate object member names produce unpredictable receiver behavior ([RFC 8259 - Objects](https://www.rfc-editor.org/rfc/rfc8259)).
 
-The event object uses the minimum event fields already accepted in the IAM Control Plane API contract ([IAM Control Plane API contract - Audit](./iam-control-plane-api-contract.md#audit)):
+The event object uses the minimum event fields exposed by the MVP audit API ([Access-Control API Reference - Audit](../../access-control/docs/api.md#audit)):
 
 | Field | Required in MVP? | Notes |
 | --- | --- | --- |
@@ -74,7 +73,7 @@ Example line:
 
 The IAM Control Plane API appends a new line for every required audit event. Normal application code must not rewrite, truncate, compact, or delete existing audit lines. If a correction is needed, the application writes a new corrective audit event referencing the original `eventId`; it does not mutate the original record.
 
-Idempotent mutating calls still create audit events, because the accepted API contract requires outcomes such as `changed`, `no_change`, and `rejected` to remain visible ([IAM Control Plane API contract - Idempotence](./iam-control-plane-api-contract.md#idempotence)).
+Idempotent mutating calls still create audit events when they represent a business operation, because outcomes such as `changed`, `no_change`, and `rejected` must remain visible in the local business audit trail ([Feature requirements `FR-027` and `FR-035`](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
 Phase 6 implementation must define file permissions and process ownership so routine runtime users can write audit events without exposing broad edit or read access. OWASP notes that applications may write event logs to the file system, but logs should not be exposed from web-accessible locations and access to log data must be controlled ([OWASP Logging Cheat Sheet - Where to record event data](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html#where-to-record-event-data)).
 
@@ -91,13 +90,13 @@ Audit reading is super-admin-only through the accepted IAM Control Plane API end
 - `GET /iam/audit/events` returns a chronological audit list with minimal filters.
 - `GET /iam/audit/events/{eventId}` returns basic event detail.
 
-Audit reads must create audit events, and `admin` or `member` actors must not consult audit records (`FR-028`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API contract - Audit](./iam-control-plane-api-contract.md#audit)).
+Audit reads must create audit events, and `admin` or `member` actors must not consult audit records (`FR-028`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control API Reference - Audit](../../access-control/docs/api.md#audit)).
 
 Audit export is out of scope for the initial MVP. If export is later added, it must be explicitly accepted, authorized for `super-admin` only unless a later decision changes that rule, and audited as an audit export event.
 
 ## Correlation
 
-Every audit event includes `correlationId`. The IAM Control Plane API accepts `X-Correlation-Id` from trusted callers, validates and normalizes it, generates one when missing, returns it on responses, stores it in audit events, and propagates it across protected-service calls, Keycloak calls, technical logs, and Problem Details responses ([IAM Control Plane API contract - Audit](./iam-control-plane-api-contract.md#audit)).
+Every audit event includes `correlationId`. The IAM Control Plane API accepts `X-Correlation-Id` from trusted callers, validates and normalizes it, generates one when missing, returns it on responses, stores it in audit events, and propagates it across protected-service calls, Keycloak calls, technical logs, and Problem Details responses ([Access-Control API Reference - Audit](../../access-control/docs/api.md#audit)).
 
 `correlationId` is operational evidence, not authorization evidence. It helps join related records; it does not prove that a caller was authorized.
 
@@ -109,7 +108,7 @@ Audit files are part of the MVP's durable state. Phase 6 must include them in ba
 
 Backup copies inherit the same confidentiality expectations as live audit files. OWASP notes that log data can be present in repositories, archives, and backups, and that access to logs should be restricted and monitored ([OWASP Logging Cheat Sheet - Protection](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html#protection)).
 
-The exact backup tool, schedule, storage location, encryption mechanism, and restore-test cadence remain Phase 6 operations decisions.
+Concrete local backup and restore commands live in the access-control runtime runbook. Deployment-specific backup schedule, off-host storage, encryption mechanism, and restore-test cadence remain operations decisions outside this architecture page ([Access-Control runtime runbook - Backup and Restore](../../access-control/README.md#backup-and-restore)).
 
 ## Confidentiality
 
@@ -130,25 +129,14 @@ This accepted MVP storage is intentionally not:
 
 Residual risk: file-backed append-only storage gives a simple durable audit trail, but it depends on operating-system permissions, runtime identity, backups, and operator discipline. Tamper detection, read-only media, centralized log management, or cryptographic integrity can be reviewed later if the risk or compliance profile requires them. OWASP identifies logs as attack targets and recommends considering tamper detection, restricted read privileges, and monitoring of log access ([OWASP Logging Cheat Sheet - Protection](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html#protection)).
 
-## Phase 6 Implementation Inputs
-
-| Input | Status |
-| --- | --- |
-| Exact audit file path and naming | Open Phase 6 implementation detail. |
-| File rotation policy | Open implementation detail; must preserve all records and must not shorten retention. |
-| File permissions and runtime user | Open Phase 6 implementation detail; must support append-only semantics and restricted read access. |
-| Backup mechanism and restore test | Open operations gate before production data is trusted. |
-| Encryption at rest | Open operations and hosting decision; confidentiality requirements are accepted, mechanism is not. |
-| Tamper-evidence hardening | Deferred. Not required for the initial MVP unless a later review changes the risk acceptance. |
-
 ## References
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
-- [MVP Scope - Keycloak IAM Control Plane API](../evaluation/mvp-scope.md)
-- [IAM Control Plane API Contract](./iam-control-plane-api-contract.md)
-- [Authorization Check Runtime Behavior](./authorization-check-behavior.md)
+- [MVP Scope - Access-Control Production MVP](../evaluation/mvp-scope.md)
+- [Access-Control API Reference](../../access-control/docs/api.md)
+- [Authorization Check Behavior](./authorization-check-behavior.md)
+- [Access-Control runtime runbook](../../access-control/README.md)
 - [Phase 5 Review Note](../evaluation/phase-5-review-note.md)
-- [ADR 0005 - Authorize Phase 6 Production MVP](../decisions/0005-authorize-phase-6-production-mvp.md)
 - [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)
 - [RFC 8259 - The JavaScript Object Notation (JSON) Data Interchange Format](https://www.rfc-editor.org/rfc/rfc8259)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
