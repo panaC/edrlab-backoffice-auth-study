@@ -35,11 +35,11 @@ and the evidence workflow in the
 | ID | Status | Proof target | Current evidence or gap |
 | --- | --- | --- | --- |
 | `SEC-FE-001` | `Implemented` | Member cannot bypass UI and call admin endpoints directly. | Covered by member/admin bearer and impersonation tests. |
-| `SEC-FE-002` | `Partial` | Client-supplied hidden/admin fields cannot mutate protected state. | Onboarding identity override and rejected mutations covered; full field coverage across admin endpoints remains open. |
+| `SEC-FE-002` | `Implemented` | Client-supplied hidden/admin fields cannot mutate protected state. | Covered by protected-field and path-target mutation tests across account create, profile update, account lifecycle, service-role create/update/lifecycle, and member service-role assignment endpoints. |
 | `SEC-FE-003` | `Implemented` | Protected service ignores UI state and calls `authorization/check`. | Covered by demo service authentication and authorization tests. |
 | `SEC-CLAIM-001` | `Partial` | Stale token role claims do not keep access after role removal. | Access-stop after role removal and disablement covered; stale real-token role-claim evidence remains open. |
 | `SEC-CLAIM-002` | `Implemented` | Misleading raw account or service-role claims do not authorize access. | Covered by raw OIDC claim rejection tests. |
-| `SEC-CLAIM-003` | `Partial` | Admin-looking token for inactive or drifted state fails closed. | Drift and fail-closed paths covered; explicit inactive admin-looking token case remains open. |
+| `SEC-CLAIM-003` | `Implemented` | Admin-looking token for inactive or drifted state fails closed. | Covered by inactive admin-looking OIDC token denial, lifecycle drift, account-type drift, and fail-closed tests. |
 | `SEC-TOKEN-001` | `Implemented` | Wrong issuer is rejected before account resolution. | Covered by OIDC subject-token and service-token validation tests; issuer validation is required by OpenID Connect ID Token validation ([OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)). |
 | `SEC-TOKEN-002` | `Implemented` | Wrong or missing audience is rejected before account resolution. | Covered by OIDC subject-token and service-token validation tests; JWT audience identifies intended recipients ([RFC 7519](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3)). |
 | `SEC-TOKEN-003` | `Partial` | Expired, invalid-signature, unsupported-algorithm, or wrong-client token is rejected. | Expiry, subject, and expected-client checks are covered for OIDC subject-token and service-token introspection; invalid-signature and unsupported-algorithm cases remain open for local JWT-validation paths. |

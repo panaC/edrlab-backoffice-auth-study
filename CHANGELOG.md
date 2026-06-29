@@ -11,6 +11,8 @@ This repository is a study repository, not a released software package. Changelo
 - Added Docker-volume backup and restore scripts for the Phase 6 `access-control/` MVP runtime, including checksum verification, a restore confirmation gate, and generated-backup ignore rules.
 - Added `docs/architecture/keycloak-iam-onboarding.md` as the dedicated Keycloak/IAM onboarding architecture note.
 - Added `SEC-DRIFT-002` regression evidence for direct Keycloak lifecycle drift, including fail-closed authorization denial and `drift_detected` audit assertions.
+- Added `SEC-CLAIM-003` regression evidence that an admin-looking OIDC token for a disabled account fails closed against canonical IAM lifecycle state.
+- Added `SEC-FE-002` regression evidence that client-supplied hidden or admin fields cannot mutate protected account, service-role, lifecycle, or assignment state.
 
 ### Changed
 

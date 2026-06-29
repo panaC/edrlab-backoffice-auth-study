@@ -15,11 +15,15 @@ ROLE_STATUSES = {"active", "disabled", "archived"}
 PROTECTED_PROFILE_FIELDS = {
     "accountId",
     "accountType",
+    "hasLinkedSubject",
     "lifecycle",
     "linkedSubject",
+    "schemaVersion",
     "serviceRoles",
 }
+PROTECTED_ACCOUNT_CREATE_FIELDS = PROTECTED_PROFILE_FIELDS - {"accountType"}
 ONBOARDING_PROTECTED_FIELDS = {
+    "accountId",
     "subject",
     "sub",
     "email",
@@ -27,9 +31,21 @@ ONBOARDING_PROTECTED_FIELDS = {
     "email_verified",
     "acr",
     "accountType",
+    "hasLinkedSubject",
     "lifecycle",
     "linkedSubject",
+    "schemaVersion",
     "serviceRoles",
+}
+PROTECTED_SERVICE_ROLE_CREATE_FIELDS = {
+    "schemaVersion",
+    "status",
+}
+PROTECTED_SERVICE_ROLE_UPDATE_FIELDS = {
+    "roleId",
+    "schemaVersion",
+    "serviceId",
+    "status",
 }
 
 
@@ -158,6 +174,8 @@ class AccessControlService:
         operation = "account.create"
         target_id = "unresolved"
         try:
+            if PROTECTED_ACCOUNT_CREATE_FIELDS.intersection(payload):
+                raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected account fields cannot be changed here.")
             target_type = payload.get("accountType")
             if target_type not in {"member", "admin"}:
                 raise ApiError(422, "invalid_account_type", "Unprocessable Entity", "Only member or admin creation is allowed.")
@@ -438,6 +456,12 @@ class AccessControlService:
         try:
             if actor["accountType"] != "super-admin":
                 raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can create service roles.")
+            # Preserve the requested role ID for rejected audit events before full payload validation.
+            requested_role_id = payload.get("roleId")
+            if isinstance(requested_role_id, str) and requested_role_id.strip():
+                target_id = requested_role_id.strip()
+            if PROTECTED_SERVICE_ROLE_CREATE_FIELDS.intersection(payload):
+                raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected service-role fields cannot be changed here.")
             role_id = self._required_string(payload, "roleId")
             target_id = role_id
             service_id = self._required_string(payload, "serviceId")
@@ -483,7 +507,9 @@ class AccessControlService:
         try:
             if actor["accountType"] != "super-admin":
                 raise ApiError(403, "forbidden", "Forbidden", "Only super-admins can update service roles.")
-            unsupported = set(payload) - {"description", "roleId", "serviceId"}
+            if PROTECTED_SERVICE_ROLE_UPDATE_FIELDS.intersection(payload):
+                raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected service-role fields cannot be changed here.")
+            unsupported = set(payload) - {"description"}
             if unsupported:
                 raise ApiError(422, "validation_error", "Unprocessable Entity", "Unsupported service-role update field.")
 
@@ -491,12 +517,6 @@ class AccessControlService:
                 role = state["serviceRoles"].get(role_id)
                 if not role:
                     raise ApiError(404, "not_found", "Not Found", "Service role not found.")
-                protected_field_changed = (
-                    payload.get("roleId", role_id) != role_id
-                    or payload.get("serviceId", role.get("serviceId")) != role.get("serviceId")
-                )
-                if protected_field_changed:
-                    raise ApiError(422, "protected_field", "Unprocessable Entity", "Protected service-role fields cannot be changed here.")
                 before = dict(role)
                 if "description" in payload:
                     description = payload["description"]

@@ -755,6 +755,263 @@ class IamHttpAuthenticationTests(unittest.TestCase):
             )
         )
 
+    def test_admin_account_endpoints_reject_protected_body_fields(self) -> None:
+        protected_account_fields: dict[str, object] = {
+            "accountId": "acc_client_supplied",
+            "hasLinkedSubject": True,
+            "lifecycle": "active",
+            "linkedSubject": "forged-sub",
+            "schemaVersion": "iam-schema-v999",
+            "serviceRoles": [DEFAULT_SERVICE_ROLE_ID],
+        }
+        initial_account_ids = set(self._state()["accounts"])
+
+        for field, value in protected_account_fields.items():
+            with self.subTest(endpoint="create", field=field):
+                correlation_id = f"corr-protected-account-create-{field}"
+                self._assert_problem(
+                    "POST",
+                    "/iam/accounts",
+                    headers={
+                        "Authorization": "Bearer dev-sub:super-sub",
+                        "X-Correlation-Id": correlation_id,
+                    },
+                    body={
+                        "email": f"protected-create-{field.lower()}@example.test",
+                        "organization": "MVP Organization",
+                        "name": "Protected Create",
+                        "accountType": "member",
+                        field: value,
+                    },
+                    status=422,
+                    code="protected_field",
+                )
+                self.assertEqual(set(self._state()["accounts"]), initial_account_ids)
+                self._assert_rejected_audit_event("account.create", "unresolved", correlation_id, "protected_field")
+
+        before_member = dict(self._account_state(self.member["accountId"]))
+        for field, value in {
+            **protected_account_fields,
+            "accountType": "super-admin",
+        }.items():
+            with self.subTest(endpoint="profile", field=field):
+                correlation_id = f"corr-protected-profile-{field}"
+                self._assert_problem(
+                    "PATCH",
+                    f"/iam/accounts/{self.member['accountId']}/profile",
+                    headers={
+                        "Authorization": "Bearer dev-sub:super-sub",
+                        "X-Correlation-Id": correlation_id,
+                    },
+                    body={"name": "Ignored Protected Profile", field: value},
+                    status=422,
+                    code="protected_field",
+                )
+                self.assertEqual(self._account_state(self.member["accountId"]), before_member)
+                self._assert_rejected_audit_event(
+                    "account.profile.update",
+                    self.member["accountId"],
+                    correlation_id,
+                    "protected_field",
+                )
+
+    def test_path_driven_account_mutations_do_not_trust_body_targets(self) -> None:
+        other = self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "other-target@example.test",
+                "organization": "MVP Organization",
+                "name": "Other Target",
+                "accountType": "member",
+            },
+            "corr-create-other-target",
+        )
+        other_before = dict(self._account_state(other["accountId"]))
+
+        status, disabled = self._json_request(
+            "POST",
+            f"/iam/accounts/{self.member['accountId']}/disable",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={
+                "accountId": other["accountId"],
+                "accountType": "super-admin",
+                "lifecycle": "archived",
+                "linkedSubject": "forged-sub",
+                "serviceRoles": [DEFAULT_SERVICE_ROLE_ID],
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(disabled["accountId"], self.member["accountId"])
+        self.assertEqual(disabled["lifecycle"], "disabled")
+        self.assertEqual(self._account_state(other["accountId"]), other_before)
+        target_state = self._account_state(self.member["accountId"])
+        self.assertEqual(target_state["accountType"], "member")
+        self.assertEqual(target_state["linkedSubject"], "member-sub")
+        self.assertEqual(target_state["serviceRoles"], [])
+
+        status, restored = self._json_request(
+            "POST",
+            f"/iam/accounts/{self.member['accountId']}/restore",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={
+                "accountId": other["accountId"],
+                "accountType": "super-admin",
+                "lifecycle": "archived",
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(restored["accountId"], self.member["accountId"])
+        self.assertEqual(restored["lifecycle"], "active")
+        self.assertEqual(self._account_state(other["accountId"]), other_before)
+
+        alternate_role_id = "access-check-demo:alternate"
+        self.service.create_service_role(
+            self.super_admin_id,
+            {
+                "roleId": alternate_role_id,
+                "serviceId": DEFAULT_SERVICE_ID,
+                "description": "Alternate test role.",
+            },
+            "corr-create-alternate-role",
+        )
+
+        status, assigned = self._json_request(
+            "PUT",
+            f"/iam/accounts/{self.member['accountId']}/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={
+                "accountId": other["accountId"],
+                "roleId": alternate_role_id,
+                "accountType": "super-admin",
+                "serviceRoles": [alternate_role_id],
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(assigned["accountId"], self.member["accountId"])
+        self.assertEqual(assigned["serviceRoles"], [DEFAULT_SERVICE_ROLE_ID])
+        self.assertEqual(self._account_state(other["accountId"]), other_before)
+
+        status, removed = self._json_request(
+            "DELETE",
+            f"/iam/accounts/{self.member['accountId']}/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={
+                "accountId": other["accountId"],
+                "roleId": alternate_role_id,
+                "serviceRoles": [alternate_role_id],
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(removed["accountId"], self.member["accountId"])
+        self.assertEqual(removed["serviceRoles"], [])
+        self.assertEqual(self._account_state(other["accountId"]), other_before)
+
+        self._json_request(
+            "POST",
+            f"/iam/accounts/{self.member['accountId']}/disable",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={"accountId": other["accountId"], "lifecycle": "active"},
+        )
+        status, archived = self._json_request(
+            "POST",
+            f"/iam/accounts/{self.member['accountId']}/archive",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={
+                "accountId": other["accountId"],
+                "accountType": "super-admin",
+                "lifecycle": "active",
+                "linkedSubject": "forged-sub",
+                "serviceRoles": [alternate_role_id],
+            },
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(archived["accountId"], self.member["accountId"])
+        self.assertEqual(archived["lifecycle"], "archived")
+        self.assertEqual(self._account_state(other["accountId"]), other_before)
+        archived_state = self._account_state(self.member["accountId"])
+        self.assertEqual(archived_state["accountType"], "member")
+        self.assertEqual(archived_state["linkedSubject"], "member-sub")
+        self.assertEqual(archived_state["serviceRoles"], [])
+
+    def test_service_role_endpoints_reject_protected_body_fields(self) -> None:
+        for field, value in {"schemaVersion": "iam-schema-v999", "status": "archived"}.items():
+            with self.subTest(endpoint="create", field=field):
+                role_id = f"access-check-demo:protected-{field.lower()}"
+                correlation_id = f"corr-protected-service-role-create-{field}"
+                self._assert_problem(
+                    "POST",
+                    "/iam/service-roles",
+                    headers={
+                        "Authorization": "Bearer dev-sub:super-sub",
+                        "X-Correlation-Id": correlation_id,
+                    },
+                    body={
+                        "roleId": role_id,
+                        "serviceId": DEFAULT_SERVICE_ID,
+                        "description": "Protected create attempt.",
+                        field: value,
+                    },
+                    status=422,
+                    code="protected_field",
+                )
+                self.assertNotIn(role_id, self._state()["serviceRoles"])
+                self._assert_rejected_audit_event(
+                    "service_role.create",
+                    role_id,
+                    correlation_id,
+                    "protected_field",
+                )
+
+        before_role = dict(self._service_role_state(DEFAULT_SERVICE_ROLE_ID))
+        protected_update_fields: dict[str, object] = {
+            "roleId": "access-check-demo:changed",
+            "schemaVersion": "iam-schema-v999",
+            "serviceId": "changed-service",
+            "status": "archived",
+        }
+        for field, value in protected_update_fields.items():
+            with self.subTest(endpoint="update", field=field):
+                correlation_id = f"corr-protected-service-role-update-{field}"
+                self._assert_problem(
+                    "PATCH",
+                    f"/iam/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+                    headers={
+                        "Authorization": "Bearer dev-sub:super-sub",
+                        "X-Correlation-Id": correlation_id,
+                    },
+                    body={"description": "Ignored protected service role update.", field: value},
+                    status=422,
+                    code="protected_field",
+                )
+                self.assertEqual(self._service_role_state(DEFAULT_SERVICE_ROLE_ID), before_role)
+                self._assert_rejected_audit_event(
+                    "service_role.update",
+                    DEFAULT_SERVICE_ROLE_ID,
+                    correlation_id,
+                    "protected_field",
+                )
+
+    def test_path_driven_service_role_lifecycle_does_not_trust_body_state(self) -> None:
+        before_role = dict(self._service_role_state(DEFAULT_SERVICE_ROLE_ID))
+
+        status, disabled = self._json_request(
+            "POST",
+            f"/iam/service-roles/{DEFAULT_SERVICE_ROLE_ID}/disable",
+            headers={"Authorization": "Bearer dev-sub:super-sub"},
+            body={
+                "roleId": "access-check-demo:changed",
+                "schemaVersion": "iam-schema-v999",
+                "serviceId": "changed-service",
+                "status": "archived",
+            },
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(disabled["roleId"], DEFAULT_SERVICE_ROLE_ID)
+        self.assertEqual(disabled["serviceId"], before_role["serviceId"])
+        self.assertEqual(disabled["schemaVersion"], before_role["schemaVersion"])
+        self.assertEqual(disabled["status"], "disabled")
+
     def test_member_bearer_can_use_self_endpoints(self) -> None:
         status, body = self._json_request(
             "GET",
@@ -906,6 +1163,60 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         self.assertEqual(event["reasonCode"], "keycloak_indeterminate")
         self.assertEqual(event["correlationId"], "corr-keycloak-failure")
 
+    def _state(self) -> dict[str, object]:
+        return self.service.store.load()
+
+    def _account_state(self, account_id: str) -> dict[str, object]:
+        return self._state()["accounts"][account_id]  # type: ignore[index]
+
+    def _service_role_state(self, role_id: str) -> dict[str, object]:
+        return self._state()["serviceRoles"][role_id]  # type: ignore[index]
+
+    def _audit_events(self) -> list[dict[str, object]]:
+        return [
+            json.loads(line)
+            for line in self.audit_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+    def _assert_rejected_audit_event(
+        self,
+        operation: str,
+        target_id: object,
+        correlation_id: str,
+        reason_code: str,
+    ) -> None:
+        self.assertTrue(
+            any(
+                event.get("operation") == operation
+                and event.get("targetId") == target_id
+                and event.get("outcome") == "rejected"
+                and event.get("correlationId") == correlation_id
+                and event.get("reasonCode") == reason_code
+                for event in self._audit_events()
+            ),
+            f"missing rejected audit event for {operation} {correlation_id}",
+        )
+
+    def _assert_problem(
+        self,
+        method: str,
+        path: str,
+        *,
+        headers: dict[str, str] | None = None,
+        body: object | None = None,
+        status: int,
+        code: str,
+    ) -> dict[str, object]:
+        with self.assertRaises(urllib.error.HTTPError) as raised:
+            self._json_request(method, path, headers=headers, body=body)
+        response = raised.exception
+        problem = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(response.code, status)
+        self.assertEqual(problem["status"], status)
+        self.assertEqual(problem["code"], code)
+        return problem
+
     def _json_request(
         self,
         method: str,
@@ -1019,6 +1330,55 @@ class OidcTokenTests(unittest.TestCase):
         self.assertEqual(member["accountType"], "member")
         self.assertEqual(decision["decision"], "deny")
         self.assertEqual(decision["reason"], "not_authorized")
+
+    def test_admin_looking_token_for_inactive_account_fails_closed(self) -> None:
+        _, url = self._serve_introspection(
+            {
+                "inactive-admin-looking-token": {
+                    **self._active_response(sub="admin-sub"),
+                    "acr": "iam-privileged",
+                    "email": "inactive-admin@example.test",
+                    "email_verified": True,
+                    "iam_account_type": "super-admin",
+                    "realm_access": {"roles": [DEFAULT_SERVICE_ROLE_ID]},
+                }
+            }
+        )
+        service = self._service_with_validator(url)
+        super_admin_id = service.bootstrap_first_super_admin(
+            email="super-admin@example.test",
+            name="Initial Super Admin",
+            organization="MVP Organization",
+            subject="super-sub",
+        )["accountId"]
+        admin = service.create_account(
+            super_admin_id,
+            {
+                "email": "inactive-admin@example.test",
+                "organization": "MVP Organization",
+                "name": "Inactive Admin",
+                "accountType": "admin",
+            },
+            "corr-create-inactive-admin",
+        )
+        service.activate_onboarding_from_bearer(
+            "Bearer inactive-admin-looking-token",
+            {},
+            "corr-activate-inactive-admin",
+        )
+        service.lifecycle(super_admin_id, admin["accountId"], "disable", "corr-disable-inactive-admin")
+
+        decision = service.authorization_check(
+            {
+                "subjectToken": "inactive-admin-looking-token",
+                "serviceId": DEFAULT_SERVICE_ID,
+                "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+            },
+            "corr-inactive-admin-looking-deny",
+        )
+
+        self.assertEqual(decision["decision"], "deny")
+        self.assertEqual(decision["reason"], "account_not_active")
 
     def test_oidc_service_token_requires_contract_claims(self) -> None:
         missing_issuer = self._active_response(sub="service-account", client_id=DEFAULT_SERVICE_ID)

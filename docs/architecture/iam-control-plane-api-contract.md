@@ -74,6 +74,13 @@ The IAM Control Plane API must validate the issuer, audience, expiry, subject, a
 
 The Keycloak IAM schema policy is fixed separately: EDRLab IAM user attributes are managed attributes, unmanaged attributes are disabled and verified during bootstrap, account type is exactly one client role on the configured backoffice client, default `backoffice`, and the first service-access role maps to client `access-check-demo-service` role `consult` ([Keycloak IAM schema policy](./keycloak-iam-schema-policy.md)).
 
+Request body trust boundary:
+
+- Client bodies must not supply server-owned account state such as `accountId`, `lifecycle`, `linkedSubject`, `hasLinkedSubject`, `serviceRoles`, or `schemaVersion`. The only request-body account type selection is `accountType` on `POST /iam/accounts`, and the IAM API still enforces the actor's allowed creation scope.
+- Client bodies must not supply server-owned service-role state such as `status` or `schemaVersion`; `roleId` and `serviceId` are accepted only when creating a service role and cannot be changed by update.
+- Path identifiers and path actions are authoritative for lifecycle and assignment routes. Request-body fields cannot redirect the target account, target service role, lifecycle transition, or service-role assignment.
+- Protected-field attempts are rejected with `422 protected_field` where the endpoint parses the body. Path-driven routes that do not need a body ignore any supplied body for authorization-significant state.
+
 ## Actors and Authentication
 
 | Actor | Authenticates as | Allowed API surface |
