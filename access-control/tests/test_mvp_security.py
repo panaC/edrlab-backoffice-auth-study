@@ -1515,9 +1515,10 @@ class KeycloakStateStoreTests(unittest.TestCase):
                 email_verified=True,
             ),
         }
+        self.audit_path = Path(self.tmp.name) / "audit.jsonl"
         self.service = AccessControlService(
             self.store,
-            AuditWriter(Path(self.tmp.name) / "audit.jsonl"),
+            AuditWriter(self.audit_path),
             StaticSubjectTokenValidator(self.subject_tokens),
         )
 
@@ -1643,6 +1644,63 @@ class KeycloakStateStoreTests(unittest.TestCase):
 
         self.assertEqual(decision["decision"], "deny")
         self.assertEqual(decision["reason"], "drift_detected")
+
+    def test_direct_keycloak_lifecycle_change_is_drift_and_audited(self) -> None:
+        cases = (
+            ("active-user-disabled", "active", False),
+            ("disabled-user-enabled", "disabled", True),
+        )
+        for subject, lifecycle, enabled in cases:
+            with self.subTest(lifecycle=lifecycle, enabled=enabled):
+                correlation_id = f"corr-lifecycle-drift-{subject}"
+                account_id = f"acc-{subject}"
+                self.client.add_user(
+                    subject,
+                    f"{subject}@example.test",
+                    {
+                        "iam.account_id": [account_id],
+                        "iam.lifecycle": [lifecycle],
+                        "iam.linked_subject": [subject],
+                        "iam.organization": ["MVP Organization"],
+                        "iam.assigned_service_roles": [json.dumps([DEFAULT_SERVICE_ROLE_ID])],
+                        "iam.schema_version": ["iam-schema-v1"],
+                    },
+                    {"backoffice": {"account-type-member"}},
+                    enabled=enabled,
+                    first_name="Lifecycle",
+                    last_name="Drift",
+                )
+                token = f"{subject}-token"
+                self.subject_tokens[token] = SubjectEvidence(subject=subject)
+
+                decision = self.service.authorization_check(
+                    {
+                        "subjectToken": token,
+                        "serviceId": DEFAULT_SERVICE_ID,
+                        "requiredRole": DEFAULT_SERVICE_ROLE_ID,
+                    },
+                    correlation_id,
+                )
+
+                self.assertEqual(decision["decision"], "deny")
+                self.assertEqual(decision["reason"], "drift_detected")
+                self.assertTrue(
+                    any(
+                        event.get("operation") == "authorization.check.denied"
+                        and event.get("outcome") == "rejected"
+                        and event.get("correlationId") == correlation_id
+                        and event.get("reasonCode") == "drift_detected"
+                        for event in self._audit_events()
+                    ),
+                    f"missing lifecycle drift audit event for {correlation_id}",
+                )
+
+    def _audit_events(self) -> list[dict[str, object]]:
+        return [
+            json.loads(line)
+            for line in self.audit_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
 
 
 if __name__ == "__main__":

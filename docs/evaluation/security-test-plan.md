@@ -51,7 +51,7 @@ and the evidence workflow in the
 | `SEC-FAIL-003` | `Partial` | Missing or corrupt managed attributes block sensitive operations. | Account-type drift covered; lifecycle, account ID, and schema-version corruption remain open. |
 | `SEC-FAIL-004` | `Partial` | Unknown service/role, inactive account, disabled role, or archived role fails closed. | Role removal and disablement covered; unknown IDs, archived role, and inactive account remain open. |
 | `SEC-DRIFT-001` | `Implemented` | Direct protected-service role mapping in Keycloak is detected and denied. | Covered by direct service-role drift tests. |
-| `SEC-DRIFT-002` | `Open` | Direct lifecycle change in Keycloak is treated as drift. | Add lifecycle-drift test and audit assertion. |
+| `SEC-DRIFT-002` | `Implemented` | Direct lifecycle change in Keycloak is treated as drift. | Covered by lifecycle drift tests for direct Keycloak `enabled` and managed `iam.lifecycle` mismatches, with fail-closed authorization denial and `drift_detected` audit evidence. |
 | `SEC-DRIFT-003` | `Implemented` | Missing, multiple, or elevated account-type roles block access. | Covered by account-type drift tests. |
 | `SEC-DRIFT-004` | `Open` | Direct `iam.linked_subject` change is drift. | Proposed EDRLab-controlled append-only subject-link ledger outside Keycloak; no runtime ledger or executable drift test yet. |
 | `SEC-AUDIT-001` | `Partial` | Required events exist for allow, deny, reject, indeterminate, drift, bootstrap, onboarding, role, lifecycle, and audit-read scenarios. | Several event classes covered; full matrix-wide audit evidence remains open. |
