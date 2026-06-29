@@ -29,6 +29,7 @@ This repository is a study repository, not a released software package. Changelo
 - Documented the local MVP backup and restore procedure, generated evidence and backup locations, and remaining deployment-operation limitations in `access-control/README.md`.
 - Simplified `AGENTS.md` into a concise Phase 6 MVP implementation guide and moved the longer documentation, citation, and wiki rules into `docs/agent-policy.md` for documentation-heavy tasks.
 - Aligned Keycloak schema and onboarding architecture references with the current runtime names: managed `iam.*` attributes and configurable backoffice client ID defaulting to `backoffice`.
+- Made Keycloak bootstrap explicitly set and verify disabled unmanaged User Profile attributes, with tests covering the schema policy guard.
 - Tightened OIDC service-token validation for `authorization/check` to require issuer, audience, expiry, subject, and expected service client, with a matching Keycloak audience mapper for the Docker runtime.
 - Aligned member service-role removal with the IAM API contract so inactive roles can be removed from members and repeated removal stays idempotent.
 - Tightened onboarding repeat activation idempotence so only already-active accounts with the same immutable subject return no-change success, matching `FR-043` and `FR-044`.

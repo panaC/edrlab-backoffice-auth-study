@@ -40,7 +40,7 @@ policies are owned by the linked architecture pages.
 | Protected-service result | The access-check demo returns JSON containing `result: "OK"` or `result: "KO"` plus an HTTP status. |
 | Correlation | Clients may send `X-Correlation-Id`; the IAM Control Plane API generates one when missing and returns it in every response. |
 | Audit storage | Local file-backed append-only storage with one JSON event object per physical line. |
-| Keycloak schema | Managed Keycloak User Profile attributes, unmanaged attributes disabled, account-type client roles on `edrlab-backoffice`, and service-access client roles on protected-service clients. |
+| Keycloak schema | Managed Keycloak User Profile attributes, unmanaged attributes disabled and verified by bootstrap, account-type client roles on the configured backoffice client, default `backoffice`, and service-access client roles on protected-service clients. |
 | Direct Keycloak administration | Not a business API path. Business administration goes through the EDRLab Admin Console and IAM Control Plane API (`FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md)). |
 
 ## Bootstrap Process
@@ -72,7 +72,7 @@ MVP rule:
 
 The IAM Control Plane API must validate the issuer, audience, expiry, subject, and expected OAuth client of security tokens before using them for account resolution or service authorization. The feature requirements forbid frontend-only authorization and unmanaged raw-claim authorization shortcuts (`FR-020`, `FR-021`, `FR-033`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
-The Keycloak IAM schema policy is fixed separately: EDRLab IAM user attributes are managed attributes, unmanaged attributes are disabled, account type is exactly one `edrlab-backoffice` client role, and the first service-access role maps to client `access-check-demo-service` role `consult` ([Keycloak IAM schema policy](./keycloak-iam-schema-policy.md)).
+The Keycloak IAM schema policy is fixed separately: EDRLab IAM user attributes are managed attributes, unmanaged attributes are disabled and verified during bootstrap, account type is exactly one client role on the configured backoffice client, default `backoffice`, and the first service-access role maps to client `access-check-demo-service` role `consult` ([Keycloak IAM schema policy](./keycloak-iam-schema-policy.md)).
 
 ## Actors and Authentication
 

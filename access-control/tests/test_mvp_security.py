@@ -1135,6 +1135,36 @@ class HttpContractTests(unittest.TestCase):
 
 
 class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
+    def test_user_profile_policy_declares_iam_attributes_and_disables_unmanaged_attributes(self) -> None:
+        profile = {
+            "attributes": [
+                {
+                    "name": "email",
+                    "displayName": "Email",
+                    "permissions": {"view": ["admin", "user"], "edit": ["admin", "user"]},
+                }
+            ],
+            "unmanagedAttributePolicy": "ENABLED",
+        }
+
+        keycloak_bootstrap.apply_iam_user_profile_policy(profile)
+
+        self.assertEqual(profile["unmanagedAttributePolicy"], "DISABLED")
+        by_name = {
+            attribute["name"]: attribute
+            for attribute in profile["attributes"]
+            if isinstance(attribute, dict)
+        }
+        self.assertEqual(by_name["email"]["displayName"], "Email")
+        for attribute_name in keycloak_bootstrap.IAM_USER_ATTRIBUTES:
+            self.assertEqual(by_name[attribute_name]["displayName"], attribute_name)
+            self.assertFalse(by_name[attribute_name]["multivalued"])
+            self.assertEqual(by_name[attribute_name]["permissions"], {"view": ["admin"], "edit": ["admin"]})
+
+    def test_user_profile_verification_rejects_enabled_unmanaged_attributes(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "unmanaged user-profile attributes are not disabled"):
+            keycloak_bootstrap.verify_unmanaged_attributes_disabled({"unmanagedAttributePolicy": "ENABLED"})
+
     def test_client_merge_preserves_existing_unowned_configuration(self) -> None:
         existing = {
             "id": "client-uuid",

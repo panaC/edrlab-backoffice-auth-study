@@ -54,6 +54,7 @@ IAM_USER_ATTRIBUTES = (
     "iam.last_control_plane_mutation_at",
 )
 REALM_EVENT_TYPES = ("LOGIN", "LOGIN_ERROR", "LOGOUT", "CODE_TO_TOKEN", "CLIENT_LOGIN")
+USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY = "DISABLED"
 
 
 def main() -> None:
@@ -139,6 +140,15 @@ def ensure_user_profile(token: str) -> None:
     profile = api_get(token, f"realms/{KEYCLOAK_REALM}/users/profile")
     if not isinstance(profile, dict):
         raise RuntimeError("Unexpected Keycloak user-profile response")
+    apply_iam_user_profile_policy(profile)
+    api_json("PUT", token, f"realms/{KEYCLOAK_REALM}/users/profile", profile, expected={200})
+    verified = api_get(token, f"realms/{KEYCLOAK_REALM}/users/profile")
+    if not isinstance(verified, dict):
+        raise RuntimeError("Unexpected Keycloak user-profile verification response")
+    verify_unmanaged_attributes_disabled(verified)
+
+
+def apply_iam_user_profile_policy(profile: dict[str, Any]) -> None:
     attributes = profile.get("attributes")
     if not isinstance(attributes, list):
         attributes = []
@@ -163,7 +173,12 @@ def ensure_user_profile(token: str) -> None:
             }
         )
     profile["attributes"] = attributes
-    api_json("PUT", token, f"realms/{KEYCLOAK_REALM}/users/profile", profile, expected={200})
+    profile["unmanagedAttributePolicy"] = USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY
+
+
+def verify_unmanaged_attributes_disabled(profile: dict[str, Any]) -> None:
+    if profile.get("unmanagedAttributePolicy") != USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY:
+        raise RuntimeError("Keycloak unmanaged user-profile attributes are not disabled")
 
 
 def backoffice_client_payload() -> dict[str, Any]:
