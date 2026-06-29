@@ -10,6 +10,10 @@ from typing import Any
 CORRELATION_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
 
 
+class JsonBodyValidationError(ValueError):
+    pass
+
+
 def correlation_id(value: str | None) -> str:
     if value and CORRELATION_RE.match(value):
         return value
@@ -21,7 +25,10 @@ def read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
     if length == 0:
         return {}
     body = handler.rfile.read(length)
-    return json.loads(body.decode("utf-8"))
+    payload = json.loads(body.decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise JsonBodyValidationError("Request body must be a JSON object.")
+    return payload
 
 
 def json_response(

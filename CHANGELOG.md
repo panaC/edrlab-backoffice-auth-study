@@ -34,6 +34,7 @@ This repository is a study repository, not a released software package. Changelo
 - Aligned member service-role removal with the IAM API contract so inactive roles can be removed from members and repeated removal stays idempotent.
 - Tightened onboarding repeat activation idempotence so only already-active accounts with the same immutable subject return no-change success, matching `FR-043` and `FR-044`.
 - Aligned the documented audit `actorType` schema with runtime events by adding `authenticated-subject` for onboarding and `iam-api` for IAM dependency-failure audit records.
+- Aligned IAM API JSON body validation with the contract so non-object JSON request bodies return `422 validation_error` instead of a generic `503`.
 
 
 Older entries are archived in [CHANGELOG.archive.md](./CHANGELOG.archive.md). Do not read the archive by default; use it only for historical lookup.

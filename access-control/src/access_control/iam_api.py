@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from .audit import AuditWriter
 from .config import allow_dev_actor_header
 from .config import audit_path
-from .http_util import correlation_id, json_response, problem_response, read_json
+from .http_util import JsonBodyValidationError, correlation_id, json_response, problem_response, read_json
 from .service import AccessControlService, ApiError
 from .store import state_store_from_env
 from .tokens import ServiceAuthenticator, TokenValidationError, service_authenticator_from_env
@@ -63,6 +63,15 @@ class IamHandler(BaseHTTPRequestHandler):
             json_response(self, status, result, corr)
         except ApiError as exc:
             problem_response(self, exc.status, exc.code, exc.title, exc.detail, corr)
+        except JsonBodyValidationError:
+            problem_response(
+                self,
+                422,
+                "validation_error",
+                "Unprocessable Entity",
+                "Request body must be a JSON object.",
+                corr,
+            )
         except json.JSONDecodeError:
             problem_response(self, 400, "invalid_json", "Invalid JSON", "Request body is not valid JSON.", corr)
         except Exception as exc:

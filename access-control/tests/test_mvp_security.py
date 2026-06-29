@@ -745,6 +745,37 @@ class IamHttpAuthenticationTests(unittest.TestCase):
             )
         self.assertEqual(raised.exception.code, 422)
 
+    def test_non_object_json_body_returns_validation_error(self) -> None:
+        cases: list[tuple[str, str, dict[str, str], object]] = [
+            (
+                "POST",
+                "/iam/accounts",
+                {"Authorization": "Bearer dev-sub:super-sub"},
+                [],
+            ),
+            (
+                "POST",
+                "/iam/authorization/check",
+                {"Authorization": "Bearer service-token"},
+                "not-an-object",
+            ),
+        ]
+        for method, path, headers, body in cases:
+            with self.subTest(path=path, body=body):
+                with self.assertRaises(urllib.error.HTTPError) as raised:
+                    self._json_request(
+                        method,
+                        path,
+                        headers=headers,
+                        body=body,
+                    )
+                response = raised.exception
+                problem = json.loads(response.read().decode("utf-8"))
+                self.assertEqual(response.code, 422)
+                self.assertEqual(problem["status"], 422)
+                self.assertEqual(problem["code"], "validation_error")
+                self.assertEqual(problem["detail"], "Request body must be a JSON object.")
+
     def test_onboarding_activates_from_bearer_evidence(self) -> None:
         self.service.create_account(
             self.super_admin_id,
@@ -807,7 +838,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         path: str,
         *,
         headers: dict[str, str] | None = None,
-        body: dict[str, object] | None = None,
+        body: object | None = None,
     ) -> tuple[int, dict[str, object]]:
         request_headers = dict(headers or {})
         data = None
