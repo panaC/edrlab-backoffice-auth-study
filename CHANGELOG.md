@@ -14,6 +14,7 @@ This repository is a study repository, not a released software package. Changelo
 ### Changed
 
 - Made `docs/evaluation/mvp-scope.md` the Phase 6 MVP source of truth, superseding ADR 0005 for current MVP authority and replacing the old IAM API contract as the required runtime API source.
+- Added a production readiness tracker to `docs/evaluation/mvp-scope.md` for non-security MVP gaps, required evidence, next actions, and deferral risks.
 - Converted `docs/evaluation/security-test-plan.md` into a Phase 6 security evidence tracker with `Implemented`, `Partial`, `Open`, and `Deferred` status values for every test row.
 - Cleaned architecture documents so `authorization/check`, audit storage, and Keycloak schema pages describe architecture behavior and policy while concrete runtime commands remain in `access-control/README.md`.
 - Reduced context-heavy documentation by compressing `docs/README.md` into a short active/archive map, compacting `docs/evaluation/security-test-plan.md` into a tracker, and adding AGENTS context-budget rules for historical material.
