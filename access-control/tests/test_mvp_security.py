@@ -12,10 +12,10 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from access_check_demo_service.app import DemoHandler
 from access_control.audit import AuditWriter
 from access_control import keycloak_bootstrap
 from access_control.config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
-from access_control.demo_service import DemoHandler
 from access_control.iam_api import IamServer
 from access_control.keycloak_store import KeycloakStateStore
 from access_control.service import AccessControlService, ApiError

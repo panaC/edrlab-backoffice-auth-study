@@ -35,9 +35,8 @@ Last reviewed: 2026-06-29
 
 ## Purpose
 
-This directory contains the required Phase 6 runtime runbook for the accepted access-control MVP scope: Keycloak, an IAM Control Plane API, an `access-check-demo-service`, append-only local audit storage, idempotent first-`super-admin` bootstrap, Linux scripts, Docker Compose runtime, and executable tests. The runtime follows the accepted MVP boundary and the supporting API, audit, authorization-check, schema, and security-test artifacts ([MVP scope](../docs/evaluation/mvp-scope.md), [Access-Control API Reference](./docs/api.md), [Authorization Check Behavior](../docs/architecture/authorization-check-behavior.md), [Audit Storage Architecture](../docs/architecture/audit-storage.md), [Keycloak IAM Schema Policy](../docs/architecture/keycloak-iam-schema-policy.md), [MVP Security Test Plan](../docs/evaluation/security-test-plan.md)).
-
-This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 runtime: it now validates the protected-service subject-token path, service-to-service authentication, and Keycloak-backed IAM state through Keycloak/OIDC and Admin REST, but it does not yet include the Admin Console UI, full Keycloak IAM schema migration, or production operations hardening.
+- Runtime runbook for the accepted Phase 6 access-control MVP: Dockerized Keycloak, IAM Control Plane API, `access-check-demo-service`, local append-only audit storage, first-`super-admin` bootstrap, Linux scripts, tests, and current MVP limitations ([MVP scope](../docs/evaluation/mvp-scope.md), [Access-Control API Reference](./docs/api.md)).
+- Production-scope Phase 6 code that validates Keycloak/OIDC-backed IAM state and protected-service authorization, with Admin Console UI, full Keycloak IAM schema migration, and production operations hardening still open.
 
 ## What This Slice Includes
 
@@ -45,7 +44,7 @@ This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 r
 | --- | --- |
 | Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
 | IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
-| Demo protected service | `GET /access-check-demo`, returning JSON `OK` or `KO`, obtaining a client-credentials service token, and calling `POST /iam/authorization/check`. |
+| Demo protected service | Split into `access-control/src/access_check_demo_service/`; exposes `GET /access-check-demo`, returns JSON `OK` or `KO`, obtains a client-credentials service token, and calls `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
 | Bootstrap | Scripted Keycloak realm/client/user/profile/role bootstrap plus idempotent first-`super-admin` bootstrap outside the public API and the initial `access-check-demo:consult` role. |
 | Tests | Docker-only Python `unittest` coverage for bootstrap, actor authorization, onboarding, access checks, OIDC token validation, service authentication, access-stop behavior, audit format, and audit confidentiality. |

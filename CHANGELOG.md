@@ -13,6 +13,7 @@ This repository is a study repository, not a released software package. Changelo
 
 ### Changed
 
+- Split the demo protected service runtime code into its own `access_check_demo_service` source package under `access-control/src/`.
 - Made `docs/evaluation/mvp-scope.md` the Phase 6 MVP source of truth, superseding ADR 0005 for current MVP authority and replacing the old IAM API contract as the required runtime API source.
 - Added a production readiness tracker to `docs/evaluation/mvp-scope.md` for non-security MVP gaps, required evidence, next actions, and deferral risks.
 - Converted `docs/evaluation/security-test-plan.md` into a Phase 6 security evidence tracker with `Implemented`, `Partial`, `Open`, and `Deferred` status values for every test row.
