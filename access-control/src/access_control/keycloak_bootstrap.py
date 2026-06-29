@@ -67,7 +67,8 @@ def main() -> None:
     ensure_control_plane_admin_roles(token, control_plane_uuid)
     ensure_account_type_roles(token, backoffice_uuid)
     ensure_service_role(token, service_uuid, "consult", "Initial MVP access-check demo consultation role.")
-    ensure_audience_mapper(token, backoffice_uuid)
+    ensure_audience_mapper(token, backoffice_uuid, SERVICE_CLIENT_ID)
+    ensure_audience_mapper(token, service_uuid, CONTROL_PLANE_CLIENT_ID)
     super_admin = ensure_user(token, SUPER_ADMIN_USERNAME, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD, "Initial", "Super Admin")
     ensure_user(token, SMOKE_USERNAME, SMOKE_EMAIL, SMOKE_PASSWORD, "MVP", "Member")
     write_bootstrap_output(super_admin)
@@ -329,19 +330,19 @@ def ensure_client_role(
     )
 
 
-def ensure_audience_mapper(token: str, backoffice_uuid: str) -> None:
+def ensure_audience_mapper(token: str, client_uuid: str, audience: str) -> None:
     mapper = {
-        "name": f"audience-{SERVICE_CLIENT_ID}",
+        "name": f"audience-{audience}",
         "protocol": "openid-connect",
         "protocolMapper": "oidc-audience-mapper",
         "consentRequired": False,
         "config": {
-            "included.client.audience": SERVICE_CLIENT_ID,
+            "included.client.audience": audience,
             "id.token.claim": "false",
             "access.token.claim": "true",
         },
     }
-    path = f"realms/{KEYCLOAK_REALM}/clients/{backoffice_uuid}/protocol-mappers/models"
+    path = f"realms/{KEYCLOAK_REALM}/clients/{client_uuid}/protocol-mappers/models"
     existing = api_get(token, path)
     if not isinstance(existing, list):
         raise RuntimeError("Unexpected protocol mapper response")

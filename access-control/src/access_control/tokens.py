@@ -126,6 +126,7 @@ class OidcServiceTokenAuthenticator(ServiceAuthenticator):
         client_secret: str,
         expected_service_client_id: str,
         expected_issuer: str,
+        expected_audience: str,
         timeout_seconds: float,
     ) -> None:
         self.introspection_url = introspection_url
@@ -133,6 +134,7 @@ class OidcServiceTokenAuthenticator(ServiceAuthenticator):
         self.client_secret = client_secret
         self.expected_service_client_id = expected_service_client_id
         self.expected_issuer = expected_issuer.rstrip("/")
+        self.expected_audience = expected_audience
         self.timeout_seconds = timeout_seconds
 
     def require_authorized(self, authorization_header: str) -> None:
@@ -147,10 +149,15 @@ class OidcServiceTokenAuthenticator(ServiceAuthenticator):
         if response.get("active") is not True:
             raise TokenValidationError(401, "invalid_service_token", "Unauthorized", "Service token is inactive or invalid.")
         issuer = _string(response.get("iss"))
-        if issuer and issuer != self.expected_issuer:
+        if issuer != self.expected_issuer:
             raise TokenValidationError(401, "invalid_service_token", "Unauthorized", "Service token issuer is invalid.")
+        if not _contains_claim(response.get("aud"), self.expected_audience):
+            raise TokenValidationError(401, "invalid_service_token", "Unauthorized", "Service token audience is invalid.")
         if not _is_unexpired(response.get("exp")):
             raise TokenValidationError(401, "invalid_service_token", "Unauthorized", "Service token is expired or missing expiry.")
+        subject = _string(response.get("sub"))
+        if not subject:
+            raise TokenValidationError(401, "invalid_service_token", "Unauthorized", "Service token is missing a subject.")
         token_client = _string(response.get("client_id")) or _string(response.get("azp"))
         if token_client != self.expected_service_client_id:
             raise TokenValidationError(401, "invalid_service_token", "Unauthorized", "Service token client is invalid.")
@@ -234,6 +241,7 @@ def service_authenticator_from_env() -> ServiceAuthenticator:
             config.service_client_secret(),
             config.service_client_id(),
             config.oidc_issuer(),
+            config.keycloak_admin_client_id(),
             config.oidc_timeout_seconds(),
         )
     return SharedSecretServiceAuthenticator(config.service_token())

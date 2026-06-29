@@ -809,11 +809,36 @@ class OidcTokenTests(unittest.TestCase):
         self.assertEqual(decision["decision"], "deny")
         self.assertEqual(decision["reason"], "not_authorized")
 
-    def test_oidc_service_token_requires_expected_client(self) -> None:
+    def test_oidc_service_token_requires_contract_claims(self) -> None:
+        missing_issuer = self._active_response(sub="service-account", client_id=DEFAULT_SERVICE_ID)
+        missing_issuer.pop("iss")
+        missing_audience = self._active_response(sub="service-account", client_id=DEFAULT_SERVICE_ID)
+        missing_audience.pop("aud")
+        missing_subject = self._active_response(sub="service-account", client_id=DEFAULT_SERVICE_ID)
+        missing_subject.pop("sub")
         _, url = self._serve_introspection(
             {
                 "service-token": self._active_response(sub="service-account", client_id=DEFAULT_SERVICE_ID),
+                "wrong-issuer": self._active_response(
+                    sub="service-account",
+                    iss="http://wrong.example.test/realms/mvp",
+                    client_id=DEFAULT_SERVICE_ID,
+                ),
+                "missing-issuer": missing_issuer,
+                "wrong-audience": self._active_response(
+                    sub="service-account",
+                    aud="other-service",
+                    client_id=DEFAULT_SERVICE_ID,
+                ),
+                "missing-audience": missing_audience,
+                "missing-subject": missing_subject,
                 "wrong-client": self._active_response(sub="service-account", client_id="other-client"),
+                "expired": self._active_response(
+                    sub="service-account",
+                    exp=int(time.time()) - 1,
+                    client_id=DEFAULT_SERVICE_ID,
+                ),
+                "inactive": {"active": False},
             }
         )
         authenticator = OidcServiceTokenAuthenticator(
@@ -822,13 +847,25 @@ class OidcTokenTests(unittest.TestCase):
             "secret",
             DEFAULT_SERVICE_ID,
             self.issuer,
+            self.audience,
             1,
         )
 
         authenticator.require_authorized("Bearer service-token")
-        with self.assertRaises(TokenValidationError) as raised:
-            authenticator.require_authorized("Bearer wrong-client")
-        self.assertEqual(raised.exception.status, 401)
+        for token in (
+            "wrong-issuer",
+            "missing-issuer",
+            "wrong-audience",
+            "missing-audience",
+            "missing-subject",
+            "wrong-client",
+            "expired",
+            "inactive",
+        ):
+            with self.subTest(token=token):
+                with self.assertRaises(TokenValidationError) as raised:
+                    authenticator.require_authorized(f"Bearer {token}")
+                self.assertEqual(raised.exception.status, 401)
 
     def _service_with_validator(self, url: str) -> AccessControlService:
         tmp = tempfile.TemporaryDirectory()

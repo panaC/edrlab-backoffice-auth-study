@@ -41,7 +41,7 @@ Last reviewed: 2026-06-29
 
 | Item | Included |
 | --- | --- |
-| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
+| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, user-token and service-token audience mappers, and smoke-test user. |
 | IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
 | Demo protected service | Split into `access-control/src/access_check_demo_service/`; exposes `GET /access-check-demo`, returns JSON `OK` or `KO`, obtains a client-credentials service token, and calls `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
