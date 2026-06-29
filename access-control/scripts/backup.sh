@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="$ROOT_DIR/access-control/compose.yaml"
 ENV_FILE="$ROOT_DIR/access-control/.env.local"
-PROJECT_NAME="${COMPOSE_PROJECT_NAME:-edrlab-access-control-mvp}"
+PROJECT_NAME="${COMPOSE_PROJECT_NAME:-access-control-mvp}"
 BACKUP_IMAGE="${ACCESS_CONTROL_BACKUP_IMAGE:-busybox:1.36.1}"
 BACKUP_ROOT="${ACCESS_CONTROL_BACKUP_DIR:-$ROOT_DIR/access-control/backups}"
 BACKUP_ID="${1:-$(date -u +%Y%m%dT%H%M%SZ)}"

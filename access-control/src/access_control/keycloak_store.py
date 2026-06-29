@@ -23,14 +23,14 @@ ACCOUNT_TYPE_ROLE_BY_TYPE = {
     "super-admin": "account-type-super-admin",
 }
 ACCOUNT_TYPE_BY_ROLE = {value: key for key, value in ACCOUNT_TYPE_ROLE_BY_TYPE.items()}
-EDRLAB_ATTRS = {
-    "edrlab.account_id",
-    "edrlab.lifecycle",
-    "edrlab.linked_subject",
-    "edrlab.organization",
-    "edrlab.assigned_service_roles",
-    "edrlab.schema_version",
-    "edrlab.last_control_plane_mutation_at",
+IAM_ATTRS = {
+    "iam.account_id",
+    "iam.lifecycle",
+    "iam.linked_subject",
+    "iam.organization",
+    "iam.assigned_service_roles",
+    "iam.schema_version",
+    "iam.last_control_plane_mutation_at",
 }
 
 
@@ -84,8 +84,8 @@ class KeycloakStateStore:
             self.client.ensure_client_role(
                 self.backoffice_client_id,
                 role_name,
-                f"EDRLab {account_type} account type.",
-                {"edrlab.schema_version": [SCHEMA_VERSION]},
+                f"MVP Organization {account_type} account type.",
+                {"iam.schema_version": [SCHEMA_VERSION]},
             )
 
     def _load_service_roles(self) -> dict[str, dict[str, Any]]:
@@ -96,14 +96,14 @@ class KeycloakStateStore:
                 if not role_name:
                     continue
                 attrs = _attributes(role)
-                role_id = _attr(attrs, "edrlab.role_id") or f"{service_client_id}:{role_name}"
-                status = _attr(attrs, "edrlab.role_status") or "active"
+                role_id = _attr(attrs, "iam.role_id") or f"{service_client_id}:{role_name}"
+                status = _attr(attrs, "iam.role_status") or "active"
                 roles[role_id] = {
                     "roleId": role_id,
                     "serviceId": service_client_id,
                     "status": status,
                     "description": _string(role.get("description")),
-                    "schemaVersion": _attr(attrs, "edrlab.schema_version") or SCHEMA_VERSION,
+                    "schemaVersion": _attr(attrs, "iam.schema_version") or SCHEMA_VERSION,
                 }
         return roles
 
@@ -113,14 +113,14 @@ class KeycloakStateStore:
         service_roles: dict[str, dict[str, Any]],
     ) -> dict[str, Any] | None:
         attrs = _attributes(user)
-        account_id = _attr(attrs, "edrlab.account_id")
+        account_id = _attr(attrs, "iam.account_id")
         if not account_id:
             return None
         user_id = _required_string(user, "id")
         account_type, account_type_violations, account_type_roles = self._account_type_for_user(user_id)
         direct_service_role_ids = self._service_roles_for_user(user_id)
         assigned_service_role_ids, assigned_service_role_violations = _assigned_service_roles(attrs)
-        lifecycle = _attr(attrs, "edrlab.lifecycle") or ""
+        lifecycle = _attr(attrs, "iam.lifecycle") or ""
         violations = [*account_type_violations, *assigned_service_role_violations]
         enabled = user.get("enabled") is True
         if lifecycle in {"disabled", "archived"} and enabled:
@@ -138,13 +138,13 @@ class KeycloakStateStore:
         account: dict[str, Any] = {
             "accountId": account_id,
             "email": _string(user.get("email")),
-            "organization": _attr(attrs, "edrlab.organization") or "",
+            "organization": _attr(attrs, "iam.organization") or "",
             "name": _display_name(user),
             "accountType": account_type,
             "lifecycle": lifecycle,
-            "linkedSubject": _attr(attrs, "edrlab.linked_subject"),
+            "linkedSubject": _attr(attrs, "iam.linked_subject"),
             "serviceRoles": assigned_service_role_ids,
-            "schemaVersion": _attr(attrs, "edrlab.schema_version") or SCHEMA_VERSION,
+            "schemaVersion": _attr(attrs, "iam.schema_version") or SCHEMA_VERSION,
             "_keycloakUserId": user_id,
             "_keycloakAccountTypeRoles": sorted(account_type_roles),
             "_directServiceRoles": direct_service_role_ids,
@@ -172,7 +172,7 @@ class KeycloakStateStore:
                 if not role_name:
                     continue
                 attrs = _attributes(role)
-                role_ids.append(_attr(attrs, "edrlab.role_id") or f"{service_client_id}:{role_name}")
+                role_ids.append(_attr(attrs, "iam.role_id") or f"{service_client_id}:{role_name}")
         return sorted(set(role_ids))
 
     def _apply_service_role_changes(
@@ -194,10 +194,10 @@ class KeycloakStateStore:
                 role_name,
                 _string(role.get("description")),
                 {
-                    "edrlab.role_id": [role_id],
-                    "edrlab.role_status": [_required_string(role, "status")],
-                    "edrlab.schema_version": [_string(role.get("schemaVersion")) or SCHEMA_VERSION],
-                    "edrlab.last_control_plane_mutation_at": [_now()],
+                    "iam.role_id": [role_id],
+                    "iam.role_status": [_required_string(role, "status")],
+                    "iam.schema_version": [_string(role.get("schemaVersion")) or SCHEMA_VERSION],
+                    "iam.last_control_plane_mutation_at": [_now()],
                 },
             )
 
@@ -231,7 +231,7 @@ class KeycloakStateStore:
             if user:
                 return user
         account_id = _required_string(account, "accountId")
-        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        user = self.client.find_user_by_attribute("iam.account_id", account_id)
         if user:
             return user
         linked_subject = account.get("linkedSubject")
@@ -262,17 +262,17 @@ class KeycloakStateStore:
 
     def _write_user_profile(self, user: dict[str, Any], account: dict[str, Any]) -> None:
         attrs = _attributes(user)
-        for attr_name in EDRLAB_ATTRS:
+        for attr_name in IAM_ATTRS:
             if attr_name not in attrs:
                 continue
             attrs[attr_name] = list(attrs[attr_name])
-        _set_attr(attrs, "edrlab.account_id", _required_string(account, "accountId"))
-        _set_attr(attrs, "edrlab.lifecycle", _required_string(account, "lifecycle"))
-        _set_attr(attrs, "edrlab.linked_subject", account.get("linkedSubject"))
-        _set_attr(attrs, "edrlab.organization", _required_string(account, "organization"))
-        _set_attr(attrs, "edrlab.assigned_service_roles", _assigned_service_roles_json(account.get("serviceRoles")))
-        _set_attr(attrs, "edrlab.schema_version", _string(account.get("schemaVersion")) or SCHEMA_VERSION)
-        _set_attr(attrs, "edrlab.last_control_plane_mutation_at", _now())
+        _set_attr(attrs, "iam.account_id", _required_string(account, "accountId"))
+        _set_attr(attrs, "iam.lifecycle", _required_string(account, "lifecycle"))
+        _set_attr(attrs, "iam.linked_subject", account.get("linkedSubject"))
+        _set_attr(attrs, "iam.organization", _required_string(account, "organization"))
+        _set_attr(attrs, "iam.assigned_service_roles", _assigned_service_roles_json(account.get("serviceRoles")))
+        _set_attr(attrs, "iam.schema_version", _string(account.get("schemaVersion")) or SCHEMA_VERSION)
+        _set_attr(attrs, "iam.last_control_plane_mutation_at", _now())
         first_name, last_name = _name_parts(_required_string(account, "name"), user)
         payload = {
             "id": user["id"],
@@ -325,7 +325,7 @@ class KeycloakStateStore:
             current_names = {
                 _string(role.get("name"))
                 for role in current_roles
-                if _attr(_attributes(role), "edrlab.role_id") or _string(role.get("name"))
+                if _attr(_attributes(role), "iam.role_id") or _string(role.get("name"))
             }
             if current_names:
                 self.client.remove_user_client_roles(user_id, service_id, sorted(current_names))
@@ -627,7 +627,7 @@ def _set_attr(attrs: dict[str, list[str]], name: str, value: Any) -> None:
 
 
 def _assigned_service_roles(attrs: dict[str, list[str]]) -> tuple[list[str], list[str]]:
-    raw = _attr(attrs, "edrlab.assigned_service_roles")
+    raw = _attr(attrs, "iam.assigned_service_roles")
     if raw is None:
         return [], []
     try:

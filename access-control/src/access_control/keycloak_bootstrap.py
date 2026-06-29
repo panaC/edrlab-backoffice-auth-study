@@ -25,14 +25,14 @@ def env_bool(name: str, default: bool = False) -> bool:
 
 
 KEYCLOAK_BASE_URL = env("KEYCLOAK_BASE_URL", "http://keycloak:8080").rstrip("/")
-KEYCLOAK_REALM = env("KEYCLOAK_REALM", "edrlab-backoffice-mvp")
+KEYCLOAK_REALM = env("KEYCLOAK_REALM", "access-control-mvp")
 KC_BOOTSTRAP_ADMIN_USERNAME = env("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
 KC_BOOTSTRAP_ADMIN_PASSWORD = env("KC_BOOTSTRAP_ADMIN_PASSWORD", "change-me-admin-password")
-BACKOFFICE_CLIENT_ID = env("KEYCLOAK_BACKOFFICE_CLIENT_ID", "edrlab-backoffice")
+BACKOFFICE_CLIENT_ID = env("KEYCLOAK_BACKOFFICE_CLIENT_ID", "backoffice")
 BACKOFFICE_CLIENT_SECRET = env("KEYCLOAK_BACKOFFICE_CLIENT_SECRET", "change-me-backoffice-secret")
 SERVICE_CLIENT_ID = env("KEYCLOAK_SERVICE_CLIENT_ID", DEFAULT_SERVICE_ID)
 SERVICE_CLIENT_SECRET = env("KEYCLOAK_SERVICE_CLIENT_SECRET", "change-me-demo-service-secret")
-CONTROL_PLANE_CLIENT_ID = env("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID", "edrlab-iam-control-plane")
+CONTROL_PLANE_CLIENT_ID = env("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID", "iam-control-plane")
 CONTROL_PLANE_CLIENT_SECRET = env("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_SECRET", "change-me-iam-control-plane-secret")
 SUPER_ADMIN_USERNAME = env("KEYCLOAK_SUPER_ADMIN_USERNAME", "mvp-super-admin")
 SUPER_ADMIN_EMAIL = env("BOOTSTRAP_SUPER_ADMIN_EMAIL", "super-admin@example.test")
@@ -44,14 +44,14 @@ SMOKE_PASSWORD = env("KEYCLOAK_SMOKE_PASSWORD", "change-me-member-password")
 BACKOFFICE_REDIRECT_URI = env("KEYCLOAK_BACKOFFICE_REDIRECT_URI", "http://localhost:9999/callback")
 RESET_FIXTURE_PASSWORDS = env_bool("KEYCLOAK_BOOTSTRAP_RESET_FIXTURE_PASSWORDS")
 
-EDRLAB_USER_ATTRIBUTES = (
-    "edrlab.account_id",
-    "edrlab.lifecycle",
-    "edrlab.linked_subject",
-    "edrlab.organization",
-    "edrlab.assigned_service_roles",
-    "edrlab.schema_version",
-    "edrlab.last_control_plane_mutation_at",
+IAM_USER_ATTRIBUTES = (
+    "iam.account_id",
+    "iam.lifecycle",
+    "iam.linked_subject",
+    "iam.organization",
+    "iam.assigned_service_roles",
+    "iam.schema_version",
+    "iam.last_control_plane_mutation_at",
 )
 REALM_EVENT_TYPES = ("LOGIN", "LOGIN_ERROR", "LOGOUT", "CODE_TO_TOKEN", "CLIENT_LOGIN")
 
@@ -116,7 +116,7 @@ def ensure_realm(token: str) -> None:
     payload = {
         "realm": KEYCLOAK_REALM,
         "enabled": True,
-        "displayName": "EDRLab Backoffice MVP",
+        "displayName": "Access-Control Backoffice MVP",
         "eventsEnabled": True,
         "eventsExpiration": 3600,
         "enabledEventTypes": list(REALM_EVENT_TYPES),
@@ -149,7 +149,7 @@ def ensure_user_profile(token: str) -> None:
         if name in by_name:
             raise RuntimeError(f"Duplicate Keycloak user-profile attribute: {name}")
         by_name[name] = attribute
-    for attribute_name in EDRLAB_USER_ATTRIBUTES:
+    for attribute_name in IAM_USER_ATTRIBUTES:
         definition = by_name.get(attribute_name)
         if definition is None:
             definition = {"name": attribute_name}
@@ -168,7 +168,7 @@ def ensure_user_profile(token: str) -> None:
 def backoffice_client_payload() -> dict[str, Any]:
     return {
         "clientId": BACKOFFICE_CLIENT_ID,
-        "name": "EDRLab Backoffice MVP",
+        "name": "Access-Control Backoffice MVP",
         "enabled": True,
         "protocol": "openid-connect",
         "publicClient": False,
@@ -210,7 +210,7 @@ def service_client_payload() -> dict[str, Any]:
 def control_plane_client_payload() -> dict[str, Any]:
     return {
         "clientId": CONTROL_PLANE_CLIENT_ID,
-        "name": "EDRLab IAM Control Plane API",
+        "name": "IAM Control Plane API",
         "enabled": True,
         "protocol": "openid-connect",
         "publicClient": False,
@@ -278,9 +278,9 @@ def ensure_control_plane_admin_roles(token: str, control_plane_uuid: str) -> Non
 
 
 def ensure_account_type_roles(token: str, backoffice_uuid: str) -> None:
-    ensure_client_role(token, backoffice_uuid, "account-type-member", "EDRLab member account type.", {"edrlab.schema_version": ["iam-schema-v1"]})
-    ensure_client_role(token, backoffice_uuid, "account-type-admin", "EDRLab admin account type.", {"edrlab.schema_version": ["iam-schema-v1"]})
-    ensure_client_role(token, backoffice_uuid, "account-type-super-admin", "EDRLab super-admin account type.", {"edrlab.schema_version": ["iam-schema-v1"]})
+    ensure_client_role(token, backoffice_uuid, "account-type-member", "IAM member account type.", {"iam.schema_version": ["iam-schema-v1"]})
+    ensure_client_role(token, backoffice_uuid, "account-type-admin", "IAM admin account type.", {"iam.schema_version": ["iam-schema-v1"]})
+    ensure_client_role(token, backoffice_uuid, "account-type-super-admin", "IAM super-admin account type.", {"iam.schema_version": ["iam-schema-v1"]})
 
 
 def ensure_service_role(token: str, service_uuid: str, role_name: str, description: str) -> None:
@@ -290,9 +290,9 @@ def ensure_service_role(token: str, service_uuid: str, role_name: str, descripti
         role_name,
         description,
         {
-            "edrlab.role_id": [DEFAULT_SERVICE_ROLE_ID],
-            "edrlab.role_status": ["active"],
-            "edrlab.schema_version": ["iam-schema-v1"],
+            "iam.role_id": [DEFAULT_SERVICE_ROLE_ID],
+            "iam.role_status": ["active"],
+            "iam.schema_version": ["iam-schema-v1"],
         },
     )
 
@@ -483,7 +483,7 @@ def merge_fixture_user_representation(existing: dict[str, Any], desired: dict[st
 
 
 def is_iam_managed_user(user: dict[str, Any]) -> bool:
-    return bool(_attribute_values(user).get("edrlab.account_id"))
+    return bool(_attribute_values(user).get("iam.account_id"))
 
 
 def write_bootstrap_output(super_admin: dict[str, Any]) -> None:

@@ -17,5 +17,5 @@ USER app
 
 EXPOSE 8000 8001
 
-CMD ["python", "-m", "edrlab_access_control.iam_api"]
+CMD ["python", "-m", "access_control.iam_api"]
 

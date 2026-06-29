@@ -53,7 +53,7 @@ def problem_response(
         handler,
         status,
         {
-            "type": f"https://docs.edrlab.example/problems/{code}",
+            "type": f"https://docs.access-control.example/problems/{code}",
             "title": title,
             "status": status,
             "detail": detail,

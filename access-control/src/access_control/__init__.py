@@ -1,4 +1,4 @@
-"""EDRLab access-control MVP slice."""
+"""MVP Organization access-control MVP slice."""
 
 __all__ = ["__version__"]
 

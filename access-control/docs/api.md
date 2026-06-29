@@ -55,7 +55,7 @@ Error responses use `application/problem+json`:
 
 ```json
 {
-  "type": "https://docs.edrlab.example/problems/forbidden",
+  "type": "https://docs.access-control.example/problems/forbidden",
   "title": "Forbidden",
   "status": 403,
   "detail": "Operation is not allowed.",
@@ -89,7 +89,7 @@ Account objects returned by the runtime use this public shape:
 {
   "accountId": "acc_123",
   "email": "member@example.test",
-  "organization": "EDRLab",
+  "organization": "MVP Organization",
   "name": "Member One",
   "accountType": "member",
   "lifecycle": "active",
@@ -141,7 +141,7 @@ Request:
 ```json
 {
   "email": "member@example.test",
-  "organization": "EDRLab",
+  "organization": "MVP Organization",
   "name": "Member One",
   "accountType": "member"
 }
@@ -163,7 +163,7 @@ Request:
 ```json
 {
   "email": "member@example.test",
-  "organization": "EDRLab",
+  "organization": "MVP Organization",
   "name": "Member One"
 }
 ```

@@ -43,7 +43,7 @@ This is production-scope code, not a Phase 4 PoC. It is still an early Phase 6 r
 
 | Item | Included |
 | --- | --- |
-| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed EDRLab User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
+| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, audience mapper, and smoke-test user. |
 | IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
 | Demo protected service | `GET /access-check-demo`, returning JSON `OK` or `KO`, obtaining a client-credentials service token, and calling `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
@@ -134,7 +134,7 @@ Recommended MVP scenario:
 
 1. An admin or super-admin creates the backoffice account through the IAM Control Plane API. The account starts in `invited` state, has `email`, `name`, `organization`, and `accountType`, and has no `linkedSubject`.
 2. The controlled provisioning path creates or updates the matching user in the Keycloak MVP realm with the same email. Public registration remains disabled and routine direct Keycloak business administration remains out of scope for the MVP ([MVP scope - Out of Scope](../docs/evaluation/mvp-scope.md#out-of-scope)).
-3. Keycloak sends the invited user an actions email for first login setup, instead of an EDRLab admin sending a reusable password. Keycloak documents SMTP-based realm email, per-user required actions, `execute-actions-email`, and password-reset/update-password emails ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm), [Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user), [Keycloak Admin REST `execute-actions-email`](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)).
+3. Keycloak sends the invited user an actions email for first login setup, instead of an backoffice admin sending a reusable password. Keycloak documents SMTP-based realm email, per-user required actions, `execute-actions-email`, and password-reset/update-password emails ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm), [Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user), [Keycloak Admin REST `execute-actions-email`](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)).
 4. For a `member`, the first-login actions should at least make the user own their credential and satisfy email verification before IAM activation. For an `admin` or `super-admin`, the actions must also satisfy the accepted privileged-authentication evidence requirement, using the MVP OTP direction where applicable ([MVP scope - Onboarding and Bootstrap](../docs/evaluation/mvp-scope.md#onboarding-and-bootstrap), [Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)).
 5. The user follows the Keycloak link or signs in through the Admin Console, completes the required Keycloak actions, and returns to the Admin Console with a user access token.
 6. The Admin Console calls `POST /iam/onboarding/activate` with that bearer token. The IAM API activates the account only if the token evidence safely matches exactly one invited account.
@@ -145,7 +145,7 @@ Recommended Keycloak configuration for the MVP:
 | --- | --- |
 | Realm email | Configure SMTP for the MVP realm so Keycloak can send verification and action emails. Keycloak sends verification, password, and event notification emails only after realm SMTP settings are configured ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm)). |
 | Public registration | Keep public registration disabled. Backoffice accounts are created only through authorized administration workflows. |
-| Backoffice OIDC client | Use the `edrlab-backoffice` Authorization Code + PKCE client and allow only the Admin Console redirect URI used after first-login actions. |
+| Backoffice OIDC client | Use the `backoffice` Authorization Code + PKCE client and allow only the Admin Console redirect URI used after first-login actions. |
 | User creation | The controlled provisioning path creates or updates the Keycloak user that matches the IAM invited account email. |
 | Required actions for `member` | Send `VERIFY_EMAIL` and `UPDATE_PASSWORD`, so the user proves email ownership and owns their credential before IAM activation. Keycloak supports required actions per user and default required actions for new users ([Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user)). |
 | Required actions for `admin` and `super-admin` | Send `VERIFY_EMAIL`, `UPDATE_PASSWORD`, and `CONFIGURE_TOTP` where the MVP privileged-authentication flow uses OTP. Keycloak documents that when OTP is required, the user must configure an OTP generator at login ([Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)). |
@@ -210,8 +210,8 @@ Evidence is written to `access-control/evidence/<timestamp>/` and is ignored by 
 
 The local MVP stores durable runtime state in two Docker volumes:
 
-- `edrlab-access-control-mvp_access-control-runtime` for local IAM runtime files, including audit JSONL;
-- `edrlab-access-control-mvp_keycloak-data` for the local Keycloak data directory.
+- `access-control-mvp_access-control-runtime` for local IAM runtime files, including audit JSONL;
+- `access-control-mvp_keycloak-data` for the local Keycloak data directory.
 
 Audit files are durable MVP state and must be included in backup and restore planning before production data is trusted ([Audit Storage Architecture](../docs/architecture/audit-storage.md#backup-and-restore), [MVP scope - Production Readiness Gaps](../docs/evaluation/mvp-scope.md#production-readiness-gaps)).
 

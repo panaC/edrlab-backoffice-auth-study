@@ -8,9 +8,9 @@ DEFAULT_STATE_PATH = "/app/runtime/state/state.json"
 DEFAULT_AUDIT_PATH = "/app/runtime/audit/audit.jsonl"
 DEFAULT_SERVICE_ROLE_ID = "access-check-demo:consult"
 DEFAULT_SERVICE_ID = "access-check-demo-service"
-DEFAULT_PRIVILEGED_ACR = "edrlab-privileged"
-DEFAULT_KEYCLOAK_REALM = "edrlab-backoffice-mvp"
-DEFAULT_BACKOFFICE_CLIENT_ID = "edrlab-backoffice"
+DEFAULT_PRIVILEGED_ACR = "iam-privileged"
+DEFAULT_KEYCLOAK_REALM = "access-control-mvp"
+DEFAULT_BACKOFFICE_CLIENT_ID = "backoffice"
 
 
 def state_path() -> str:
@@ -98,7 +98,7 @@ def service_token_url() -> str:
 
 
 def keycloak_admin_client_id() -> str:
-    return os.environ.get("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID", "edrlab-iam-control-plane")
+    return os.environ.get("KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID", "iam-control-plane")
 
 
 def keycloak_admin_client_secret() -> str:
@@ -120,6 +120,6 @@ def bootstrap_config() -> dict[str, str]:
     return {
         "email": os.environ.get("BOOTSTRAP_SUPER_ADMIN_EMAIL", "super-admin@example.test"),
         "name": os.environ.get("BOOTSTRAP_SUPER_ADMIN_NAME", "Initial Super Admin"),
-        "organization": os.environ.get("BOOTSTRAP_SUPER_ADMIN_ORGANIZATION", "EDRLab"),
+        "organization": os.environ.get("BOOTSTRAP_SUPER_ADMIN_ORGANIZATION", "MVP Organization"),
         "subject": subject,
     }

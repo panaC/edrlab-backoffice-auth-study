@@ -12,15 +12,15 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from edrlab_access_control.audit import AuditWriter
-from edrlab_access_control import keycloak_bootstrap
-from edrlab_access_control.config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
-from edrlab_access_control.demo_service import DemoHandler
-from edrlab_access_control.iam_api import IamServer
-from edrlab_access_control.keycloak_store import KeycloakStateStore
-from edrlab_access_control.service import AccessControlService, ApiError
-from edrlab_access_control.store import FileStateStore
-from edrlab_access_control.tokens import (
+from access_control.audit import AuditWriter
+from access_control import keycloak_bootstrap
+from access_control.config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
+from access_control.demo_service import DemoHandler
+from access_control.iam_api import IamServer
+from access_control.keycloak_store import KeycloakStateStore
+from access_control.service import AccessControlService, ApiError
+from access_control.store import FileStateStore
+from access_control.tokens import (
     OidcIntrospectionSubjectTokenValidator,
     OidcServiceTokenAuthenticator,
     SharedSecretServiceAuthenticator,
@@ -67,7 +67,7 @@ class MvpSecurityTests(unittest.TestCase):
         self.bootstrap = self.service.bootstrap_first_super_admin(
             email="super-admin@example.test",
             name="Initial Super Admin",
-            organization="EDRLab",
+            organization="MVP Organization",
             subject="super-sub",
         )
         self.super_admin_id = self.bootstrap["accountId"]
@@ -97,13 +97,13 @@ class MvpSecurityTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "admin@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Admin",
                 "accountType": "admin",
             },
             "corr-admin",
         )
-        self._add_subject_token("admin-token", "admin-sub", "admin@example.test", acr="edrlab-privileged")
+        self._add_subject_token("admin-token", "admin-sub", "admin@example.test", acr="iam-privileged")
         self.service.activate_onboarding_from_bearer(
             "Bearer admin-token",
             {},
@@ -114,7 +114,7 @@ class MvpSecurityTests(unittest.TestCase):
                 admin["accountId"],
                 {
                     "email": "other-admin@example.test",
-                    "organization": "EDRLab",
+                    "organization": "MVP Organization",
                     "name": "Other Admin",
                     "accountType": "admin",
                 },
@@ -127,7 +127,7 @@ class MvpSecurityTests(unittest.TestCase):
                 self.super_admin_id,
                 {
                     "email": "new-super@example.test",
-                    "organization": "EDRLab",
+                    "organization": "MVP Organization",
                     "name": "New Super",
                     "accountType": "super-admin",
                 },
@@ -140,13 +140,13 @@ class MvpSecurityTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "audited-admin@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Audited Admin",
                 "accountType": "admin",
             },
             "corr-create-audited-admin",
         )
-        self._add_subject_token("audited-admin-token", "audited-admin-sub", "audited-admin@example.test", acr="edrlab-privileged")
+        self._add_subject_token("audited-admin-token", "audited-admin-sub", "audited-admin@example.test", acr="iam-privileged")
         self.service.activate_onboarding_from_bearer(
             "Bearer audited-admin-token",
             {},
@@ -156,7 +156,7 @@ class MvpSecurityTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "audited-member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Audited Member",
                 "accountType": "member",
             },
@@ -174,7 +174,7 @@ class MvpSecurityTests(unittest.TestCase):
                 admin["accountId"],
                 {
                     "email": "forbidden-admin@example.test",
-                    "organization": "EDRLab",
+                    "organization": "MVP Organization",
                     "name": "Forbidden Admin",
                     "accountType": "admin",
                 },
@@ -225,21 +225,21 @@ class MvpSecurityTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "priv-admin@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Priv Admin",
                 "accountType": "admin",
             },
             "corr-create-priv-admin",
         )
         with self.assertRaises(ApiError) as missing_acr:
-            self._add_subject_token("priv-admin-normal-token", "priv-admin-sub", "priv-admin@example.test", acr="edrlab-normal")
+            self._add_subject_token("priv-admin-normal-token", "priv-admin-sub", "priv-admin@example.test", acr="iam-normal")
             self.service.activate_onboarding_from_bearer(
                 "Bearer priv-admin-normal-token",
                 {},
                 "corr-deny-priv-admin",
             )
         self.assertEqual(missing_acr.exception.status, 403)
-        self._add_subject_token("priv-admin-token", "priv-admin-sub", "priv-admin@example.test", acr="edrlab-privileged")
+        self._add_subject_token("priv-admin-token", "priv-admin-sub", "priv-admin@example.test", acr="iam-privileged")
         activated = self.service.activate_onboarding_from_bearer(
             "Bearer priv-admin-token",
             {},
@@ -253,7 +253,7 @@ class MvpSecurityTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Member",
                 "accountType": "member",
             },
@@ -319,13 +319,13 @@ class MvpSecurityTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "services-admin@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Services Admin",
                 "accountType": "admin",
             },
             "corr-create-services-admin",
         )
-        self._add_subject_token("services-admin-token", "services-admin-sub", "services-admin@example.test", acr="edrlab-privileged")
+        self._add_subject_token("services-admin-token", "services-admin-sub", "services-admin@example.test", acr="iam-privileged")
         self.service.activate_onboarding_from_bearer(
             "Bearer services-admin-token",
             {},
@@ -466,7 +466,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         bootstrap = self.service.bootstrap_first_super_admin(
             email="super-admin@example.test",
             name="Initial Super Admin",
-            organization="EDRLab",
+            organization="MVP Organization",
             subject="super-sub",
         )
         self.super_admin_id = bootstrap["accountId"]
@@ -474,7 +474,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Member",
                 "accountType": "member",
             },
@@ -524,7 +524,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
                 },
                 body={
                     "email": "new-member@example.test",
-                    "organization": "EDRLab",
+                    "organization": "MVP Organization",
                     "name": "New Member",
                     "accountType": "member",
                 },
@@ -538,7 +538,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
             headers={"Authorization": "Bearer dev-sub:super-sub"},
             body={
                 "email": "new-member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "New Member",
                 "accountType": "member",
             },
@@ -634,7 +634,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
                     "subject": "forged-sub",
                     "email": "forged@example.test",
                     "emailVerified": True,
-                    "acr": "edrlab-privileged",
+                    "acr": "iam-privileged",
                 },
             )
         self.assertEqual(raised.exception.code, 422)
@@ -644,7 +644,7 @@ class IamHttpAuthenticationTests(unittest.TestCase):
             self.super_admin_id,
             {
                 "email": "new-member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "New Member",
                 "accountType": "member",
             },
@@ -755,12 +755,12 @@ class OidcTokenTests(unittest.TestCase):
             {
                 "azp-token": {
                     **self._active_response(sub="kc-sub", client_id=None),
-                    "azp": "edrlab-backoffice",
+                    "azp": "backoffice",
                 }
             }
         )
 
-        self.assertEqual(self._validator(url).validate("azp-token").client_id, "edrlab-backoffice")
+        self.assertEqual(self._validator(url).validate("azp-token").client_id, "backoffice")
 
     def test_raw_oidc_claims_do_not_grant_local_service_access(self) -> None:
         _, url = self._serve_introspection(
@@ -769,7 +769,7 @@ class OidcTokenTests(unittest.TestCase):
                     **self._active_response(sub="member-sub"),
                     "email": "member@example.test",
                     "email_verified": True,
-                    "edrlab_account_type": "super-admin",
+                    "iam_account_type": "super-admin",
                     "realm_access": {"roles": [DEFAULT_SERVICE_ROLE_ID]},
                 }
             }
@@ -779,12 +779,12 @@ class OidcTokenTests(unittest.TestCase):
             service.bootstrap_first_super_admin(
                 email="super-admin@example.test",
                 name="Initial Super Admin",
-                organization="EDRLab",
+                organization="MVP Organization",
                 subject="super-sub",
             )["accountId"],
             {
                 "email": "member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "Member",
                 "accountType": "member",
             },
@@ -843,7 +843,7 @@ class OidcTokenTests(unittest.TestCase):
     def _validator(self, url: str) -> OidcIntrospectionSubjectTokenValidator:
         return OidcIntrospectionSubjectTokenValidator(
             f"{url}/introspect",
-            "edrlab-backoffice",
+            "backoffice",
             "client-secret",
             self.issuer,
             self.audience,
@@ -857,7 +857,7 @@ class OidcTokenTests(unittest.TestCase):
         iss: str | None = None,
         aud: str | list[str] | None = None,
         exp: int | None = None,
-        client_id: str | None = "edrlab-backoffice",
+        client_id: str | None = "backoffice",
     ) -> dict[str, object]:
         response: dict[str, object] = {
             "active": True,
@@ -995,7 +995,7 @@ class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
     def test_client_merge_preserves_existing_unowned_configuration(self) -> None:
         existing = {
             "id": "client-uuid",
-            "clientId": "edrlab-backoffice",
+            "clientId": "backoffice",
             "name": "Custom Existing Name",
             "redirectUris": ["https://admin.example.test/callback"],
             "webOrigins": ["https://admin.example.test"],
@@ -1006,8 +1006,8 @@ class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
             "optionalClientScopes": ["profile"],
         }
         desired = {
-            "clientId": "edrlab-backoffice",
-            "name": "EDRLab Backoffice MVP",
+            "clientId": "backoffice",
+            "name": "Access-Control Backoffice MVP",
             "enabled": True,
             "protocol": "openid-connect",
             "redirectUris": ["http://localhost:9999/callback"],
@@ -1042,12 +1042,12 @@ class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
             "lastName": "Admin",
             "requiredActions": ["UPDATE_PASSWORD"],
             "attributes": {
-                "edrlab.account_id": ["acc_bootstrap_super_admin"],
-                "edrlab.lifecycle": ["disabled"],
-                "edrlab.linked_subject": ["super-sub"],
-                "edrlab.organization": ["EDRLab"],
-                "edrlab.assigned_service_roles": ["[]"],
-                "edrlab.schema_version": ["iam-schema-v1"],
+                "iam.account_id": ["acc_bootstrap_super_admin"],
+                "iam.lifecycle": ["disabled"],
+                "iam.linked_subject": ["super-sub"],
+                "iam.organization": ["MVP Organization"],
+                "iam.assigned_service_roles": ["[]"],
+                "iam.schema_version": ["iam-schema-v1"],
             },
         }
         desired = keycloak_bootstrap.fixture_user_payload(
@@ -1201,7 +1201,7 @@ class KeycloakStateStoreTests(unittest.TestCase):
         self.client = FakeKeycloakAdminClient()
         self.store = KeycloakStateStore(
             self.client,  # type: ignore[arg-type]
-            backoffice_client_id="edrlab-backoffice",
+            backoffice_client_id="backoffice",
             service_client_ids=[DEFAULT_SERVICE_ID],
         )
         self.client.ensure_client_role(
@@ -1209,23 +1209,23 @@ class KeycloakStateStoreTests(unittest.TestCase):
             "consult",
             "Initial MVP access-check demo consultation role.",
             {
-                "edrlab.role_id": [DEFAULT_SERVICE_ROLE_ID],
-                "edrlab.role_status": ["active"],
-                "edrlab.schema_version": ["iam-schema-v1"],
+                "iam.role_id": [DEFAULT_SERVICE_ROLE_ID],
+                "iam.role_status": ["active"],
+                "iam.schema_version": ["iam-schema-v1"],
             },
         )
         self.client.add_user(
             "super-sub",
             "super-admin@example.test",
             {
-                "edrlab.account_id": ["acc-super"],
-                "edrlab.lifecycle": ["active"],
-                "edrlab.linked_subject": ["super-sub"],
-                "edrlab.organization": ["EDRLab"],
-                "edrlab.assigned_service_roles": ["[]"],
-                "edrlab.schema_version": ["iam-schema-v1"],
+                "iam.account_id": ["acc-super"],
+                "iam.lifecycle": ["active"],
+                "iam.linked_subject": ["super-sub"],
+                "iam.organization": ["MVP Organization"],
+                "iam.assigned_service_roles": ["[]"],
+                "iam.schema_version": ["iam-schema-v1"],
             },
-            {"edrlab-backoffice": {"account-type-super-admin"}},
+            {"backoffice": {"account-type-super-admin"}},
             first_name="Super",
             last_name="Admin",
         )
@@ -1251,35 +1251,35 @@ class KeycloakStateStoreTests(unittest.TestCase):
             "acc-super",
             {
                 "email": "member@example.test",
-                "organization": "EDRLab",
+                "organization": "MVP Organization",
                 "name": "MVP Member",
                 "accountType": "member",
             },
             "corr-create",
         )
         account_id = created["accountId"]
-        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        user = self.client.find_user_by_attribute("iam.account_id", account_id)
         self.assertIsNotNone(user)
         assert user is not None
-        self.assertEqual(user["attributes"]["edrlab.lifecycle"], ["invited"])
-        self.assertEqual(json.loads(user["attributes"]["edrlab.assigned_service_roles"][0]), [])
-        self.assertIn("account-type-member", self.client.assignments[user["id"]]["edrlab-backoffice"])
+        self.assertEqual(user["attributes"]["iam.lifecycle"], ["invited"])
+        self.assertEqual(json.loads(user["attributes"]["iam.assigned_service_roles"][0]), [])
+        self.assertIn("account-type-member", self.client.assignments[user["id"]]["backoffice"])
 
         self.service.assign_service_role("acc-super", account_id, DEFAULT_SERVICE_ROLE_ID, "corr-assign")
-        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        user = self.client.find_user_by_attribute("iam.account_id", account_id)
         assert user is not None
         self.assertEqual(
-            json.loads(user["attributes"]["edrlab.assigned_service_roles"][0]),
+            json.loads(user["attributes"]["iam.assigned_service_roles"][0]),
             [DEFAULT_SERVICE_ROLE_ID],
         )
         self.assertNotIn("consult", self.client.assignments[user["id"]].get(DEFAULT_SERVICE_ID, set()))
 
         activated = self.service.activate_onboarding_from_bearer("Bearer member-token", {}, "corr-activate")
-        user = self.client.find_user_by_attribute("edrlab.account_id", account_id)
+        user = self.client.find_user_by_attribute("iam.account_id", account_id)
         assert user is not None
         self.assertEqual(activated["lifecycle"], "active")
-        self.assertEqual(user["attributes"]["edrlab.lifecycle"], ["active"])
-        self.assertEqual(user["attributes"]["edrlab.linked_subject"], ["member-sub"])
+        self.assertEqual(user["attributes"]["iam.lifecycle"], ["active"])
+        self.assertEqual(user["attributes"]["iam.linked_subject"], ["member-sub"])
 
         decision = self.service.authorization_check(
             {
@@ -1292,7 +1292,7 @@ class KeycloakStateStoreTests(unittest.TestCase):
         self.assertEqual(decision["decision"], "allow")
 
     def test_keycloak_account_type_drift_blocks_actor_resolution(self) -> None:
-        self.client.assignments["super-sub"]["edrlab-backoffice"].add("account-type-admin")
+        self.client.assignments["super-sub"]["backoffice"].add("account-type-admin")
 
         with self.assertRaises(ApiError) as raised:
             self.service.resolve_actor_id_from_bearer("Bearer super-token", "corr-drift")
@@ -1305,15 +1305,15 @@ class KeycloakStateStoreTests(unittest.TestCase):
             "drift-member-sub",
             "drift-member@example.test",
             {
-                "edrlab.account_id": ["acc-drift-member"],
-                "edrlab.lifecycle": ["active"],
-                "edrlab.linked_subject": ["drift-member-sub"],
-                "edrlab.organization": ["EDRLab"],
-                "edrlab.assigned_service_roles": ["[]"],
-                "edrlab.schema_version": ["iam-schema-v1"],
+                "iam.account_id": ["acc-drift-member"],
+                "iam.lifecycle": ["active"],
+                "iam.linked_subject": ["drift-member-sub"],
+                "iam.organization": ["MVP Organization"],
+                "iam.assigned_service_roles": ["[]"],
+                "iam.schema_version": ["iam-schema-v1"],
             },
             {
-                "edrlab-backoffice": {"account-type-member"},
+                "backoffice": {"account-type-member"},
                 DEFAULT_SERVICE_ID: {"consult"},
             },
             first_name="Drift",
@@ -1338,15 +1338,15 @@ class KeycloakStateStoreTests(unittest.TestCase):
             "assigned-plus-direct-sub",
             "assigned-plus-direct@example.test",
             {
-                "edrlab.account_id": ["acc-assigned-plus-direct"],
-                "edrlab.lifecycle": ["active"],
-                "edrlab.linked_subject": ["assigned-plus-direct-sub"],
-                "edrlab.organization": ["EDRLab"],
-                "edrlab.assigned_service_roles": [json.dumps([DEFAULT_SERVICE_ROLE_ID])],
-                "edrlab.schema_version": ["iam-schema-v1"],
+                "iam.account_id": ["acc-assigned-plus-direct"],
+                "iam.lifecycle": ["active"],
+                "iam.linked_subject": ["assigned-plus-direct-sub"],
+                "iam.organization": ["MVP Organization"],
+                "iam.assigned_service_roles": [json.dumps([DEFAULT_SERVICE_ROLE_ID])],
+                "iam.schema_version": ["iam-schema-v1"],
             },
             {
-                "edrlab-backoffice": {"account-type-member"},
+                "backoffice": {"account-type-member"},
                 DEFAULT_SERVICE_ID: {"consult"},
             },
             first_name="Assigned",

@@ -19,8 +19,8 @@ from .config import DEFAULT_SERVICE_ROLE_ID
 
 
 KEYCLOAK_BASE_URL = os.environ.get("KEYCLOAK_BASE_URL", "http://keycloak:8080").rstrip("/")
-KEYCLOAK_REALM = os.environ.get("KEYCLOAK_REALM", "edrlab-backoffice-mvp")
-BACKOFFICE_CLIENT_ID = os.environ.get("KEYCLOAK_BACKOFFICE_CLIENT_ID", "edrlab-backoffice")
+KEYCLOAK_REALM = os.environ.get("KEYCLOAK_REALM", "access-control-mvp")
+BACKOFFICE_CLIENT_ID = os.environ.get("KEYCLOAK_BACKOFFICE_CLIENT_ID", "backoffice")
 BACKOFFICE_CLIENT_SECRET = os.environ.get("KEYCLOAK_BACKOFFICE_CLIENT_SECRET", "change-me-backoffice-secret")
 BACKOFFICE_REDIRECT_URI = os.environ.get("KEYCLOAK_BACKOFFICE_REDIRECT_URI", "http://localhost:9999/callback")
 SUPER_ADMIN_USERNAME = os.environ.get("KEYCLOAK_SUPER_ADMIN_USERNAME", "mvp-super-admin")
@@ -187,7 +187,7 @@ def ensure_local_member_account(
             "POST",
             f"{IAM_API_BASE_URL}/iam/accounts",
             actor_token=admin_access_token,
-            body={"email": email, "organization": "EDRLab", "name": "MVP Member", "accountType": "member"},
+            body={"email": email, "organization": "MVP Organization", "name": "MVP Member", "accountType": "member"},
             expected={200},
         )
     request_json(
