@@ -11,6 +11,7 @@ This repository is a study repository, not a released software package. Changelo
 - Added Docker-volume backup and restore scripts for the Phase 6 `access-control/` MVP runtime, including checksum verification, a restore confirmation gate, and generated-backup ignore rules.
 - Added `docs/architecture/keycloak-iam-onboarding.md` as the dedicated Keycloak/IAM onboarding architecture note.
 - Added `SEC-DRIFT-002` regression evidence for direct Keycloak lifecycle drift, including fail-closed authorization denial and `drift_detected` audit assertions.
+- Added `SEC-CLAIM-001` Docker Keycloak smoke evidence that stale real-token service-role claims return confirmed `403 KO` after IAM-managed role removal.
 - Added `SEC-CLAIM-003` regression evidence that an admin-looking OIDC token for a disabled account fails closed against canonical IAM lifecycle state.
 - Added `SEC-FE-002` regression evidence that client-supplied hidden or admin fields cannot mutate protected account, service-role, lifecycle, or assignment state.
 - Added `SEC-SUBJECT-003` regression evidence that different-subject onboarding cannot rebind an existing subject link and leaves rejected audit evidence.
@@ -38,6 +39,7 @@ This repository is a study repository, not a released software package. Changelo
 - Made Keycloak bootstrap explicitly set and verify disabled unmanaged User Profile attributes, with tests covering the schema policy guard.
 - Tightened OIDC service-token validation for `authorization/check` to require issuer, audience, expiry, subject, and expected service client, with a matching Keycloak audience mapper for the Docker runtime.
 - Aligned member service-role removal with the IAM API contract so inactive roles can be removed from members and repeated removal stays idempotent.
+- Made Keycloak User Profile bootstrap and schema documentation compatible with runtimes that omit the unmanaged-attribute policy field when the server default is already disabled.
 - Tightened onboarding repeat activation idempotence so only already-active accounts with the same immutable subject return no-change success, matching `FR-043` and `FR-044`.
 - Added SEC-SUBJECT-002 regression evidence for repeat onboarding activation idempotence and `no_change` onboarding audit events.
 - Aligned the documented audit `actorType` schema with runtime events by adding `authenticated-subject` for onboarding and `iam-api` for IAM dependency-failure audit records.

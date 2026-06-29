@@ -1821,6 +1821,14 @@ class KeycloakBootstrapIdempotenceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unmanaged user-profile attributes are not disabled"):
             keycloak_bootstrap.verify_unmanaged_attributes_disabled({"unmanagedAttributePolicy": "ENABLED"})
 
+    def test_user_profile_verification_accepts_missing_default_unmanaged_policy(self) -> None:
+        profile = {"attributes": []}
+
+        keycloak_bootstrap.apply_iam_user_profile_policy(profile)
+        keycloak_bootstrap.verify_unmanaged_attributes_disabled(profile)
+
+        self.assertNotIn("unmanagedAttributePolicy", profile)
+
     def test_client_merge_preserves_existing_unowned_configuration(self) -> None:
         existing = {
             "id": "client-uuid",

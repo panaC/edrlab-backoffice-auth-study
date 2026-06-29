@@ -15,7 +15,7 @@ from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Any
 
-from .config import DEFAULT_SERVICE_ROLE_ID
+from .config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
 
 
 KEYCLOAK_BASE_URL = os.environ.get("KEYCLOAK_BASE_URL", "http://keycloak:8080").rstrip("/")
@@ -23,6 +23,9 @@ KEYCLOAK_REALM = os.environ.get("KEYCLOAK_REALM", "access-control-mvp")
 BACKOFFICE_CLIENT_ID = os.environ.get("KEYCLOAK_BACKOFFICE_CLIENT_ID", "backoffice")
 BACKOFFICE_CLIENT_SECRET = os.environ.get("KEYCLOAK_BACKOFFICE_CLIENT_SECRET", "change-me-backoffice-secret")
 BACKOFFICE_REDIRECT_URI = os.environ.get("KEYCLOAK_BACKOFFICE_REDIRECT_URI", "http://localhost:9999/callback")
+KC_BOOTSTRAP_ADMIN_USERNAME = os.environ.get("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
+KC_BOOTSTRAP_ADMIN_PASSWORD = os.environ.get("KC_BOOTSTRAP_ADMIN_PASSWORD", "change-me-admin-password")
+SERVICE_CLIENT_ID = os.environ.get("KEYCLOAK_SERVICE_CLIENT_ID", DEFAULT_SERVICE_ID)
 SUPER_ADMIN_USERNAME = os.environ.get("KEYCLOAK_SUPER_ADMIN_USERNAME", "mvp-super-admin")
 SUPER_ADMIN_PASSWORD = os.environ.get("KEYCLOAK_SUPER_ADMIN_PASSWORD", "change-me-super-admin-password")
 SMOKE_USERNAME = os.environ.get("KEYCLOAK_SMOKE_USERNAME", "mvp-member")
@@ -42,6 +45,8 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def main() -> None:
     wait_for_runtime()
     admin_token_response = login_with_authorization_code(SUPER_ADMIN_USERNAME, SUPER_ADMIN_PASSWORD)
+    keycloak_admin_token = keycloak_admin_access_token()
+    remove_direct_service_role_mapping(keycloak_admin_token, SMOKE_USERNAME)
     admin_id_claims = decode_claims(admin_token_response["id_token"])
     admin_subject = required_claim(admin_id_claims, "sub")
     if admin_subject != expected_bootstrap_super_admin_subject():
@@ -59,12 +64,45 @@ def main() -> None:
         admin_token_response["access_token"],
         token_response["access_token"],
     )
+    stale_token_response = issue_token_with_stale_service_role_claim(keycloak_admin_token)
+    stale_access_token = stale_token_response["access_token"]
+    stale_access_token_claims = decode_claims(stale_access_token)
+    if not has_demo_service_role_claim(stale_access_token_claims):
+        raise RuntimeError("Keycloak access token did not carry the expected stale demo service-role claim")
+    request_json(
+        "PUT",
+        f"{IAM_API_BASE_URL}/iam/accounts/{account['accountId']}/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+        actor_token=admin_token_response["access_token"],
+        expected={200},
+    )
     demo_status, demo_body = request_json(
         "GET",
         f"{DEMO_BASE_URL}/access-check-demo",
-        headers={"Authorization": f"Bearer {token_response['access_token']}"},
+        headers={"Authorization": f"Bearer {stale_access_token}"},
         expected={200},
     )
+    request_json(
+        "DELETE",
+        f"{IAM_API_BASE_URL}/iam/accounts/{account['accountId']}/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+        actor_token=admin_token_response["access_token"],
+        expected={200},
+    )
+    try:
+        stale_denied_status, stale_denied_body = request_json(
+            "GET",
+            f"{DEMO_BASE_URL}/access-check-demo",
+            headers={"Authorization": f"Bearer {stale_access_token}"},
+            expected={403},
+        )
+        if stale_denied_body.get("authorized") is not False or stale_denied_body.get("result") != "KO":
+            raise RuntimeError(f"Stale service-role claim returned unexpected denial body: {stale_denied_body}")
+    finally:
+        request_json(
+            "PUT",
+            f"{IAM_API_BASE_URL}/iam/accounts/{account['accountId']}/service-roles/{DEFAULT_SERVICE_ROLE_ID}",
+            actor_token=admin_token_response["access_token"],
+            expected={200},
+        )
     bad_status, bad_body = request_json(
         "GET",
         f"{DEMO_BASE_URL}/access-check-demo",
@@ -79,6 +117,9 @@ def main() -> None:
                 "accountId": account["accountId"],
                 "authorizedDemoStatus": demo_status,
                 "authorizedDemoBody": demo_body,
+                "staleTokenHadServiceRoleClaim": True,
+                "staleTokenAfterRoleRemovalStatus": stale_denied_status,
+                "staleTokenAfterRoleRemovalBody": stale_denied_body,
                 "invalidTokenStatus": bad_status,
                 "invalidTokenBody": bad_body,
             },
@@ -175,6 +216,33 @@ def login_with_authorization_code(username: str, password: str) -> dict[str, Any
     return token_body
 
 
+def issue_token_with_stale_service_role_claim(keycloak_admin_token: str) -> dict[str, Any]:
+    add_direct_service_role_mapping(keycloak_admin_token, SMOKE_USERNAME)
+    try:
+        token_response = login_with_authorization_code(SMOKE_USERNAME, SMOKE_PASSWORD)
+    finally:
+        remove_direct_service_role_mapping(keycloak_admin_token, SMOKE_USERNAME)
+    return token_response
+
+
+def has_demo_service_role_claim(claims: dict[str, Any]) -> bool:
+    resource_access = claims.get("resource_access")
+    if not isinstance(resource_access, dict):
+        return False
+    service_access = resource_access.get(SERVICE_CLIENT_ID)
+    if not isinstance(service_access, dict):
+        return False
+    roles = service_access.get("roles")
+    return isinstance(roles, list) and service_role_name() in roles
+
+
+def service_role_name() -> str:
+    prefix = f"{SERVICE_CLIENT_ID}:"
+    if DEFAULT_SERVICE_ROLE_ID.startswith(prefix):
+        return DEFAULT_SERVICE_ROLE_ID.removeprefix(prefix)
+    return DEFAULT_SERVICE_ROLE_ID.rsplit(":", 1)[-1]
+
+
 def ensure_local_member_account(
     subject: str,
     email: str,
@@ -212,6 +280,104 @@ def find_account_by_email(email: str, admin_access_token: str) -> dict[str, Any]
         if isinstance(account, dict) and str(account.get("email", "")).lower() == email.lower():
             return account
     return None
+
+
+def keycloak_admin_access_token() -> str:
+    body = post_form(
+        f"{KEYCLOAK_BASE_URL}/realms/master/protocol/openid-connect/token",
+        {
+            "client_id": "admin-cli",
+            "username": KC_BOOTSTRAP_ADMIN_USERNAME,
+            "password": KC_BOOTSTRAP_ADMIN_PASSWORD,
+            "grant_type": "password",
+        },
+    )
+    token = body.get("access_token")
+    if not isinstance(token, str) or not token:
+        raise RuntimeError("Unable to obtain Keycloak admin token")
+    return token
+
+
+def add_direct_service_role_mapping(admin_token: str, username: str) -> None:
+    change_direct_service_role_mapping("POST", admin_token, username)
+
+
+def remove_direct_service_role_mapping(admin_token: str, username: str) -> None:
+    change_direct_service_role_mapping("DELETE", admin_token, username)
+
+
+def change_direct_service_role_mapping(method: str, admin_token: str, username: str) -> None:
+    user = find_keycloak_user(admin_token, username)
+    service_client = find_keycloak_client(admin_token, SERVICE_CLIENT_ID)
+    role = keycloak_api_get(
+        admin_token,
+        f"clients/{service_client['id']}/roles/{urllib.parse.quote(service_role_name())}",
+    )
+    if not isinstance(role, dict):
+        raise RuntimeError("Unexpected Keycloak service-role response")
+    keycloak_api_json(
+        method,
+        admin_token,
+        f"users/{user['id']}/role-mappings/clients/{service_client['id']}",
+        [role],
+        expected={200, 204},
+    )
+
+
+def find_keycloak_user(admin_token: str, username: str) -> dict[str, Any]:
+    users = keycloak_api_get(admin_token, f"users?username={urllib.parse.quote(username)}")
+    if not isinstance(users, list):
+        raise RuntimeError("Unexpected Keycloak users response")
+    matches = [user for user in users if isinstance(user, dict) and user.get("username") == username]
+    if len(matches) != 1 or not isinstance(matches[0].get("id"), str):
+        raise RuntimeError(f"Unable to resolve Keycloak user: {username}")
+    return matches[0]
+
+
+def find_keycloak_client(admin_token: str, client_id: str) -> dict[str, Any]:
+    clients = keycloak_api_get(admin_token, f"clients?clientId={urllib.parse.quote(client_id)}")
+    if not isinstance(clients, list):
+        raise RuntimeError("Unexpected Keycloak clients response")
+    matches = [client for client in clients if isinstance(client, dict) and client.get("clientId") == client_id]
+    if len(matches) != 1 or not isinstance(matches[0].get("id"), str):
+        raise RuntimeError(f"Unable to resolve Keycloak client: {client_id}")
+    return matches[0]
+
+
+def keycloak_api_get(admin_token: str, path: str) -> Any:
+    request = urllib.request.Request(
+        f"{KEYCLOAK_BASE_URL}/admin/realms/{KEYCLOAK_REALM}/{path}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    with urllib.request.urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def keycloak_api_json(
+    method: str,
+    admin_token: str,
+    path: str,
+    body: Any,
+    *,
+    expected: set[int],
+) -> None:
+    data = json.dumps(body, separators=(",", ":")).encode("utf-8")
+    request = urllib.request.Request(
+        f"{KEYCLOAK_BASE_URL}/admin/realms/{KEYCLOAK_REALM}/{path}",
+        data=data,
+        method=method,
+        headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            status = response.status
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+        error_body = exc.read().decode("utf-8")
+        if status not in expected:
+            raise RuntimeError(f"Unexpected Keycloak HTTP status {status} for {method} {path}: {error_body}") from exc
+    if status not in expected:
+        raise RuntimeError(f"Unexpected Keycloak HTTP status {status} for {method} {path}")
 
 
 def request_json(

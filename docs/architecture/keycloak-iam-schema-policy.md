@@ -40,6 +40,8 @@ The policy keeps Keycloak as the IAM-state holder for the accepted architecture,
 
 Keycloak documents that its User Profile can distinguish managed and unmanaged attributes, and that unmanaged attributes are disabled by default unless configured otherwise. It also recommends using strict attribute policies where possible ([Keycloak User Profile - managed and unmanaged attributes](https://www.keycloak.org/docs/latest/server_admin/#understanding-managed-and-unmanaged-attributes)). This MVP adopts that strict posture.
 
+The Phase 6 runtime bootstrap verifies that strict posture according to the Keycloak User Profile representation it receives: if `unmanagedAttributePolicy` is present, it must be `DISABLED`; if the field is omitted by the runtime Keycloak API, bootstrap treats the omitted value as Keycloak's documented default-disabled behavior and still requires every EDRLab IAM attribute to be declared as a managed profile attribute.
+
 ## Managed User Attributes
 
 The MVP Keycloak User Profile must declare these custom EDRLab attributes:

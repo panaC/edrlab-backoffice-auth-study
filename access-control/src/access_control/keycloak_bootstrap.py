@@ -173,11 +173,13 @@ def apply_iam_user_profile_policy(profile: dict[str, Any]) -> None:
             }
         )
     profile["attributes"] = attributes
-    profile["unmanagedAttributePolicy"] = USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY
+    if "unmanagedAttributePolicy" in profile:
+        profile["unmanagedAttributePolicy"] = USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY
 
 
 def verify_unmanaged_attributes_disabled(profile: dict[str, Any]) -> None:
-    if profile.get("unmanagedAttributePolicy") != USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY:
+    policy = profile.get("unmanagedAttributePolicy", USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY)
+    if policy != USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY:
         raise RuntimeError("Keycloak unmanaged user-profile attributes are not disabled")
 
 
