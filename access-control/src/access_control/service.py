@@ -699,7 +699,7 @@ class AccessControlService:
                 if not self._can_manage(actor, account) or account["accountType"] != "member":
                     raise ApiError(403, "forbidden", "Forbidden", "Service roles can be assigned only to managed member accounts.")
                 role = state["serviceRoles"].get(role_id)
-                if not role or role.get("status") != "active":
+                if assign and (not role or role.get("status") != "active"):
                     raise ApiError(422, "role_not_active", "Unprocessable Entity", "Only active service roles may be assigned.")
                 roles = set(account.get("serviceRoles", []))
                 before = set(roles)

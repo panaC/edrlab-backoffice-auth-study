@@ -314,6 +314,65 @@ class MvpSecurityTests(unittest.TestCase):
         )
         self.assertEqual(deny_after_disable["decision"], "deny")
 
+    def test_role_removal_allows_inactive_role_cleanup_and_idempotent_retry(self) -> None:
+        member = self.service.create_account(
+            self.super_admin_id,
+            {
+                "email": "inactive-role-cleanup@example.test",
+                "organization": "MVP Organization",
+                "name": "Inactive Role Cleanup",
+                "accountType": "member",
+            },
+            "corr-create-inactive-role-cleanup",
+        )
+        self.service.assign_service_role(
+            self.super_admin_id,
+            member["accountId"],
+            DEFAULT_SERVICE_ROLE_ID,
+            "corr-assign-inactive-role-cleanup",
+        )
+        self.service.service_role_lifecycle(
+            self.super_admin_id,
+            DEFAULT_SERVICE_ROLE_ID,
+            "disable",
+            "corr-disable-inactive-role-cleanup",
+        )
+
+        removed = self.service.remove_service_role(
+            self.super_admin_id,
+            member["accountId"],
+            DEFAULT_SERVICE_ROLE_ID,
+            "corr-remove-inactive-role-cleanup",
+        )
+        self.assertNotIn(DEFAULT_SERVICE_ROLE_ID, removed["serviceRoles"])
+
+        retried = self.service.remove_service_role(
+            self.super_admin_id,
+            member["accountId"],
+            DEFAULT_SERVICE_ROLE_ID,
+            "corr-retry-inactive-role-cleanup",
+        )
+        self.assertNotIn(DEFAULT_SERVICE_ROLE_ID, retried["serviceRoles"])
+        events = [json.loads(line) for line in self.audit_path.read_text(encoding="utf-8").splitlines()]
+        self.assertTrue(
+            any(
+                event["operation"] == "service_role.remove"
+                and event["targetId"] == member["accountId"]
+                and event["outcome"] == "changed"
+                and event["correlationId"] == "corr-remove-inactive-role-cleanup"
+                for event in events
+            )
+        )
+        self.assertTrue(
+            any(
+                event["operation"] == "service_role.remove"
+                and event["targetId"] == member["accountId"]
+                and event["outcome"] == "no_change"
+                and event["correlationId"] == "corr-retry-inactive-role-cleanup"
+                for event in events
+            )
+        )
+
     def test_admin_gets_effective_service_access_without_assignment(self) -> None:
         admin = self.service.create_account(
             self.super_admin_id,

@@ -30,6 +30,7 @@ This repository is a study repository, not a released software package. Changelo
 - Simplified `AGENTS.md` into a concise Phase 6 MVP implementation guide and moved the longer documentation, citation, and wiki rules into `docs/agent-policy.md` for documentation-heavy tasks.
 - Aligned Keycloak schema and onboarding architecture references with the current runtime names: managed `iam.*` attributes and configurable backoffice client ID defaulting to `backoffice`.
 - Tightened OIDC service-token validation for `authorization/check` to require issuer, audience, expiry, subject, and expected service client, with a matching Keycloak audience mapper for the Docker runtime.
+- Aligned member service-role removal with the IAM API contract so inactive roles can be removed from members and repeated removal stays idempotent.
 
 
 Older entries are archived in [CHANGELOG.archive.md](./CHANGELOG.archive.md). Do not read the archive by default; use it only for historical lookup.
