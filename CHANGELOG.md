@@ -9,10 +9,12 @@ This repository is a study repository, not a released software package. Changelo
 ### Added
 
 - Added Docker-volume backup and restore scripts for the Phase 6 `access-control/` MVP runtime, including checksum verification, a restore confirmation gate, and generated-backup ignore rules.
-- Added `access-control/docs/api.md` as the current runtime endpoint and schema reference for the Phase 6 access-control MVP.
+- Added `docs/architecture/keycloak-iam-onboarding.md` as the dedicated Keycloak/IAM onboarding architecture note.
 
 ### Changed
 
+- Promoted `docs/architecture/iam-control-plane-api-contract.md` as the current IAM route, payload, schema, error, and authorization contract for the Phase 6 runtime.
+- Removed the separate runtime-tree API reference location so runtime documentation stays in the runbook and API contract tracking stays under `docs/architecture/`.
 - Split the demo protected service runtime code into its own `access_check_demo_service` source package under `access-control/src/`.
 - Made `docs/evaluation/mvp-scope.md` the Phase 6 MVP source of truth, superseding ADR 0005 for current MVP authority and replacing the old IAM API contract as the required runtime API source.
 - Added a production readiness tracker to `docs/evaluation/mvp-scope.md` for non-security MVP gaps, required evidence, next actions, and deferral risks.
@@ -26,6 +28,7 @@ This repository is a study repository, not a released software package. Changelo
 - Moved older changelog entries to `CHANGELOG.archive.md` so the default changelog stays short and current.
 - Documented the local MVP backup and restore procedure, generated evidence and backup locations, and remaining deployment-operation limitations in `access-control/README.md`.
 - Simplified `AGENTS.md` into a concise Phase 6 MVP implementation guide and moved the longer documentation, citation, and wiki rules into `docs/agent-policy.md` for documentation-heavy tasks.
+- Aligned Keycloak schema and onboarding architecture references with the current runtime names: managed `iam.*` attributes and configurable backoffice client ID defaulting to `backoffice`.
 
 
 Older entries are archived in [CHANGELOG.archive.md](./CHANGELOG.archive.md). Do not read the archive by default; use it only for historical lookup.

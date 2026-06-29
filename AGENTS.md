@@ -14,7 +14,7 @@ Before changing the repository, read the smallest set that applies to the task:
 - [access-control/README.md](./access-control/README.md) as the required runtime runbook for Phase 6 work.
 - [README.md](./README.md) only when changing the project brief, root documentation, or checking project purpose or actor model not covered by MVP scope.
 - [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) only when changing access-control behavior or checking feature scope.
-- [access-control/docs/api.md](./access-control/docs/api.md) when changing IAM HTTP routes, payloads, errors, or endpoint behavior.
+- [docs/architecture/iam-control-plane-api-contract.md](./docs/architecture/iam-control-plane-api-contract.md) when changing IAM HTTP routes, payloads, errors, or endpoint behavior.
 - [docs/architecture/authorization-check-behavior.md](./docs/architecture/authorization-check-behavior.md) when changing `authorization/check` architecture behavior.
 - [docs/architecture/audit-storage.md](./docs/architecture/audit-storage.md) when changing audit storage architecture.
 - [docs/architecture/keycloak-iam-schema-policy.md](./docs/architecture/keycloak-iam-schema-policy.md) when changing managed Keycloak schema or drift policy.
@@ -38,14 +38,14 @@ Use these gates before editing behavior, code, tests, runtime docs, or architect
 | --- | --- | --- |
 | Feature behavior, actor permissions, lifecycle, onboarding, or service-access rules | [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) | Name the relevant `FR-*` in the summary or tests. |
 | MVP boundary, exclusions, readiness, or residual risk | [docs/evaluation/mvp-scope.md](./docs/evaluation/mvp-scope.md) | Update scope, gaps, or source map if the boundary changes. |
-| IAM HTTP routes, payloads, errors, auth rules, or endpoint behavior | [access-control/docs/api.md](./access-control/docs/api.md) | Keep code, tests, and API reference in the same change. |
+| IAM HTTP routes, payloads, errors, auth rules, or endpoint behavior | [docs/architecture/iam-control-plane-api-contract.md](./docs/architecture/iam-control-plane-api-contract.md) | Keep code, tests, and API reference in the same change. |
 | Runtime commands, environment variables, evidence, backup, restore, stop, or reset | [access-control/README.md](./access-control/README.md) | Keep the runbook executable from a clean Linux checkout. |
 | `authorization/check` timeout, retry, cache, fail-closed, audit, or metrics semantics | [docs/architecture/authorization-check-behavior.md](./docs/architecture/authorization-check-behavior.md) | Update security tests or the security tracker when evidence changes. |
 | Audit event shape, storage, retention, confidentiality, or read behavior | [docs/architecture/audit-storage.md](./docs/architecture/audit-storage.md) | Update audit tests or tracker rows when behavior changes. |
 | Keycloak managed attributes, roles, migration, service-account grants, or drift policy | [docs/architecture/keycloak-iam-schema-policy.md](./docs/architecture/keycloak-iam-schema-policy.md) | Update bootstrap, migration, drift tests, or runtime docs as applicable. |
 | Security tests, evidence, or tracker status | [docs/evaluation/security-test-plan.md](./docs/evaluation/security-test-plan.md) | Update tracker status/evidence and run or record relevant tests. |
 
-Behavior changes must name their source document. API drift is not allowed: any route, payload, error code, or authorization rule change must update implementation, tests, and [access-control/docs/api.md](./access-control/docs/api.md) together.
+Behavior changes must name their source document. API drift is not allowed: any route, payload, error code, or authorization rule change must update implementation, tests, and [docs/architecture/iam-control-plane-api-contract.md](./docs/architecture/iam-control-plane-api-contract.md) together.
 
 ## Operating Rules
 

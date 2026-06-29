@@ -29,7 +29,7 @@ The policy keeps Keycloak as the IAM-state holder for the accepted architecture,
 | --- | --- |
 | Unmanaged attributes | Disabled. Production IAM state must not depend on unmanaged Keycloak attributes. |
 | Managed attributes | Every EDRLab IAM user attribute is declared in the Keycloak User Profile schema. |
-| Account type | Exactly one client role on client `edrlab-backoffice`: `account-type-member`, `account-type-admin`, or `account-type-super-admin`. |
+| Account type | Exactly one client role on the configured backoffice client, default `backoffice`: `account-type-member`, `account-type-admin`, or `account-type-super-admin`. |
 | Service-access roles | Client roles on the protected-service client. The first MVP role is client `access-check-demo-service`, role `consult`, exposed by the IAM Control Plane API as `access-check-demo:consult`. |
 | Role lifecycle metadata | Schema-controlled role metadata marks service-access roles as `active`, `disabled`, or `archived`; disabled or archived roles do not authorize access. |
 | Edit path | Routine writes happen only through the IAM Control Plane API. Human Keycloak admin edits of business IAM state are not normal administration. |
@@ -45,15 +45,15 @@ The MVP Keycloak User Profile must declare these custom EDRLab attributes:
 
 | Attribute | Required for | Write rule | Validation |
 | --- | --- | --- | --- |
-| `edrlab.account_id` | Stable internal account identifier. | Written once at account creation or first-super-admin bootstrap; immutable afterwards. | Required, unique, opaque string. |
-| `edrlab.lifecycle` | Backoffice lifecycle state. | Written only through authorized lifecycle operations. | Enum: `invited`, `active`, `disabled`, `archived`. |
-| `edrlab.linked_subject` | Immutable subject link created during safe onboarding. | Empty before activation; written only by onboarding activation; immutable afterwards. | Empty or exactly the resolved Keycloak subject for the account. |
-| `edrlab.organization` | Required account profile field. | Written only through authorized account creation or profile update. | Non-empty string in MVP account creation. |
-| `edrlab.assigned_service_roles` | Canonical member service-role assignments. | Written only by the IAM Control Plane API when member service-access roles are assigned, removed, or otherwise persisted. | JSON array of service-access role IDs. For `member` accounts, authorization uses this managed attribute rather than Keycloak user role mappings; any protected-service client-role mapping directly assigned to a user is treated as direct-admin drift (`FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
-| `edrlab.schema_version` | Schema evolution marker. | Written by bootstrap, migration, or IAM Control Plane API mutation. | Current MVP value: `iam-schema-v1`. |
-| `edrlab.last_control_plane_mutation_at` | Drift and reconciliation support. | Written by the IAM Control Plane API after accepted mutations. | Server timestamp; advisory, not sole proof of authorization. |
+| `iam.account_id` | Stable internal account identifier. | Written once at account creation or first-super-admin bootstrap; immutable afterwards. | Required, unique, opaque string. |
+| `iam.lifecycle` | Backoffice lifecycle state. | Written only through authorized lifecycle operations. | Enum: `invited`, `active`, `disabled`, `archived`. |
+| `iam.linked_subject` | Immutable subject link created during safe onboarding. | Empty before activation; written only by onboarding activation; immutable afterwards. | Empty or exactly the resolved Keycloak subject for the account. |
+| `iam.organization` | Required account profile field. | Written only through authorized account creation or profile update. | Non-empty string in MVP account creation. |
+| `iam.assigned_service_roles` | Canonical member service-role assignments. | Written only by the IAM Control Plane API when member service-access roles are assigned, removed, or otherwise persisted. | JSON array of service-access role IDs. For `member` accounts, authorization uses this managed attribute rather than Keycloak user role mappings; any protected-service client-role mapping directly assigned to a user is treated as direct-admin drift (`FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). |
+| `iam.schema_version` | Schema evolution marker. | Written by bootstrap, migration, or IAM Control Plane API mutation. | Current MVP value: `iam-schema-v1`. |
+| `iam.last_control_plane_mutation_at` | Drift and reconciliation support. | Written by the IAM Control Plane API after accepted mutations. | Server timestamp; advisory, not sole proof of authorization. |
 
-The standard Keycloak profile fields `email`, `firstName`, and `lastName` continue to hold the MVP `email` and `name` data, while `edrlab.organization` covers the required organization field. Mutable profile data must not be used as stable authorization identity; account state, lifecycle, audit, and access decisions use `edrlab.account_id` (`FR-009`, `FR-040`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
+The standard Keycloak profile fields `email`, `firstName`, and `lastName` continue to hold the MVP `email` and `name` data, while `iam.organization` covers the required organization field. Mutable profile data must not be used as stable authorization identity; account state, lifecycle, audit, and access decisions use `iam.account_id` (`FR-009`, `FR-040`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
 Keycloak Admin REST exposes user profile data through `UserRepresentation`, including `email`, `firstName`, `lastName`, `enabled`, and an `attributes` map, which is the product surface used by the control plane for this schema ([Keycloak Admin REST - UserRepresentation](https://www.keycloak.org/docs-api/latest/rest-api/index.html#UserRepresentation)).
 
@@ -65,9 +65,9 @@ Account type uses one dedicated client:
 
 | Keycloak client | Role | Project account type |
 | --- | --- | --- |
-| `edrlab-backoffice` | `account-type-member` | `member` |
-| `edrlab-backoffice` | `account-type-admin` | `admin` |
-| `edrlab-backoffice` | `account-type-super-admin` | `super-admin` |
+| configured backoffice client, default `backoffice` | `account-type-member` | `member` |
+| configured backoffice client, default `backoffice` | `account-type-admin` | `admin` |
+| configured backoffice client, default `backoffice` | `account-type-super-admin` | `super-admin` |
 
 Rules:
 
@@ -92,9 +92,9 @@ Service-role lifecycle is represented as schema-controlled role metadata with at
 
 | Role metadata | Values |
 | --- | --- |
-| `edrlab.role_status` | `active`, `disabled`, `archived` |
-| `edrlab.schema_version` | `iam-schema-v1` |
-| `edrlab.last_control_plane_mutation_at` | server timestamp |
+| `iam.role_status` | `active`, `disabled`, `archived` |
+| `iam.schema_version` | `iam-schema-v1` |
+| `iam.last_control_plane_mutation_at` | server timestamp |
 
 Keycloak Admin REST supports client-level roles and `RoleRepresentation` includes role attributes, so the MVP can carry schema-controlled role metadata with the Keycloak role object ([Keycloak Admin REST - client roles](https://www.keycloak.org/docs-api/latest/rest-api/index.html), [Keycloak Admin REST - RoleRepresentation](https://www.keycloak.org/docs-api/latest/rest-api/index.html#RoleRepresentation)). Disabled or archived service roles cannot be assigned and cannot authorize protected-service access (`FR-032`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
@@ -122,16 +122,16 @@ The IAM Control Plane API must check the current Keycloak state before every sen
 
 Minimum invariant checks:
 
-- `edrlab.account_id` exists, is unique, and has not changed;
-- `edrlab.lifecycle` is one of `invited`, `active`, `disabled`, or `archived`;
+- `iam.account_id` exists, is unique, and has not changed;
+- `iam.lifecycle` is one of `invited`, `active`, `disabled`, or `archived`;
 - Keycloak `enabled=false` for `disabled` and `archived`, and `enabled=true` for `invited` and `active`;
-- `edrlab.linked_subject` is empty before activation and immutable after activation;
-- exactly one `edrlab-backoffice` account-type role exists;
+- `iam.linked_subject` is empty before activation and immutable after activation;
+- exactly one account-type role exists on the configured backoffice client;
 - service-access roles are assigned only to `member` accounts;
-- no user has direct protected-service client-role mappings; member service-role assignments are read from `edrlab.assigned_service_roles`;
+- no user has direct protected-service client-role mappings; member service-role assignments are read from `iam.assigned_service_roles`;
 - assigned service-access roles exist and are `active`;
 - role metadata schema version is recognized;
-- `edrlab.last_control_plane_mutation_at` and local audit/correlation evidence are consistent enough for the operation being evaluated.
+- `iam.last_control_plane_mutation_at` and local audit/correlation evidence are consistent enough for the operation being evaluated.
 
 Known invalid state returns deny or blocks the operation. Unreadable, incomplete, or incoherent state returns indeterminate `503` for authorization checks and blocks sensitive admin operations, following the accepted authorization-check behavior ([Authorization Check Behavior](./authorization-check-behavior.md)).
 
@@ -149,19 +149,19 @@ Migration from PoC or manually prepared Keycloak state to the MVP schema is stri
 
 Invalid records are migration blockers. The migration may keep them out of the MVP, keep them inactive, or quarantine them for manual review, but it must not create active access from inconsistent state. A temporary `migration_blocked` lifecycle value is not part of the MVP lifecycle; if a state must be represented in Keycloak before correction, use non-active access behavior and the migration report rather than expanding the lifecycle enum.
 
-Unmanaged `edrlab.*` attributes found during migration are either mapped to declared managed attributes through an explicit migration rule or rejected. They must not survive as free-form business IAM state.
+Unmanaged `iam.*` attributes found during migration are either mapped to declared managed attributes through an explicit migration rule or rejected. They must not survive as free-form business IAM state.
 
 ## Token and Claim Boundary
 
 Account-type roles and service-access roles may appear in Keycloak tokens only as display hints, diagnostics, or integration evidence. They are not the final authorization authority for protected backend services.
 
-Protected backend services must call `POST /iam/authorization/check`. The IAM Control Plane API reads current Keycloak state, applies invariant checks, handles drift, and returns the decision. This preserves the anti-bypass rule that frontend state, raw token claims, and protected-service local guesses do not decide business access (`FR-020`, `FR-021`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control API Reference - Authorization](../../access-control/docs/api.md#authorization)).
+Protected backend services must call `POST /iam/authorization/check`. The IAM Control Plane API reads current Keycloak state, applies invariant checks, handles drift, and returns the decision. This preserves the anti-bypass rule that frontend state, raw token claims, and protected-service local guesses do not decide business access (`FR-020`, `FR-021`, `FR-038`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API Contract - Authorization](./iam-control-plane-api-contract.md#authorization)).
 
 ## References
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [MVP Scope - Access-Control Production MVP](../evaluation/mvp-scope.md)
-- [Access-Control API Reference](../../access-control/docs/api.md)
+- [IAM Control Plane API Contract](./iam-control-plane-api-contract.md)
 - [Authorization Check Behavior](./authorization-check-behavior.md)
 - [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP Design](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md)
 - [Keycloak WP-010 Result - IAM Mapping Design](../poc/keycloak-wp010-result.md)

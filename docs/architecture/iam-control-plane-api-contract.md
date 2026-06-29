@@ -1,14 +1,9 @@
 # IAM Control Plane API Contract
 
-Status: Superseded
+Status: Accepted
 Phase: Phase 6 - Production MVP
 Scope: Architecture
 Last reviewed: 2026-06-29
-
-Superseded for Phase 6 runtime use by
-[access-control/docs/api.md](../../access-control/docs/api.md). This file is
-retained as historical Phase 5 design context; current MVP scope authority lives
-in [MVP scope](../evaluation/mvp-scope.md).
 
 ## Contents
 
@@ -27,9 +22,11 @@ in [MVP scope](../evaluation/mvp-scope.md).
 
 ## Purpose
 
-This document fixes the accepted MVP contract for the EDRLab IAM Control Plane API. It turns the accepted Keycloak IAM Control Plane architecture into concrete API boundaries for endpoints, actors, service-to-service authentication, operation authorization, errors, idempotence, and audit, and now constrains Phase 6 implementation ([ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [ADR 0005](../decisions/0005-authorize-phase-6-production-mvp.md), [MVP scope](../evaluation/mvp-scope.md)).
-
-The contract is intentionally limited to the MVP scope. It does not start Phase 6 implementation, choose a framework, create production code, or define deployment topology ([Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+This is the current endpoint, schema, and authorization contract for the Phase 6
+EDRLab IAM Control Plane API. The accepted MVP boundary is owned by
+[MVP scope](../evaluation/mvp-scope.md), runtime commands are owned by the
+[access-control runbook](../../access-control/README.md), and deeper behavior
+policies are owned by the linked architecture pages.
 
 ## Contract Summary
 
@@ -126,65 +123,7 @@ Protected service to IAM API authentication:
 | --- | --- | --- | --- |
 | `POST` | `/iam/onboarding/activate` | Authenticated browser subject | Safely link and activate one invited account when the match rules are satisfied. This is not a member/admin/super-admin operation because the account may not be active yet. |
 
-The onboarding endpoint uses the safe automatic activation rules from `FR-043` and must deny unsafe activation under `FR-044` ([Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). It is called by the invited user after Keycloak authentication, not by an admin activating another user's account. The IAM Control Plane API must derive onboarding evidence from validated authentication evidence, not from client-supplied request-body claims.
-
-Recommended MVP provisioning scenario:
-
-1. An admin or super-admin creates the backoffice account through the IAM Control Plane API in `invited` state.
-2. The controlled provisioning path creates or updates the matching Keycloak user in the MVP realm with the same email. Public registration remains disabled and routine direct Keycloak business administration is not the business path ([MVP scope - Out of Scope](../evaluation/mvp-scope.md#out-of-scope)).
-3. Keycloak delivers first-login setup through an actions email, using realm email configuration and user required actions. Keycloak documents realm SMTP configuration, per-user required actions, and the Admin REST `execute-actions-email` operation ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm), [Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user), [Keycloak Admin REST `execute-actions-email`](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)).
-4. For `member` accounts, the first-login actions should make the user own their credential and satisfy email verification before IAM activation. For `admin` and `super-admin` accounts, the flow must also satisfy the accepted privileged-authentication evidence requirement, using the MVP OTP direction where applicable ([MVP scope - Privileged Onboarding](../evaluation/mvp-scope.md#privileged-onboarding), [Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)).
-5. After Keycloak login and required actions, the Admin Console calls the onboarding endpoint with the user's bearer token.
-
-Minimum Keycloak configuration for the MVP onboarding path:
-
-| Configuration item | Requirement |
-| --- | --- |
-| Realm SMTP | Configure realm email so Keycloak can send action emails for verification and credential setup ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm)). |
-| Public registration | Keep disabled; account creation starts in the IAM Control Plane API, not in public Keycloak self-registration. |
-| Backoffice client | Use the `edrlab-backoffice` Authorization Code + PKCE client and a redirect URI controlled by the Admin Console. |
-| User provisioning | Create or update the Keycloak user through the controlled provisioning path, using the same email as the IAM invited account. |
-| Member actions | Send `VERIFY_EMAIL` and `UPDATE_PASSWORD` through `execute-actions-email`. |
-| Privileged actions | Send `VERIFY_EMAIL`, `UPDATE_PASSWORD`, and `CONFIGURE_TOTP` when the MVP OTP privileged-authentication path applies. |
-| IAM state | Keep the IAM account `invited` until bearer-derived onboarding evidence passes the safe match rules. |
-
-The recommended `execute-actions-email` action lists are:
-
-```json
-["VERIFY_EMAIL", "UPDATE_PASSWORD"]
-```
-
-```json
-["VERIFY_EMAIL", "UPDATE_PASSWORD", "CONFIGURE_TOTP"]
-```
-
-Intended request shape:
-
-```http
-POST /iam/onboarding/activate
-Authorization: Bearer <keycloak-user-access-token>
-Content-Type: application/json
-
-{}
-```
-
-Runtime behavior:
-
-- validate the bearer token issuer, audience, expiry, subject, and expected OAuth client before account resolution;
-- derive `sub`, `email`, `email_verified`, and privileged-authentication evidence such as `acr` from the validated token or trusted IdP evidence;
-- ignore or reject request-body attempts to supply `subject`, `emailVerified`, `acr`, `accountType`, `lifecycle`, `linkedSubject`, or other authorization-significant fields;
-- find exactly one `invited` account with no existing authenticated-subject link and a verified email matching the authenticated subject;
-- require privileged-authentication evidence for `admin` and `super-admin` activation;
-- set the immutable subject link and move the account to `active` only after the safe match passes;
-- audit successful activation, idempotent repeat activation for the same subject, unsafe matches, missing verified email, missing privileged evidence, and rejected subject-link mutation attempts.
-
-Suggested client flow:
-
-1. An admin or super-admin creates an `invited` backoffice account.
-2. The invited user signs in through Keycloak.
-3. The Admin Console calls `GET /iam/me` with the user's bearer token.
-4. If the account is not active and linked yet, the Admin Console calls `POST /iam/onboarding/activate` with the same bearer token.
-5. After successful activation, `GET /iam/me` returns the linked active account.
+The onboarding endpoint uses the safe automatic activation rules from `FR-043` and must deny unsafe activation under `FR-044` ([Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements)). It is called by the invited user after Keycloak authentication, not by an admin activating another user's account. The IAM Control Plane API must derive onboarding evidence from validated authentication evidence, not from client-supplied request-body claims. See this: [keycloak-iam-onboarding](./keycloak-iam-onboarding.md)
 
 ### Service-Access Roles
 

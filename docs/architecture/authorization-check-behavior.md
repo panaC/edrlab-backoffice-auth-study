@@ -19,7 +19,7 @@ Last reviewed: 2026-06-29
 
 ## Purpose
 
-This document defines the MVP architecture behavior for `POST /iam/authorization/check`, including timeout, retry, cache, fail-closed handling, acceptable access-stop delay, audit, and metrics. Endpoint schemas live in the runtime API reference; the accepted MVP boundary lives in the MVP scope document ([Access-Control API Reference](../../access-control/docs/api.md#authorization), [MVP scope](../evaluation/mvp-scope.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
+This document defines the MVP architecture behavior for `POST /iam/authorization/check`, including timeout, retry, cache, fail-closed handling, acceptable access-stop delay, audit, and metrics. Endpoint schemas live in the IAM API contract; the accepted MVP boundary lives in the MVP scope document ([IAM Control Plane API Contract - Authorization](./iam-control-plane-api-contract.md#authorization), [MVP scope](../evaluation/mvp-scope.md), [Project governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)).
 
 Protected services must enforce authorization server-side and deny when access cannot be safely determined (`FR-020`, `FR-021`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)).
 
@@ -128,7 +128,7 @@ The IAM API may include `Retry-After` on `503` responses when it has a useful re
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [MVP Scope - Access-Control Production MVP](../evaluation/mvp-scope.md)
-- [Access-Control API Reference](../../access-control/docs/api.md)
+- [IAM Control Plane API Contract](./iam-control-plane-api-contract.md)
 - [Audit Storage Architecture](./audit-storage.md)
 - [Keycloak IAM Schema Policy](./keycloak-iam-schema-policy.md)
 - [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)

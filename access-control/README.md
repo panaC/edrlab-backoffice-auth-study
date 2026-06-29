@@ -11,7 +11,7 @@ Last reviewed: 2026-06-29
 - Use Linux shell examples. Do not add PowerShell or Windows runtime commands unless explicitly requested.
 - Run MVP verification through Docker Compose; do not use local Python test execution for this runtime.
 - MVP boundary lives in [docs/evaluation/mvp-scope.md](../docs/evaluation/mvp-scope.md).
-- Endpoint schemas live in [access-control/docs/api.md](./docs/api.md).
+- Endpoint schemas live in [docs/architecture/iam-control-plane-api-contract.md](../docs/architecture/iam-control-plane-api-contract.md).
 - Security evidence status lives in [docs/evaluation/security-test-plan.md](../docs/evaluation/security-test-plan.md#test-tracker).
 - Treat `.env.local`, generated evidence, and backups as local operational data that must not be committed.
 
@@ -25,7 +25,6 @@ Last reviewed: 2026-06-29
 - [Run](#run)
 - [Super-Admin Bootstrap](#super-admin-bootstrap)
 - [API Reference](#api-reference)
-- [Onboarding Activation](#onboarding-activation)
 - [Expected Outputs](#expected-outputs)
 - [Evidence](#evidence)
 - [Backup and Restore](#backup-and-restore)
@@ -35,7 +34,7 @@ Last reviewed: 2026-06-29
 
 ## Purpose
 
-- Runtime runbook for the accepted Phase 6 access-control MVP: Dockerized Keycloak, IAM Control Plane API, `access-check-demo-service`, local append-only audit storage, first-`super-admin` bootstrap, Linux scripts, tests, and current MVP limitations ([MVP scope](../docs/evaluation/mvp-scope.md), [Access-Control API Reference](./docs/api.md)).
+- Runtime runbook for the accepted Phase 6 access-control MVP: Dockerized Keycloak, IAM Control Plane API, `access-check-demo-service`, local append-only audit storage, first-`super-admin` bootstrap, Linux scripts, tests, and current MVP limitations ([MVP scope](../docs/evaluation/mvp-scope.md), [IAM Control Plane API Contract](../docs/architecture/iam-control-plane-api-contract.md)).
 - Production-scope Phase 6 code that validates Keycloak/OIDC-backed IAM state and protected-service authorization, with Admin Console UI, full Keycloak IAM schema migration, and production operations hardening still open.
 
 ## What This Slice Includes
@@ -123,67 +122,7 @@ runtime state.
 
 ## API Reference
 
-Endpoint families, request schemas, response examples, and common error codes are documented in [access-control/docs/api.md](./docs/api.md). This runbook remains the required runtime entry point for starting, verifying, backing up, restoring, stopping, and resetting the Phase 6 MVP.
-
-## Onboarding Activation
-
-`POST /iam/onboarding/activate` is the transition from a pre-created `invited` account to an `active` linked account. It is called by the invited user after Keycloak authentication, not by an admin activating another account. This follows the accepted onboarding rule that a backoffice account is activated only when the IAM API can safely match one invited account to the authenticated subject's verified email ([Feature requirements `FR-043` and `FR-044`](../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control API Reference - Onboarding](./docs/api.md#onboarding)).
-
-Recommended MVP scenario:
-
-1. An admin or super-admin creates the backoffice account through the IAM Control Plane API. The account starts in `invited` state, has `email`, `name`, `organization`, and `accountType`, and has no `linkedSubject`.
-2. The controlled provisioning path creates or updates the matching user in the Keycloak MVP realm with the same email. Public registration remains disabled and routine direct Keycloak business administration remains out of scope for the MVP ([MVP scope - Out of Scope](../docs/evaluation/mvp-scope.md#out-of-scope)).
-3. Keycloak sends the invited user an actions email for first login setup, instead of an backoffice admin sending a reusable password. Keycloak documents SMTP-based realm email, per-user required actions, `execute-actions-email`, and password-reset/update-password emails ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm), [Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user), [Keycloak Admin REST `execute-actions-email`](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)).
-4. For a `member`, the first-login actions should at least make the user own their credential and satisfy email verification before IAM activation. For an `admin` or `super-admin`, the actions must also satisfy the accepted privileged-authentication evidence requirement, using the MVP OTP direction where applicable ([MVP scope - Onboarding and Bootstrap](../docs/evaluation/mvp-scope.md#onboarding-and-bootstrap), [Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)).
-5. The user follows the Keycloak link or signs in through the Admin Console, completes the required Keycloak actions, and returns to the Admin Console with a user access token.
-6. The Admin Console calls `POST /iam/onboarding/activate` with that bearer token. The IAM API activates the account only if the token evidence safely matches exactly one invited account.
-
-Recommended Keycloak configuration for the MVP:
-
-| Area | MVP setting |
-| --- | --- |
-| Realm email | Configure SMTP for the MVP realm so Keycloak can send verification and action emails. Keycloak sends verification, password, and event notification emails only after realm SMTP settings are configured ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm)). |
-| Public registration | Keep public registration disabled. Backoffice accounts are created only through authorized administration workflows. |
-| Backoffice OIDC client | Use the `backoffice` Authorization Code + PKCE client and allow only the Admin Console redirect URI used after first-login actions. |
-| User creation | The controlled provisioning path creates or updates the Keycloak user that matches the IAM invited account email. |
-| Required actions for `member` | Send `VERIFY_EMAIL` and `UPDATE_PASSWORD`, so the user proves email ownership and owns their credential before IAM activation. Keycloak supports required actions per user and default required actions for new users ([Keycloak required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user)). |
-| Required actions for `admin` and `super-admin` | Send `VERIFY_EMAIL`, `UPDATE_PASSWORD`, and `CONFIGURE_TOTP` where the MVP privileged-authentication flow uses OTP. Keycloak documents that when OTP is required, the user must configure an OTP generator at login ([Keycloak creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)). |
-| Action email API | Use Keycloak Admin REST `PUT /admin/realms/{realm}/users/{user-id}/execute-actions-email` with the required-action list. Keycloak documents this endpoint as sending an email link for the user to execute selected actions ([Keycloak Admin REST users resource](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)). |
-| IAM activation | Do not mark the IAM account active from the provisioning step. Activation happens only when the invited user returns with validated token evidence and `POST /iam/onboarding/activate` succeeds. |
-
-Example action email payloads:
-
-```json
-["VERIFY_EMAIL", "UPDATE_PASSWORD"]
-```
-
-```json
-["VERIFY_EMAIL", "UPDATE_PASSWORD", "CONFIGURE_TOTP"]
-```
-
-The first payload is for `member` onboarding. The second is for privileged onboarding when the MVP OTP safeguard applies.
-
-Onboarding activation call shape:
-
-```http
-POST /iam/onboarding/activate
-Authorization: Bearer <keycloak-user-access-token>
-Content-Type: application/json
-
-{}
-```
-
-The IAM API validates the bearer token issuer, audience, expiry, subject, and expected OAuth client, extracts the authenticated `sub`, `email`, `email_verified`, and privileged-authentication evidence such as `acr`, then applies the safe match rules. The client must not provide `subject`, `emailVerified`, or `acr` as trusted request-body fields.
-
-Expected caller flow:
-
-1. Admin or super-admin creates the backoffice account in `invited` state.
-2. The invited user signs in through Keycloak.
-3. The Admin Console calls `GET /iam/me` with the user's bearer token.
-4. If no active linked account is resolved, the Admin Console calls `POST /iam/onboarding/activate` with the same bearer token.
-5. On success, the IAM API returns the activated account profile; subsequent `GET /iam/me` calls resolve normally.
-
-For `admin` and `super-admin` accounts, activation also requires the accepted privileged-authentication evidence. Without it, the route denies activation and leaves the account in `invited` state ([MVP scope - Onboarding and Bootstrap](../docs/evaluation/mvp-scope.md#onboarding-and-bootstrap)).
+Endpoint families, request schemas, response examples, and common error codes are documented in [docs/architecture/iam-control-plane-api-contract.md](../docs/architecture/iam-control-plane-api-contract.md). This runbook remains the required runtime entry point for starting, verifying, backing up, restoring, stopping, and resetting the Phase 6 MVP.
 
 ## Expected Outputs
 
@@ -266,12 +205,8 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 ## References
 
 - [MVP Scope - Access-Control Production MVP](../docs/evaluation/mvp-scope.md)
-- [Access-Control API Reference](./docs/api.md)
+- [IAM Control Plane API Contract](../docs/architecture/iam-control-plane-api-contract.md)
 - [Authorization Check Behavior](../docs/architecture/authorization-check-behavior.md)
 - [Audit Storage Architecture](../docs/architecture/audit-storage.md)
 - [Keycloak IAM Schema Policy](../docs/architecture/keycloak-iam-schema-policy.md)
 - [MVP Security Test Plan](../docs/evaluation/security-test-plan.md)
-- [Keycloak - Configuring email for a realm](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm)
-- [Keycloak - Required actions](https://www.keycloak.org/docs/latest/server_admin/#setting-required-actions-for-one-user)
-- [Keycloak - Creating an OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp)
-- [Keycloak Admin REST API - Users resource](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_users_resource)

@@ -8,9 +8,9 @@ Last reviewed: 2026-06-29
 ## Agent Brief
 
 - Read this file first for the Phase 6 MVP boundary, exclusions, readiness gaps, and source map.
-- This file is the current MVP authority; superseded ADRs and old API contracts are historical only.
+- This file is the current MVP authority; the current IAM API contract lives in the architecture docs.
 - Runtime commands and evidence belong in the [access-control runbook](../../access-control/README.md).
-- Endpoint schemas belong in the [access-control API reference](../../access-control/docs/api.md).
+- Endpoint schemas belong in the [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md).
 - Security closure status belongs in the [MVP security test tracker](./security-test-plan.md#test-tracker).
 - Current blockers are Admin Console UI, full schema migration and drift workflow, operations hardening, and security evidence closure.
 - Read [FEATURE-REQUIREMENTS.md](../../FEATURE-REQUIREMENTS.md) only when changing behavior or checking feature scope.
@@ -37,7 +37,7 @@ before production data can be trusted.
 Detailed runtime commands belong in the
 [access-control runtime runbook](../../access-control/README.md). Endpoint
 schemas belong in the
-[access-control API reference](../../access-control/docs/api.md). Architecture
+[IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md). Architecture
 behavior and policies stay in the linked architecture documents.
 
 ## Executive Summary
@@ -73,9 +73,9 @@ rollback, and residual runtime limitations
 | Area | In the MVP | Detailed source |
 | --- | --- | --- |
 | Architecture boundary | Self-hosted Keycloak stores accepted IAM state; EDRLab business administration and authorization checks go through the Admin Console and IAM Control Plane API. | [ADR 0004](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md), [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md) |
-| IAM API | REST API under `/iam` for self-profile, accounts, onboarding, service roles, assignments, `authorization/check`, and audit reads. | [Access-Control API Reference](../../access-control/docs/api.md) |
+| IAM API | REST API under `/iam` for self-profile, accounts, onboarding, service roles, assignments, `authorization/check`, and audit reads. | [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md) |
 | Account model | Backoffice accounts use fixed account types `super-admin`, `admin`, and `member`; account types are not mutable after creation. | [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements) |
-| Onboarding | Invited accounts activate only through safe bearer-token-derived onboarding evidence; privileged accounts also require accepted privileged-authentication evidence. | [Feature requirements `FR-043` and `FR-044`](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control Runtime - Onboarding Activation](../../access-control/README.md#onboarding-activation) |
+| Onboarding | Invited accounts activate only through safe bearer-token-derived onboarding evidence; privileged accounts also require accepted privileged-authentication evidence. | [Feature requirements `FR-043` and `FR-044`](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Keycloak/IAM Onboarding](../architecture/keycloak-iam-onboarding.md), [IAM Control Plane API Contract - Onboarding](../architecture/iam-control-plane-api-contract.md#onboarding) |
 | First protected service | The first protected service is `access-check-demo-service`, a synthetic service that verifies the current user's access and returns JSON `OK` or `KO`. | [Access-Control Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes) |
 | First service role | The first service-access role is `access-check-demo:consult`; member service access is consultation-style only. | [Feature requirements `FR-023`](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes) |
 | Authorization behavior | Protected services call `POST /iam/authorization/check`; the path has accepted timeout, retry, cache, fail-closed, access-stop, audit, and metrics behavior. | [Authorization Check Behavior](../architecture/authorization-check-behavior.md) |
@@ -91,7 +91,7 @@ rollback, and residual runtime limitations
 | Runtime runbook | In place | `access-control/README.md` is the required runtime runbook for Phase 6 commands, evidence, known shortcuts, stop/reset, and backup/restore procedures ([Access-Control Runtime](../../access-control/README.md)). |
 | Runtime slice | In place | The `access-control/` runtime includes Docker Compose, Keycloak, IAM API, demo service, bootstrap, audit storage, Linux scripts, Docker tests, backup/restore scripts, and smoke verification ([Access-Control Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes)). |
 | Keycloak-backed IAM state | In place for the runtime slice | The Docker runtime uses `IAM_STATE_BACKEND=keycloak`; account type, lifecycle, subject link, organization, schema marker, service-role metadata, and member role assignments are read from and written to Keycloak through the IAM Control Plane API ([Access-Control Runtime - Run](../../access-control/README.md#run)). |
-| IAM API reference | In place | Runtime endpoint families, payloads, errors, actor model, authorization check, and audit reads are described in `access-control/docs/api.md` ([Access-Control API Reference](../../access-control/docs/api.md)). |
+| IAM API contract | In place | Runtime endpoint families, payloads, errors, actor model, authorization check, and audit reads are described in `docs/architecture/iam-control-plane-api-contract.md` ([IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md)). |
 | Security tests | Partially complete as runtime evidence | Docker-only tests exist for the runtime slice, while production readiness still depends on closing or explicitly deferring every test-plan gap before declaring the MVP production-ready ([Access-Control Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes), [MVP Security Test Plan - Test Tracker](./security-test-plan.md#test-tracker)). |
 | Admin Console UI | Not included yet | The runtime documentation explicitly states that the Admin Console UI is not included yet ([Access-Control Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts)). |
 | Full schema migration and drift workflow | Not complete | The runtime represents drift with invariant checks, while full migration reporting, reconciliation workflow, and production direct-admin governance remain outside the current slice ([Access-Control Runtime - Known MVP Shortcuts](../../access-control/README.md#known-mvp-shortcuts), [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md)). |
@@ -104,9 +104,9 @@ rollback, and residual runtime limitations
 The MVP includes controlled creation, listing, reading, profile update,
 disablement, restoration, and archival for `member` accounts by `admin`, and for
 `admin` and `member` accounts by `super-admin`, within the management scopes
-defined by the feature requirements and runtime API reference
+defined by the feature requirements and IAM API contract
 ([Feature requirements `FR-017` and `FR-018`](../../FEATURE-REQUIREMENTS.md#feature-requirements),
-[Access-Control API Reference - Accounts](../../access-control/docs/api.md#accounts)).
+[IAM Control Plane API Contract - Accounts](../architecture/iam-control-plane-api-contract.md#accounts)).
 
 Accounts start as invited, require at least email, organization, name, and a
 stable internal account identifier, and are retained rather than hard-deleted in
@@ -119,8 +119,9 @@ The MVP includes safe onboarding activation through
 `POST /iam/onboarding/activate`, where the IAM API derives identity evidence
 from the authenticated user's bearer token and activates only when the accepted
 match rules pass
-([Access-Control API Reference - Onboarding](../../access-control/docs/api.md#onboarding),
-[Access-Control Runtime - Onboarding Activation](../../access-control/README.md#onboarding-activation)).
+([IAM Control Plane API Contract - Onboarding](../architecture/iam-control-plane-api-contract.md#onboarding),
+[Keycloak/IAM Onboarding](../architecture/keycloak-iam-onboarding.md),
+[Feature requirements `FR-043` and `FR-044`](../../FEATURE-REQUIREMENTS.md#feature-requirements)).
 
 The first `super-admin` is handled by a controlled bootstrap process outside the
 public IAM API. The process is idempotent and audited, and it may seed the first
@@ -133,7 +134,7 @@ The MVP includes service-access-role listing for `admin` and `super-admin`,
 catalog mutation by `super-admin`, and assignment or removal of active
 service-access roles for `member` accounts only
 ([Feature requirements `FR-002`, `FR-003`, `FR-004`, and `FR-032`](../../FEATURE-REQUIREMENTS.md#feature-requirements),
-[Access-Control API Reference - Service Roles](../../access-control/docs/api.md#service-roles)).
+[IAM Control Plane API Contract - Service Roles](../architecture/iam-control-plane-api-contract.md#service-roles)).
 
 Service-access roles must not be assigned to `admin` or `super-admin` accounts.
 Active `admin` accounts receive covered service access automatically, and active
@@ -145,7 +146,7 @@ Active `admin` accounts receive covered service access automatically, and active
 The MVP includes `access-check-demo-service` as the first protected-service
 integration. It calls `POST /iam/authorization/check` using service-to-service
 authentication and maps IAM decisions to `OK` or `KO` JSON responses
-([Access-Control API Reference - Authorization](../../access-control/docs/api.md#authorization),
+([IAM Control Plane API Contract - Authorization](../architecture/iam-control-plane-api-contract.md#authorization),
 [Access-Control Runtime - What This Slice Includes](../../access-control/README.md#what-this-slice-includes)).
 
 Protected-service authorization is server-side and fail-closed. The accepted
@@ -159,7 +160,7 @@ expectations
 The MVP includes local EDRLab business audit events for account lifecycle,
 onboarding, subject-link, role, authorization denial, audit-read, bootstrap,
 rejected privileged onboarding, and indeterminate dependency scenarios
-([Access-Control API Reference - Audit](../../access-control/docs/api.md#audit),
+([IAM Control Plane API Contract - Audit](../architecture/iam-control-plane-api-contract.md#audit),
 [Audit Storage Architecture](../architecture/audit-storage.md)).
 
 The MVP includes an accepted security regression test plan. The
@@ -206,10 +207,11 @@ This tracker uses the same status vocabulary as the security tracker:
 | Accepted Phase 6 MVP scope, residual risks, and readiness gaps | This document |
 | Feature requirements and actor rules | [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md) |
 | Accepted architecture direction | [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP Design](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) |
-| IAM routes, payloads, errors, and endpoint behavior | [Access-Control API Reference](../../access-control/docs/api.md) |
+| IAM routes, payloads, errors, and endpoint behavior | [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md) |
 | `authorization/check` timeout, retry, cache, fail-closed, access-stop, audit, and metrics behavior | [Authorization Check Behavior](../architecture/authorization-check-behavior.md) |
 | Audit storage architecture | [Audit Storage Architecture](../architecture/audit-storage.md) |
 | Keycloak state model and drift policy | [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md) |
+| Keycloak/IAM onboarding flow | [Keycloak/IAM Onboarding](../architecture/keycloak-iam-onboarding.md) |
 | Security regression test gate | [MVP Security Test Plan](./security-test-plan.md) |
 | Executable Phase 6 runtime and commands | [Access-Control Runtime Runbook](../../access-control/README.md) |
 | Phase boundaries | [Project Governance](../../PROJECT-GOVERNANCE.md) |
@@ -222,9 +224,10 @@ This tracker uses the same status vocabulary as the security tracker:
 - [Project Governance - Phase 6](../../PROJECT-GOVERNANCE.md#phase-6---production-mvp)
 - [ADR 0003 - Accept OTP for Privileged Authentication](../decisions/0003-accept-otp-for-privileged-authentication.md)
 - [ADR 0004 - Adopt Keycloak IAM Control Plane for MVP Design](../decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md)
-- [Access-Control API Reference](../../access-control/docs/api.md)
+- [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md)
 - [Authorization Check Behavior](../architecture/authorization-check-behavior.md)
 - [Audit Storage Architecture](../architecture/audit-storage.md)
 - [Keycloak IAM Schema Policy](../architecture/keycloak-iam-schema-policy.md)
+- [Keycloak/IAM Onboarding](../architecture/keycloak-iam-onboarding.md)
 - [MVP Security Test Plan](./security-test-plan.md)
 - [Access-Control Runtime Runbook](../../access-control/README.md)

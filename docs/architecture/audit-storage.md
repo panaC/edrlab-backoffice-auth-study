@@ -46,7 +46,7 @@ This is intentionally basic. It is accepted because the first MVP needs durable,
 
 Each physical line in the audit file is one complete JSON object. The application must not pretty-print audit events across multiple lines, because chronological line scanning and append-only review depend on one event per line. JSON object members should use unique names, because RFC 8259 notes that duplicate object member names produce unpredictable receiver behavior ([RFC 8259 - Objects](https://www.rfc-editor.org/rfc/rfc8259)).
 
-The event object uses the minimum event fields exposed by the MVP audit API ([Access-Control API Reference - Audit](../../access-control/docs/api.md#audit)):
+The event object uses the minimum event fields exposed by the MVP audit API ([IAM Control Plane API Contract - Audit](./iam-control-plane-api-contract.md#audit)):
 
 | Field | Required in MVP? | Notes |
 | --- | --- | --- |
@@ -90,13 +90,13 @@ Audit reading is super-admin-only through the accepted IAM Control Plane API end
 - `GET /iam/audit/events` returns a chronological audit list with minimal filters.
 - `GET /iam/audit/events/{eventId}` returns basic event detail.
 
-Audit reads must create audit events, and `admin` or `member` actors must not consult audit records (`FR-028`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [Access-Control API Reference - Audit](../../access-control/docs/api.md#audit)).
+Audit reads must create audit events, and `admin` or `member` actors must not consult audit records (`FR-028`; [Feature requirements](../../FEATURE-REQUIREMENTS.md#feature-requirements), [IAM Control Plane API Contract - Audit](./iam-control-plane-api-contract.md#audit)).
 
 Audit export is out of scope for the initial MVP. If export is later added, it must be explicitly accepted, authorized for `super-admin` only unless a later decision changes that rule, and audited as an audit export event.
 
 ## Correlation
 
-Every audit event includes `correlationId`. The IAM Control Plane API accepts `X-Correlation-Id` from trusted callers, validates and normalizes it, generates one when missing, returns it on responses, stores it in audit events, and propagates it across protected-service calls, Keycloak calls, technical logs, and Problem Details responses ([Access-Control API Reference - Audit](../../access-control/docs/api.md#audit)).
+Every audit event includes `correlationId`. The IAM Control Plane API accepts `X-Correlation-Id` from trusted callers, validates and normalizes it, generates one when missing, returns it on responses, stores it in audit events, and propagates it across protected-service calls, Keycloak calls, technical logs, and Problem Details responses ([IAM Control Plane API Contract - Audit](./iam-control-plane-api-contract.md#audit)).
 
 `correlationId` is operational evidence, not authorization evidence. It helps join related records; it does not prove that a caller was authorized.
 
@@ -133,7 +133,7 @@ Residual risk: file-backed append-only storage gives a simple durable audit trai
 
 - [Feature Requirements Specification](../../FEATURE-REQUIREMENTS.md)
 - [MVP Scope - Access-Control Production MVP](../evaluation/mvp-scope.md)
-- [Access-Control API Reference](../../access-control/docs/api.md)
+- [IAM Control Plane API Contract](./iam-control-plane-api-contract.md)
 - [Authorization Check Behavior](./authorization-check-behavior.md)
 - [Access-Control runtime runbook](../../access-control/README.md)
 - [Phase 5 Review Note](../evaluation/phase-5-review-note.md)

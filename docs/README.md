@@ -10,7 +10,8 @@ can avoid loading historical material unless they need provenance.
 | --- | --- |
 | MVP boundary, accepted scope, readiness gaps | [MVP scope](./evaluation/mvp-scope.md) |
 | Runtime commands, evidence, backup, restore, stop/reset | [Access-control runtime runbook](../access-control/README.md) |
-| Runtime endpoint schemas and errors | [Access-control API reference](../access-control/docs/api.md) |
+| IAM routes, payloads, schemas, and errors | [IAM Control Plane API contract](./architecture/iam-control-plane-api-contract.md) |
+| Keycloak/IAM onboarding flow | [Keycloak/IAM onboarding](./architecture/keycloak-iam-onboarding.md) |
 | `authorization/check` behavior | [Authorization check behavior](./architecture/authorization-check-behavior.md) |
 | Audit storage architecture | [Audit storage architecture](./architecture/audit-storage.md) |
 | Keycloak managed schema and drift policy | [Keycloak IAM schema policy](./architecture/keycloak-iam-schema-policy.md) |
@@ -30,7 +31,6 @@ phase reconstruction, or when a current document explicitly sends you there.
 | `docs/requirements/` | Requirements consolidation and review trails. |
 | `docs/risks/` | Earlier risk and threat-model material. |
 | `docs/evaluation/phase-5-review-note.md` | Phase 5 closure note and historical gate context. |
-| `docs/architecture/iam-control-plane-api-contract.md` | Superseded Phase 5 API contract; use `access-control/docs/api.md` for runtime endpoint schemas. |
 | `CHANGELOG.archive.md` | Older changelog entries; do not read by default. |
 | `docs/wiki/` | Conceptual IAM background, not project runtime authority. |
 
@@ -44,7 +44,7 @@ rg "term" docs
 
 | Folder | Use |
 | --- | --- |
-| `architecture/` | Current architecture behavior and policy, plus historical architecture notes. |
+| `architecture/` | Current architecture behavior, API contracts, and policy. |
 | `evaluation/` | Current MVP scope and evidence trackers, plus historical evaluation notes. |
 | `decisions/` | ADR-style project or architecture decisions. |
 | `poc/` | Non-production validation material from earlier phases. |

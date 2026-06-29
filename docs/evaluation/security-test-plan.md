@@ -11,7 +11,7 @@ This page is the compact Phase 6 security evidence tracker. The MVP cannot be
 called production-ready while any row is `Partial` or `Open`, unless the row is
 moved to `Deferred` with explicit accepted risk. Scope and behavior details live
 in [MVP scope](./mvp-scope.md), the
-[access-control API reference](../../access-control/docs/api.md),
+[IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md),
 [authorization check behavior](../architecture/authorization-check-behavior.md),
 [audit storage architecture](../architecture/audit-storage.md), and
 [Keycloak IAM schema policy](../architecture/keycloak-iam-schema-policy.md).
@@ -53,7 +53,7 @@ and the evidence workflow in the
 | `SEC-DRIFT-001` | `Implemented` | Direct protected-service role mapping in Keycloak is detected and denied. | Covered by direct service-role drift tests. |
 | `SEC-DRIFT-002` | `Open` | Direct lifecycle change in Keycloak is treated as drift. | Add lifecycle-drift test and audit assertion. |
 | `SEC-DRIFT-003` | `Implemented` | Missing, multiple, or elevated account-type roles block access. | Covered by account-type drift tests. |
-| `SEC-DRIFT-004` | `Open` | Direct `edrlab.linked_subject` change is drift. | Add subject-link drift test and audit assertion. |
+| `SEC-DRIFT-004` | `Open` | Direct `iam.linked_subject` change is drift. | Add subject-link drift test and audit assertion. |
 | `SEC-AUDIT-001` | `Partial` | Required events exist for allow, deny, reject, indeterminate, drift, bootstrap, onboarding, role, lifecycle, and audit-read scenarios. | Several event classes covered; full matrix-wide audit evidence remains open. |
 | `SEC-AUDIT-002` | `Implemented` | Audit file remains one JSON object per physical line. | Covered by audit JSONL format test. |
 | `SEC-AUDIT-003` | `Partial` | Audit contains no tokens, OTP values, passwords, recovery codes, client secrets, private keys, raw session IDs, or raw subject tokens. | Raw subject-token absence covered; full forbidden-value list remains open. |
@@ -74,7 +74,7 @@ authorization testing guidance and API authorization risk families
 
 - [MVP scope](./mvp-scope.md)
 - [Access-control runtime runbook](../../access-control/README.md)
-- [Access-control API reference](../../access-control/docs/api.md)
+- [IAM Control Plane API Contract](../architecture/iam-control-plane-api-contract.md)
 - [Access-control MVP security tests](../../access-control/tests/test_mvp_security.py)
 - [Authorization check behavior](../architecture/authorization-check-behavior.md)
 - [Audit storage architecture](../architecture/audit-storage.md)
