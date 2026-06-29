@@ -4,6 +4,16 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-29
+
+### Added
+
+- Added Docker-volume backup and restore scripts for the Phase 6 `access-control/` MVP runtime, including checksum verification, a restore confirmation gate, and generated-backup ignore rules.
+
+### Changed
+
+- Documented the local MVP backup and restore procedure, generated evidence and backup locations, and remaining deployment-operation limitations in `access-control/README.md`.
+
 ## 2026-06-28
 
 ### Changed

@@ -3,7 +3,7 @@
 Status: Draft
 Phase: Phase 6 - Production MVP
 Scope: Runtime
-Last reviewed: 2026-06-27
+Last reviewed: 2026-06-29
 
 ## Contents
 
@@ -15,6 +15,7 @@ Last reviewed: 2026-06-27
 - [Onboarding Activation](#onboarding-activation)
 - [Expected Outputs](#expected-outputs)
 - [Evidence](#evidence)
+- [Backup and Restore](#backup-and-restore)
 - [Stop and Reset](#stop-and-reset)
 - [Known MVP Shortcuts](#known-mvp-shortcuts)
 - [References](#references)
@@ -74,6 +75,8 @@ The main variables are:
 | `BOOTSTRAP_SUPER_ADMIN_NAME` | First `super-admin` display name. |
 | `BOOTSTRAP_SUPER_ADMIN_ORGANIZATION` | First `super-admin` organization. |
 | `BOOTSTRAP_SUPER_ADMIN_SUBJECT` | Local development subject linked to the bootstrapped `super-admin`. |
+| `ACCESS_CONTROL_BACKUP_DIR` | Optional host directory for local MVP backups. Defaults to `access-control/backups/`. |
+| `ACCESS_CONTROL_BACKUP_IMAGE` | Optional helper image for backup and restore. Defaults to `busybox:1.36.1`. |
 
 ## Run
 
@@ -170,6 +173,38 @@ bash access-control/scripts/collect-evidence.sh
 ```
 
 Evidence is written to `access-control/evidence/<timestamp>/` and is ignored by Git. The evidence includes Docker Compose service status, the Docker test summary, and the Docker Keycloak smoke result.
+
+## Backup and Restore
+
+The local MVP stores durable runtime state in two Docker volumes:
+
+- `edrlab-access-control-mvp_access-control-runtime` for local IAM runtime files, including audit JSONL;
+- `edrlab-access-control-mvp_keycloak-data` for the local Keycloak data directory.
+
+Audit files are durable MVP state and must be included in backup and restore planning before production data is trusted ([Audit Storage Policy](../docs/architecture/audit-storage.md#backup-and-restore), [ADR 0005](../docs/decisions/0005-authorize-phase-6-production-mvp.md#decision)).
+
+Create a local backup from the repository root:
+
+```bash
+bash access-control/scripts/backup.sh
+```
+
+The script stops `keycloak`, `iam-api`, and `access-check-demo-service` before copying the volumes so the local Docker volume snapshot is consistent enough for this MVP runtime. It writes archives, a `SHA256SUMS` file, and a manifest under `access-control/backups/<timestamp>/`. Generated backup files are ignored by Git and must be treated as confidential operational data.
+
+Restore a backup from the repository root:
+
+```bash
+RESTORE_CONFIRM=restore-access-control-mvp-state bash access-control/scripts/restore.sh access-control/backups/<timestamp>
+bash access-control/scripts/start.sh
+```
+
+The restore script verifies checksums, stops the runtime services, clears the target Docker volumes, and restores the saved volume contents. It is intentionally gated by `RESTORE_CONFIRM` because it overwrites current local MVP runtime state. After restore, run `bootstrap.sh` only if the restored environment did not already include the expected Keycloak realm and first `super-admin`; otherwise run `verify.sh` to prove the restored runtime still serves the MVP path.
+
+Known restore limitations for this Phase 6 slice:
+
+- the backup is a local Docker-volume procedure, not a production hosted-backup design;
+- encryption at rest, off-host retention, backup scheduling, and restore-test cadence remain deployment operations decisions;
+- restoring onto a runtime with different secrets, image versions, or realm names is not guaranteed by this script.
 
 ## Stop and Reset
 
