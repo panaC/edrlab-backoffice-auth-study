@@ -345,6 +345,7 @@ class AccessControlService:
                 account
                 for account in state["accounts"].values()
                 if account.get("linkedSubject") == subject and account.get("email", "").lower() == email.lower()
+                and account.get("lifecycle") == "active"
             ]
             if active_same_subject:
                 account = active_same_subject[0]

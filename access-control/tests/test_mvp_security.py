@@ -248,6 +248,53 @@ class MvpSecurityTests(unittest.TestCase):
         self.assertEqual(activated["accountId"], admin["accountId"])
         self.assertEqual(activated["lifecycle"], "active")
 
+    def test_onboarding_repeat_requires_account_to_still_be_active(self) -> None:
+        for lifecycle_action, expected_lifecycle in (("disable", "disabled"), ("archive", "archived")):
+            with self.subTest(expected_lifecycle=expected_lifecycle):
+                member = self.service.create_account(
+                    self.super_admin_id,
+                    {
+                        "email": f"{expected_lifecycle}-repeat@example.test",
+                        "organization": "MVP Organization",
+                        "name": f"{expected_lifecycle.title()} Repeat",
+                        "accountType": "member",
+                    },
+                    f"corr-create-{expected_lifecycle}-repeat",
+                )
+                token = f"{expected_lifecycle}-repeat-token"
+                subject = f"{expected_lifecycle}-repeat-sub"
+                self._add_subject_token(token, subject, member["email"])
+                self.service.activate_onboarding_from_bearer(
+                    f"Bearer {token}",
+                    {},
+                    f"corr-activate-{expected_lifecycle}-repeat",
+                )
+                self.service.lifecycle(
+                    self.super_admin_id,
+                    member["accountId"],
+                    "disable",
+                    f"corr-disable-{expected_lifecycle}-repeat",
+                )
+                if lifecycle_action == "archive":
+                    self.service.lifecycle(
+                        self.super_admin_id,
+                        member["accountId"],
+                        "archive",
+                        "corr-archive-repeat",
+                    )
+
+                with self.assertRaises(ApiError) as repeat:
+                    self.service.activate_onboarding_from_bearer(
+                        f"Bearer {token}",
+                        {},
+                        f"corr-repeat-{expected_lifecycle}",
+                    )
+
+                self.assertEqual(repeat.exception.status, 409)
+                self.assertEqual(repeat.exception.code, "unsafe_onboarding_match")
+                state = json.loads(self.state_path.read_text(encoding="utf-8"))
+                self.assertEqual(state["accounts"][member["accountId"]]["lifecycle"], expected_lifecycle)
+
     def test_member_access_stops_after_role_removal_and_disablement(self) -> None:
         member = self.service.create_account(
             self.super_admin_id,
