@@ -1,74 +1,34 @@
 # Abstract
 
-This repository contains the EDRLab backoffice access-control study and the approved production MVP workspace.
+This repository is the EDRLab backoffice access-control workspace. It has moved
+from study and validation into Phase 6 production-MVP implementation.
 
-The study objective is to define, compare, and eventually recommend the simplest secure way to authenticate selected backoffice users, manage their accounts, control access to company-controlled protected backend services, and audit privileged or security-relevant actions without expanding into public customer identity or a company-wide IAM replacement.
+The approved MVP is a Keycloak-backed IAM Control Plane API for selected
+backoffice users. It keeps fixed account types (`super-admin`, `admin`,
+`member`) separate from service-access roles, supports safe onboarding,
+authorizes protected services through server-side `authorization/check`, and
+records local append-only business audit
+([MVP scope](./docs/evaluation/mvp-scope.md),
+[feature requirements](./FEATURE-REQUIREMENTS.md)).
 
-## Current State
+The current runtime lives in [access-control/](./access-control/README.md). It
+includes Dockerized Keycloak, the IAM API, `access-check-demo-service`, first
+`super-admin` bootstrap, Keycloak-backed IAM state, Docker tests, human e2e
+evidence, SMTP-backed onboarding evidence, and backup/restore scripts.
 
-Current phase: Phase 6 - Production MVP.
-
-The requirements work is consolidated:
-
-- [README.md](./README.md) is the project entry point. It summarizes project purpose, actor model, scope, roadmap, open study questions, and documentation links.
-- [FEATURE-REQUIREMENTS.md](./FEATURE-REQUIREMENTS.md) is the single review-state feature-requirements source for the access-control capability, currently covering `FR-001` through `FR-044`.
-- The former `docs/requirements/baseline.md` file has been retired after coverage review.
-- [docs/requirements/feature-requirements-review.md](./docs/requirements/feature-requirements-review.md) records the consolidation trail, validation decisions, final review slices, onboarding review, baseline coverage review, and retirement decision.
-
-The current validated access-control model keeps fixed account types separate from service-access roles:
-
-- account types are `super-admin`, `admin`, and `member`;
-- account type is fixed at account creation and cannot be changed, merged, or elevated later;
-- service-access roles describe protected backend service access and do not grant account-management responsibilities;
-- active admins automatically receive access to every protected backend service covered by service-access roles;
-- `super-admin` is a high-level administration superset of `admin`, inheriting admin protected-service access and member-management capabilities while adding admin account management, service-access-role catalog management, and audit consultation;
-- service-access roles are assigned to members only; inherited admin or super-admin protected-service access does not require assigning service-access roles to privileged account types;
-- members access protected backend services only when active and assigned a covering active service-access role.
-
-The identity-provider and onboarding boundary is now explicit:
-
-- the identity provider or authentication system owns authentication, invitation delivery, credentials, MFA, identity-provider login sessions, and identity-provider recovery;
-- the access-control capability owns backoffice account state, lifecycle, immutable subject links, service-access roles, protected-service authorization, and project audit evidence;
-- an authenticated identity must resolve to exactly one linked backoffice account before authorization is evaluated;
-- identity-provider claims, groups, or roles must not override the backoffice account type, lifecycle state, service-access-role assignments, or audit requirements;
-- automatic onboarding activation may create the immutable authenticated-subject link only when the backoffice finds exactly one invited account with no existing subject link and a verified matching email; production admin and super-admin onboarding also requires privileged-authentication evidence;
-- unsafe onboarding matches fail closed: no subject link, no activation, no authorization, and administrative intervention required.
-
-The completed Phase 2 and Phase 3 study artifacts, plus the Phase 4 Keycloak PoC results and Phase 5 review decisions, provide the evidence base for the approved Phase 6 production MVP:
-
-- [docs/risks/threat-model.md](./docs/risks/threat-model.md) frames protected assets, trust boundaries, threat scenarios, requirement-refinement candidates, and review questions.
-- [docs/architecture/options.md](./docs/architecture/options.md) frames plausible architecture shapes without choosing a final target architecture.
-- [docs/evaluation/technical-solutions.md](./docs/evaluation/technical-solutions.md) identifies three concrete candidates for later evaluation: Auth0 managed login with local access control, self-hosted Keycloak with local access control, and a Spring-based local IAM control plane.
-- [docs/evaluation/solution-choice.md](./docs/evaluation/solution-choice.md) records the original self-hosted Keycloak candidate selection and closes Phase 3.
-- [docs/decisions/0001-choose-keycloak-for-validation.md](./docs/decisions/0001-choose-keycloak-for-validation.md) records the original Keycloak validation decision, now superseded for the active validation boundary.
-- [docs/decisions/0002-validate-keycloak-iam-bff.md](./docs/decisions/0002-validate-keycloak-iam-bff.md) records the accepted active direction: Keycloak as IAM source with an EDRLab IAM Control Plane API.
-- [docs/decisions/0003-accept-otp-for-privileged-authentication.md](./docs/decisions/0003-accept-otp-for-privileged-authentication.md) records the accepted OTP privileged-authentication decision for the current direction.
-- [docs/decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md](./docs/decisions/0004-adopt-keycloak-iam-control-plane-for-mvp-design.md) records the Phase 5 decision to adopt the Keycloak IAM Control Plane API architecture for constrained MVP design without starting Phase 6 implementation.
-- [docs/decisions/0005-authorize-phase-6-production-mvp.md](./docs/decisions/0005-authorize-phase-6-production-mvp.md) records the explicit decision authorizing Phase 6 production MVP implementation for the accepted scope.
-- [docs/poc/keycloak-validation-plan.md](./docs/poc/keycloak-validation-plan.md) is the original Phase 4 entry plan for the targeted non-production Keycloak validation.
-- [docs/poc/keycloak-iam-bff-validation-plan.md](./docs/poc/keycloak-iam-bff-validation-plan.md) is the active Phase 4 validation plan for Keycloak as IAM source with an EDRLab IAM Control Plane API.
-- [docs/evaluation/phase-5-review-note.md](./docs/evaluation/phase-5-review-note.md) summarizes what the Keycloak IAM Control Plane API PoC validates, the accepted residual risks, and the now-closed minimum conditions for Phase 6 MVP authorization.
-- [docs/evaluation/mvp-scope.md](./docs/evaluation/mvp-scope.md) defines the accepted MVP scope for account operations, lifecycle, service-access roles, protected services, audit, and privileged onboarding.
-
-The study has completed Phase 5. ADR 0005 authorizes Phase 6 production MVP implementation inside the accepted scope: Keycloak as IAM source, EDRLab Admin Console plus IAM Control Plane API as the business boundary, `access-check-demo-service` as the first protected service, file-backed append-only audit, accepted security tests, and simple audited first-super-admin bootstrap.
-
-The expected output is now a production-scope MVP implementation with executable security evidence, documented runtime and operations behavior, and explicit tracking of post-MVP deferrals.
+The project is suitable for controlled MVP hardening and staging rehearsal with
+non-production data. A production-ready claim still requires closure or accepted
+deferral of the remaining readiness gaps: Admin Console UI or accepted operator
+workflow, full schema migration and drift workflow, operations evidence, OTP
+support posture, security-evidence closure, and runtime shortcut review
+([readiness gaps](./docs/evaluation/mvp-scope.md#production-readiness-gaps),
+[security tracker](./docs/evaluation/security-test-plan.md#test-tracker)).
 
 ## Key Links
 
 - [Project brief](./README.md)
-- [Consolidated feature requirements](./FEATURE-REQUIREMENTS.md)
-- [Feature requirements review](./docs/requirements/feature-requirements-review.md)
-- [Threat model](./docs/risks/threat-model.md)
-- [Architecture options](./docs/architecture/options.md)
-- [Concrete technical solution candidates](./docs/evaluation/technical-solutions.md)
-- [Solution choice](./docs/evaluation/solution-choice.md)
-- [ADR 0001 - Choose Keycloak for validation](./docs/decisions/0001-choose-keycloak-for-validation.md)
-- [ADR 0005 - Authorize Phase 6 production MVP](./docs/decisions/0005-authorize-phase-6-production-mvp.md)
 - [MVP scope](./docs/evaluation/mvp-scope.md)
-- [Keycloak validation plan](./docs/poc/keycloak-validation-plan.md)
-- [Project study documentation map](./docs/README.md)
-- [Project governance](./PROJECT-GOVERNANCE.md)
+- [Access-control runtime](./access-control/README.md)
+- [IAM API contract](./docs/architecture/iam-control-plane-api-contract.md)
+- [Security test plan](./docs/evaluation/security-test-plan.md)
 - [Changelog](./CHANGELOG.md)
-- [Agent instructions](./AGENTS.md)
-- [Conceptual IAM wiki](./docs/wiki/README.md)
