@@ -40,6 +40,16 @@ LOCAL_TEST_PASSWORD = os.environ.get("HUMAN_E2E_FIXTURE_PASSWORD", "change-me-hu
 NORMAL_ACR = os.environ.get("IAM_NORMAL_ACR", "iam-normal")
 PRIVILEGED_ACR = os.environ.get("IAM_PRIVILEGED_ACR", DEFAULT_PRIVILEGED_ACR)
 OTP_LABEL_PREFIX = "iam-human-e2e"
+ONBOARDING_ACTION_EMAILS_ENABLED = os.environ.get("KEYCLOAK_ONBOARDING_ACTION_EMAILS", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+KEYCLOAK_SMTP_HOST = os.environ.get("KEYCLOAK_SMTP_HOST", "mailpit")
+KEYCLOAK_SMTP_PORT = os.environ.get("KEYCLOAK_SMTP_PORT", "1025")
+KEYCLOAK_SMTP_FROM = os.environ.get("KEYCLOAK_SMTP_FROM", "no-reply@example.test")
+MAILPIT_API_BASE_URL = os.environ.get("MAILPIT_API_BASE_URL", "http://mailpit:8025").rstrip("/")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -117,6 +127,11 @@ class Evidence:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Interactive human e2e runner for the access-control MVP.")
     parser.add_argument("--yes", action="store_true", help="Run without pausing between test cases.")
+    parser.add_argument(
+        "--email-onboarding",
+        action="store_true",
+        help="Also run the SMTP-backed Keycloak action-email onboarding test.",
+    )
     args = parser.parse_args()
 
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -127,6 +142,9 @@ def main() -> None:
     evidence.write(f"Keycloak: {KEYCLOAK_BASE_URL}/realms/{KEYCLOAK_REALM}")
     evidence.write(f"IAM API: {IAM_API_BASE_URL}")
     evidence.write(f"Demo service: {DEMO_BASE_URL}")
+    if args.email_onboarding:
+        wait_for_mailpit()
+        configure_realm_smtp(keycloak_admin_access_token())
 
     cases: list[tuple[str, str, Callable[[Evidence, dict[str, Any]], None]]] = [
         ("E2E-001", "Runtime bootstrap and health", e2e_001_runtime),
@@ -141,6 +159,8 @@ def main() -> None:
         ("E2E-010", "Super-admin audit consultation", e2e_010_audit),
         ("E2E-011", "Logout and actor isolation", e2e_011_logout),
     ]
+    if args.email_onboarding:
+        cases.append(("E2E-012", "SMTP action-email onboarding", e2e_012_email_onboarding))
     try:
         for case_id, title, callback in cases:
             evidence.section(f"{case_id} {title}")
@@ -153,6 +173,8 @@ def main() -> None:
             evidence.pause()
     finally:
         evidence.finalize()
+    if any(item["status"] == "FAIL" for item in evidence.results):
+        raise SystemExit(1)
 
 
 def e2e_001_runtime(evidence: Evidence, state: dict[str, Any]) -> None:
@@ -312,7 +334,7 @@ def e2e_006_member_onboarding(evidence: Evidence, state: dict[str, Any]) -> None
 
 def e2e_007_demo_service(evidence: Evidence, state: dict[str, Any]) -> None:
     require_state(state, "memberToken")
-    before_status, before = request_json(
+    before_status, before = request_json_with_retry(
         "GET",
         f"{DEMO_BASE_URL}/access-check-demo",
         headers={"Authorization": f"Bearer {state['memberToken']}"},
@@ -324,7 +346,7 @@ def e2e_007_demo_service(evidence: Evidence, state: dict[str, Any]) -> None:
         actor_token=state["adminToken"],
         expected={200},
     )
-    allow_status, allow = request_json(
+    allow_status, allow = request_json_with_retry(
         "GET",
         f"{DEMO_BASE_URL}/access-check-demo",
         headers={"Authorization": f"Bearer {state['memberToken']}"},
@@ -336,7 +358,7 @@ def e2e_007_demo_service(evidence: Evidence, state: dict[str, Any]) -> None:
         actor_token=state["adminToken"],
         expected={200},
     )
-    after_status, after = request_json(
+    after_status, after = request_json_with_retry(
         "GET",
         f"{DEMO_BASE_URL}/access-check-demo",
         headers={"Authorization": f"Bearer {state['memberToken']}"},
@@ -443,6 +465,56 @@ def e2e_011_logout(evidence: Evidence, state: dict[str, Any]) -> None:
     evidence.payload("noTokenMeDenied", {"status": no_token_status, "body": no_token})
     evidence.payload("keycloakLogout", logout_result or {"status": "not_executed"})
     evidence.result("E2E-011", "PASS", "No-token IAM request was denied and Keycloak logout was exercised when possible.")
+
+
+def e2e_012_email_onboarding(evidence: Evidence, state: dict[str, Any]) -> None:
+    require_state(state, "superAdminToken")
+    if not ONBOARDING_ACTION_EMAILS_ENABLED:
+        raise SkipCase("KEYCLOAK_ONBOARDING_ACTION_EMAILS is not enabled for the IAM API runtime.")
+    wait_for_mailpit()
+    admin_token = keycloak_admin_access_token()
+    configure_realm_smtp(admin_token)
+    clear_mailpit_messages()
+
+    username = f"email-member-{state['runId']}".lower()
+    email = f"{username}@example.test"
+    password = f"{LOCAL_TEST_PASSWORD}-email"
+    _, account = request_json(
+        "POST",
+        f"{IAM_API_BASE_URL}/iam/accounts",
+        actor_token=state["superAdminToken"],
+        body={
+            "email": email,
+            "organization": "MVP Organization",
+            "name": "Email Onboarding Member",
+            "accountType": "member",
+        },
+        expected={200},
+    )
+    message = wait_for_mailpit_message(email)
+    action_link = extract_keycloak_action_link(message)
+    complete_member_action_email(action_link, password)
+    token_response = login_with_authorization_code(email, password, acr_value=NORMAL_ACR)
+    _, activated = request_json(
+        "POST",
+        f"{IAM_API_BASE_URL}/iam/onboarding/activate",
+        actor_token=token_response["access_token"],
+        body={},
+        expected={200},
+    )
+
+    assert_equal(activated.get("accountId"), account.get("accountId"), "Email-onboarded account mismatch")
+    assert_equal(activated.get("lifecycle"), "active", "Email-onboarded member must become active")
+    assert_equal(activated.get("hasLinkedSubject"), True, "Email-onboarded member must have a linked subject")
+    evidence.payload(
+        "emailOnboarding",
+        {
+            "account": account,
+            "mailpitMessage": summarize_mailpit_message(message),
+            "activation": activated,
+        },
+    )
+    evidence.result("E2E-012", "PASS", "Keycloak action email was captured, completed, and activated through IAM onboarding.")
 
 
 class SkipCase(Exception):
@@ -572,6 +644,210 @@ def keycloak_admin_access_token() -> str:
     if not isinstance(token, str):
         raise RuntimeError("Unable to obtain Keycloak admin token")
     return token
+
+
+def configure_realm_smtp(admin_token: str) -> None:
+    realm = keycloak_api_get(admin_token, "")
+    if not isinstance(realm, dict):
+        raise RuntimeError("Unexpected Keycloak realm response")
+    smtp = {
+        **(realm.get("smtpServer") if isinstance(realm.get("smtpServer"), dict) else {}),
+        "host": KEYCLOAK_SMTP_HOST,
+        "port": str(KEYCLOAK_SMTP_PORT),
+        "from": KEYCLOAK_SMTP_FROM,
+        "auth": "false",
+        "ssl": "false",
+        "starttls": "false",
+    }
+    payload = {**realm, "smtpServer": smtp}
+    keycloak_api_json("PUT", admin_token, "", payload, expected={200, 204})
+
+
+def wait_for_mailpit() -> None:
+    for _ in range(30):
+        try:
+            mailpit_request_json("GET", "/api/v1/messages", expected={200})
+            return
+        except OSError:
+            time.sleep(1)
+        except urllib.error.URLError:
+            time.sleep(1)
+    raise RuntimeError(f"Mailpit API is not reachable at {MAILPIT_API_BASE_URL}")
+
+
+def clear_mailpit_messages() -> None:
+    mailpit_request_json("DELETE", "/api/v1/messages", expected={200, 204})
+
+
+def wait_for_mailpit_message(email: str) -> dict[str, Any]:
+    for _ in range(30):
+        messages = mailpit_request_json("GET", "/api/v1/messages", expected={200})
+        for summary in _mailpit_message_summaries(messages):
+            if email.lower() not in _mailpit_recipients(summary):
+                continue
+            message_id = _mailpit_message_id(summary)
+            if message_id:
+                detail = mailpit_request_json("GET", f"/api/v1/message/{urllib.parse.quote(message_id)}", expected={200})
+                if isinstance(detail, dict):
+                    return detail
+            if isinstance(summary, dict):
+                return summary
+        time.sleep(1)
+    raise RuntimeError(f"No Keycloak action email was captured for {email}")
+
+
+def extract_keycloak_action_link(message: dict[str, Any]) -> str:
+    body_parts = []
+    for key in ("HTML", "Text", "HTMLBody", "TextBody", "Body"):
+        value = message.get(key)
+        if isinstance(value, str):
+            body_parts.append(value)
+    body = "\n".join(body_parts)
+    for match in re.findall(r"https?://[^\"'<>\\\s]+", body):
+        link = html.unescape(match).rstrip(").,;")
+        if "/login-actions/action-token" in link:
+            return normalize_keycloak_link(link)
+    raise RuntimeError(f"Unable to find Keycloak action-token link in captured email: {summarize_mailpit_message(message)}")
+
+
+def complete_member_action_email(action_link: str, password: str) -> None:
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(CookieJar()), NoRedirect)
+    location, body = open_keycloak_url(opener, action_link)
+    for _ in range(8):
+        if location.startswith(BACKOFFICE_REDIRECT_URI):
+            return
+        if location and not body:
+            location, body = open_keycloak_url(opener, location)
+            if location.startswith(BACKOFFICE_REDIRECT_URI):
+                return
+        if "account updated" in extract_page_text(body).lower():
+            return
+        try:
+            form = parse_login_form(body, context=f"action-email page at {location}: {extract_page_text(body)[:300]}")
+        except RuntimeError:
+            next_link = extract_first_href(body)
+            if not next_link:
+                raise
+            location, body = open_keycloak_url(opener, next_link)
+            continue
+        fields = action_email_form_fields(form, password)
+        location, body = submit_form(opener, form.action, fields)
+    raise RuntimeError(f"Keycloak action-email flow did not finish; last url={location}; text={extract_page_text(body)[:300]}")
+
+
+def action_email_form_fields(form: LoginFormParser, password: str) -> dict[str, str]:
+    fields = dict(form.inputs)
+    has_password_field = False
+    for name in list(fields):
+        lowered = name.lower()
+        if "password" in lowered and "confirm" not in lowered:
+            fields[name] = password
+            has_password_field = True
+        if "password" in lowered and "confirm" in lowered:
+            fields[name] = password
+    if has_password_field:
+        fields.setdefault("password-new", password)
+        fields.setdefault("password-confirm", password)
+    fields.setdefault("submitAction", "Save")
+    return fields
+
+
+def open_keycloak_url(opener: urllib.request.OpenerDirector, url: str) -> tuple[str, str]:
+    request = urllib.request.Request(normalize_keycloak_link(url))
+    try:
+        with opener.open(request, timeout=10) as response:
+            return response.geturl(), response.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as exc:
+        if exc.code in {302, 303}:
+            return exc.headers.get("Location", ""), ""
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Keycloak action link returned HTTP {exc.code}: {detail[:500]}") from exc
+
+
+def normalize_keycloak_link(link: str) -> str:
+    if link.startswith("/"):
+        return urllib.parse.urljoin(f"{KEYCLOAK_BASE_URL}/", link.lstrip("/"))
+    parsed = urllib.parse.urlparse(link)
+    if parsed.hostname in {"127.0.0.1", "localhost"}:
+        base = urllib.parse.urlparse(KEYCLOAK_BASE_URL)
+        parsed = parsed._replace(scheme=base.scheme, netloc=base.netloc)
+    return urllib.parse.urlunparse(parsed)
+
+
+def extract_first_href(page: str) -> str | None:
+    for match in re.findall(r"href=[\"']([^\"']+)[\"']", page, flags=re.IGNORECASE):
+        link = html.unescape(match)
+        if "/login-actions/" in link:
+            return normalize_keycloak_link(link)
+    return None
+
+
+def summarize_mailpit_message(message: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": message.get("ID") or message.get("Id") or message.get("id"),
+        "subject": message.get("Subject") or message.get("subject"),
+        "to": _mailpit_recipients(message),
+    }
+
+
+def _mailpit_message_summaries(payload: Any) -> list[dict[str, Any]]:
+    if isinstance(payload, dict) and isinstance(payload.get("messages"), list):
+        return [item for item in payload["messages"] if isinstance(item, dict)]
+    if isinstance(payload, dict) and isinstance(payload.get("Messages"), list):
+        return [item for item in payload["Messages"] if isinstance(item, dict)]
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    return []
+
+
+def _mailpit_message_id(message: dict[str, Any]) -> str | None:
+    for key in ("ID", "Id", "id"):
+        value = message.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
+def _mailpit_recipients(message: dict[str, Any]) -> list[str]:
+    recipients: list[str] = []
+    for key in ("To", "to"):
+        value = message.get(key)
+        if isinstance(value, str):
+            recipients.append(value.lower())
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, str):
+                    recipients.append(item.lower())
+                if isinstance(item, dict):
+                    address = item.get("Address") or item.get("address") or item.get("Email") or item.get("email")
+                    if isinstance(address, str):
+                        recipients.append(address.lower())
+    return recipients
+
+
+def mailpit_request_json(method: str, path: str, *, expected: set[int]) -> Any:
+    request = urllib.request.Request(
+        f"{MAILPIT_API_BASE_URL}{path}",
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            status = response.status
+            raw = response.read()
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+        raw = exc.read()
+        if status not in expected:
+            detail = raw.decode("utf-8", errors="replace")
+            raise RuntimeError(f"Unexpected Mailpit HTTP {status} for {method} {path}: {detail}") from exc
+    if status not in expected:
+        raise RuntimeError(f"Unexpected Mailpit HTTP {status} for {method} {path}")
+    if not raw:
+        return {}
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except json.JSONDecodeError:
+        return {}
 
 
 def ensure_keycloak_user(admin_token: str, username: str, email: str, password: str) -> dict[str, Any]:
@@ -905,7 +1181,7 @@ def keycloak_logout(id_token: str) -> dict[str, Any]:
 
 def keycloak_api_get(admin_token: str, path: str) -> Any:
     request = urllib.request.Request(
-        f"{KEYCLOAK_BASE_URL}/admin/realms/{KEYCLOAK_REALM}/{path}",
+        keycloak_admin_url(path),
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     with urllib.request.urlopen(request, timeout=10) as response:
@@ -918,7 +1194,7 @@ def keycloak_api_json(method: str, admin_token: str, path: str, body: Any, *, ex
 
 def keycloak_api_json_status(method: str, admin_token: str, path: str, body: Any, *, expected: set[int]) -> int:
     request = urllib.request.Request(
-        f"{KEYCLOAK_BASE_URL}/admin/realms/{KEYCLOAK_REALM}/{path}",
+        keycloak_admin_url(path),
         data=json.dumps(body, separators=(",", ":")).encode("utf-8"),
         method=method,
         headers={"Authorization": f"Bearer {admin_token}", "Content-Type": "application/json"},
@@ -938,7 +1214,7 @@ def keycloak_api_json_status(method: str, admin_token: str, path: str, body: Any
 
 def keycloak_api_delete(admin_token: str, path: str, *, expected: set[int]) -> None:
     request = urllib.request.Request(
-        f"{KEYCLOAK_BASE_URL}/admin/realms/{KEYCLOAK_REALM}/{path}",
+        keycloak_admin_url(path),
         method="DELETE",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -952,6 +1228,12 @@ def keycloak_api_delete(admin_token: str, path: str, *, expected: set[int]) -> N
             raise RuntimeError(f"Unexpected Keycloak HTTP {status} for DELETE {path}: {detail}") from exc
     if status not in expected:
         raise RuntimeError(f"Unexpected Keycloak HTTP {status} for DELETE {path}")
+
+
+def keycloak_admin_url(path: str) -> str:
+    base = f"{KEYCLOAK_BASE_URL}/admin/realms/{KEYCLOAK_REALM}"
+    stripped = path.strip("/")
+    return f"{base}/{stripped}" if stripped else base
 
 
 def request_json(
@@ -981,6 +1263,39 @@ def request_json(
     if status not in expected:
         raise RuntimeError(f"Unexpected HTTP {status} for {method} {url}: {payload}")
     return status, payload
+
+
+def request_json_with_retry(
+    method: str,
+    url: str,
+    *,
+    actor_token: str | None = None,
+    headers: dict[str, str] | None = None,
+    body: dict[str, Any] | None = None,
+    expected: set[int],
+    attempts: int = 3,
+) -> tuple[int, dict[str, Any]]:
+    last_error: RuntimeError | None = None
+    for attempt in range(attempts):
+        try:
+            status, payload = request_json(
+                method,
+                url,
+                actor_token=actor_token,
+                headers=headers,
+                body=body,
+                expected=expected | {503},
+            )
+            if status in expected:
+                return status, payload
+            last_error = RuntimeError(f"Transient HTTP {status} for {method} {url}: {payload}")
+        except RuntimeError as exc:
+            last_error = exc
+        if attempt < attempts - 1:
+            time.sleep(1)
+    if last_error:
+        raise last_error
+    raise RuntimeError(f"Request retry failed unexpectedly for {method} {url}")
 
 
 def parse_json_body(raw: bytes) -> dict[str, Any]:

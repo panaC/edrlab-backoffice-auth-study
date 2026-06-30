@@ -109,6 +109,23 @@ def keycloak_admin_token_url() -> str:
     return os.environ.get("KEYCLOAK_ADMIN_TOKEN_URL", f"{oidc_issuer()}/protocol/openid-connect/token")
 
 
+def keycloak_backoffice_redirect_uri() -> str | None:
+    value = os.environ.get("KEYCLOAK_BACKOFFICE_REDIRECT_URI", "").strip()
+    return value or None
+
+
+def keycloak_onboarding_action_emails_enabled() -> bool:
+    value = os.environ.get("KEYCLOAK_ONBOARDING_ACTION_EMAILS", "false").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def keycloak_onboarding_action_email_lifespan_seconds() -> int | None:
+    value = os.environ.get("KEYCLOAK_ONBOARDING_ACTION_EMAIL_LIFESPAN_SECONDS", "").strip()
+    if not value:
+        return None
+    return int(value)
+
+
 def bootstrap_config() -> dict[str, str]:
     subject = os.environ.get("BOOTSTRAP_SUPER_ADMIN_SUBJECT", "bootstrap-super-admin-subject")
     subject_file = os.environ.get("BOOTSTRAP_SUPER_ADMIN_SUBJECT_FILE")

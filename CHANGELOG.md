@@ -8,6 +8,13 @@ This repository is a study repository, not a released software package. Changelo
 
 ### Changed
 
+- Implemented Keycloak-side onboarding preparation for newly invited accounts:
+  required first-login actions are set for members and privileged accounts, and
+  optional `execute-actions-email` dispatch can be enabled for SMTP-backed
+  runtimes.
+- Added an automated SMTP-backed onboarding email e2e path using Docker Mailpit,
+  including a `run-onboarding-email-e2e.sh` wrapper and an `E2E-012` test case
+  that captures the Keycloak action email and completes member activation.
 - Configured the Phase 6 `access-control/` Keycloak bootstrap with OTP
   step-up ACR/LoA evidence for privileged onboarding, mapping `iam-normal` to
   LoA 1 and `iam-privileged` to LoA 2.

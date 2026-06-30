@@ -32,6 +32,8 @@ IAM_ATTRS = {
     "iam.schema_version",
     "iam.last_control_plane_mutation_at",
 }
+MEMBER_ONBOARDING_ACTIONS = ("VERIFY_EMAIL", "UPDATE_PASSWORD")
+PRIVILEGED_ONBOARDING_ACTIONS = ("VERIFY_EMAIL", "UPDATE_PASSWORD", "CONFIGURE_TOTP")
 
 
 class KeycloakStateStore:
@@ -41,10 +43,16 @@ class KeycloakStateStore:
         *,
         backoffice_client_id: str,
         service_client_ids: list[str],
+        send_onboarding_action_emails: bool = False,
+        onboarding_action_email_redirect_uri: str | None = None,
+        onboarding_action_email_lifespan_seconds: int | None = None,
     ) -> None:
         self.client = client
         self.backoffice_client_id = backoffice_client_id
         self.service_client_ids = service_client_ids
+        self.send_onboarding_action_emails = send_onboarding_action_emails
+        self.onboarding_action_email_redirect_uri = onboarding_action_email_redirect_uri
+        self.onboarding_action_email_lifespan_seconds = onboarding_action_email_lifespan_seconds
         self._lock = threading.Lock()
 
     @classmethod
@@ -53,6 +61,9 @@ class KeycloakStateStore:
             KeycloakAdminClient.from_env(),
             backoffice_client_id=config.oidc_client_id(),
             service_client_ids=[config.service_client_id()],
+            send_onboarding_action_emails=config.keycloak_onboarding_action_emails_enabled(),
+            onboarding_action_email_redirect_uri=config.keycloak_backoffice_redirect_uri(),
+            onboarding_action_email_lifespan_seconds=config.keycloak_onboarding_action_email_lifespan_seconds(),
         )
 
     def load(self) -> dict[str, Any]:
@@ -216,10 +227,12 @@ class KeycloakStateStore:
                 continue
             user = self._resolve_user_for_account(account, original)
             user_id = _required_string(user, "id")
-            self._write_user_profile(user, account)
             is_new_account = original is None
+            self._write_user_profile(user, account)
             self._write_account_type_role(user_id, _required_string(account, "accountType"), is_new_account)
             self._write_service_role_assignments(user_id, account, service_roles)
+            if is_new_account:
+                self._send_onboarding_action_email(user_id, account)
 
     def _resolve_user_for_account(
         self,
@@ -251,7 +264,7 @@ class KeycloakStateStore:
                 "emailVerified": False,
                 "firstName": _required_string(account, "name"),
                 "lastName": "",
-                "requiredActions": [],
+                "requiredActions": list(_onboarding_required_actions(_required_string(account, "accountType"))),
                 "attributes": {},
             }
         )
@@ -274,6 +287,13 @@ class KeycloakStateStore:
         _set_attr(attrs, "iam.schema_version", _string(account.get("schemaVersion")) or SCHEMA_VERSION)
         _set_attr(attrs, "iam.last_control_plane_mutation_at", _now())
         first_name, last_name = _name_parts(_required_string(account, "name"), user)
+        required_actions = _string_list(user.get("requiredActions"))
+        if (
+            account.get("lifecycle") == "invited"
+            and not account.get("linkedSubject")
+            and user.get("emailVerified") is not True
+        ):
+            required_actions = _merged_unique(required_actions, _onboarding_required_actions(_required_string(account, "accountType")))
         payload = {
             "id": user["id"],
             "username": user.get("username") or account["email"],
@@ -282,10 +302,26 @@ class KeycloakStateStore:
             "emailVerified": user.get("emailVerified") is True,
             "firstName": first_name,
             "lastName": last_name,
-            "requiredActions": user.get("requiredActions") if isinstance(user.get("requiredActions"), list) else [],
+            "requiredActions": required_actions,
             "attributes": attrs,
         }
         self.client.update_user(str(user["id"]), payload)
+
+    def _send_onboarding_action_email(self, user_id: str, account: dict[str, Any]) -> None:
+        if not self.send_onboarding_action_emails:
+            return
+        if account.get("lifecycle") != "invited" or account.get("linkedSubject"):
+            return
+        actions = list(_onboarding_required_actions(_required_string(account, "accountType")))
+        if not actions:
+            return
+        self.client.execute_actions_email(
+            user_id,
+            actions,
+            client_id=self.backoffice_client_id,
+            redirect_uri=self.onboarding_action_email_redirect_uri,
+            lifespan_seconds=self.onboarding_action_email_lifespan_seconds,
+        )
 
     def _write_account_type_role(self, user_id: str, account_type: str, is_new_account: bool) -> None:
         desired = ACCOUNT_TYPE_ROLE_BY_TYPE.get(account_type)
@@ -429,6 +465,28 @@ class KeycloakAdminClient:
 
     def update_user(self, user_id: str, payload: dict[str, Any]) -> None:
         self._request_no_json("PUT", f"users/{urllib.parse.quote(user_id)}", payload, expected={200, 204})
+
+    def execute_actions_email(
+        self,
+        user_id: str,
+        actions: list[str],
+        *,
+        client_id: str,
+        redirect_uri: str | None,
+        lifespan_seconds: int | None,
+    ) -> None:
+        query: dict[str, str] = {"client_id": client_id}
+        if redirect_uri:
+            query["redirect_uri"] = redirect_uri
+        if lifespan_seconds is not None:
+            query["lifespan"] = str(lifespan_seconds)
+        encoded_query = urllib.parse.urlencode(query)
+        self._request_no_json(
+            "PUT",
+            f"users/{urllib.parse.quote(user_id)}/execute-actions-email?{encoded_query}",
+            actions,
+            expected={200, 204},
+        )
 
     def list_client_roles(self, client_id: str) -> list[dict[str, Any]]:
         client_uuid = self._client_uuid(client_id)
@@ -649,6 +707,22 @@ def _assigned_service_roles_json(value: Any) -> str:
         return "[]"
     role_ids = sorted(item.strip() for item in value if isinstance(item, str) and item.strip())
     return json.dumps(role_ids, separators=(",", ":"))
+
+
+def _onboarding_required_actions(account_type: str) -> tuple[str, ...]:
+    if account_type in {"admin", "super-admin"}:
+        return PRIVILEGED_ONBOARDING_ACTIONS
+    return MEMBER_ONBOARDING_ACTIONS
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str) and item.strip()]
+
+
+def _merged_unique(existing: list[str], additions: tuple[str, ...]) -> list[str]:
+    return list(dict.fromkeys([*existing, *additions]))
 
 
 def _string(value: Any) -> str:

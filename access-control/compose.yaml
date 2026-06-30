@@ -35,6 +35,9 @@ services:
       OIDC_CLIENT_ID: ${KEYCLOAK_BACKOFFICE_CLIENT_ID:-backoffice}
       OIDC_CLIENT_SECRET: ${KEYCLOAK_BACKOFFICE_CLIENT_SECRET:-change-me-backoffice-secret}
       OIDC_EXPECTED_AUDIENCE: ${KEYCLOAK_SERVICE_CLIENT_ID:-access-check-demo-service}
+      KEYCLOAK_BACKOFFICE_REDIRECT_URI: ${KEYCLOAK_BACKOFFICE_REDIRECT_URI:-http://localhost:9999/callback}
+      KEYCLOAK_ONBOARDING_ACTION_EMAILS: ${KEYCLOAK_ONBOARDING_ACTION_EMAILS:-false}
+      KEYCLOAK_ONBOARDING_ACTION_EMAIL_LIFESPAN_SECONDS: "${KEYCLOAK_ONBOARDING_ACTION_EMAIL_LIFESPAN_SECONDS:-}"
       IAM_NORMAL_ACR: ${IAM_NORMAL_ACR:-iam-normal}
       IAM_PRIVILEGED_ACR: ${IAM_PRIVILEGED_ACR:-iam-privileged}
       IAM_SERVICE_INTROSPECTION_URL: http://keycloak:8080/realms/${KEYCLOAK_REALM:-access-control-mvp}/protocol/openid-connect/token/introspect
@@ -68,6 +71,13 @@ services:
     depends_on:
       - iam-api
       - keycloak
+
+  mailpit:
+    image: ${MAILPIT_IMAGE:-axllent/mailpit:v1.27.8}
+    profiles: ["tools"]
+    ports:
+      - "${MAILPIT_UI_HOST_BIND:-127.0.0.1}:${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_HOST_BIND:-127.0.0.1}:${MAILPIT_SMTP_PORT:-1025}:1025"
 
   keycloak-bootstrap:
     build: .
@@ -179,11 +189,16 @@ services:
       KEYCLOAK_BACKOFFICE_CLIENT_ID: ${KEYCLOAK_BACKOFFICE_CLIENT_ID:-backoffice}
       KEYCLOAK_BACKOFFICE_CLIENT_SECRET: ${KEYCLOAK_BACKOFFICE_CLIENT_SECRET:-change-me-backoffice-secret}
       KEYCLOAK_BACKOFFICE_REDIRECT_URI: ${KEYCLOAK_BACKOFFICE_REDIRECT_URI:-http://localhost:9999/callback}
+      KEYCLOAK_ONBOARDING_ACTION_EMAILS: ${KEYCLOAK_ONBOARDING_ACTION_EMAILS:-false}
       KEYCLOAK_SUPER_ADMIN_USERNAME: ${KEYCLOAK_SUPER_ADMIN_USERNAME:-mvp-super-admin}
       KEYCLOAK_SUPER_ADMIN_PASSWORD: ${KEYCLOAK_SUPER_ADMIN_PASSWORD:-change-me-super-admin-password}
       BOOTSTRAP_SUPER_ADMIN_EMAIL: ${BOOTSTRAP_SUPER_ADMIN_EMAIL:-super-admin@example.test}
       HUMAN_E2E_FIXTURE_PASSWORD: ${HUMAN_E2E_FIXTURE_PASSWORD:-change-me-human-e2e-password}
       HUMAN_E2E_EVIDENCE_ROOT: /app/evidence
+      KEYCLOAK_SMTP_HOST: ${KEYCLOAK_SMTP_HOST:-mailpit}
+      KEYCLOAK_SMTP_PORT: ${KEYCLOAK_SMTP_PORT:-1025}
+      KEYCLOAK_SMTP_FROM: ${KEYCLOAK_SMTP_FROM:-no-reply@example.test}
+      MAILPIT_API_BASE_URL: ${MAILPIT_API_BASE_URL:-http://mailpit:8025}
       IAM_NORMAL_ACR: ${IAM_NORMAL_ACR:-iam-normal}
       IAM_PRIVILEGED_ACR: ${IAM_PRIVILEGED_ACR:-iam-privileged}
       IAM_API_BASE_URL: http://iam-api:8000

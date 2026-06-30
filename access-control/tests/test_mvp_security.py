@@ -1931,6 +1931,7 @@ class FakeKeycloakAdminClient:
         self.users: dict[str, dict[str, object]] = {}
         self.roles: dict[str, dict[str, dict[str, object]]] = {}
         self.assignments: dict[str, dict[str, set[str]]] = {}
+        self.action_emails: list[dict[str, object]] = []
         self.next_user = 1
 
     def add_user(
@@ -1986,6 +1987,25 @@ class FakeKeycloakAdminClient:
 
     def update_user(self, user_id: str, payload: dict[str, object]) -> None:
         self.users[user_id] = {**payload, "id": user_id}
+
+    def execute_actions_email(
+        self,
+        user_id: str,
+        actions: list[str],
+        *,
+        client_id: str,
+        redirect_uri: str | None,
+        lifespan_seconds: int | None,
+    ) -> None:
+        self.action_emails.append(
+            {
+                "userId": user_id,
+                "actions": list(actions),
+                "clientId": client_id,
+                "redirectUri": redirect_uri,
+                "lifespanSeconds": lifespan_seconds,
+            }
+        )
 
     def list_client_roles(self, client_id: str) -> list[dict[str, object]]:
         return [dict(role) for role in self.roles.get(client_id, {}).values()]
@@ -2128,6 +2148,68 @@ class KeycloakStateStoreTests(unittest.TestCase):
             "corr-check",
         )
         self.assertEqual(decision["decision"], "allow")
+
+    def test_new_invited_member_is_prepared_for_keycloak_onboarding(self) -> None:
+        created = self.service.create_account(
+            "acc-super",
+            {
+                "email": "prepared-member@example.test",
+                "organization": "MVP Organization",
+                "name": "Prepared Member",
+                "accountType": "member",
+            },
+            "corr-create-prepared-member",
+        )
+
+        user = self.client.find_user_by_attribute("iam.account_id", created["accountId"])
+        self.assertIsNotNone(user)
+        assert user is not None
+        self.assertEqual(user["requiredActions"], ["VERIFY_EMAIL", "UPDATE_PASSWORD"])
+        self.assertFalse(user["emailVerified"])
+        self.assertEqual(self.client.action_emails, [])
+
+    def test_new_invited_admin_sends_privileged_onboarding_actions_when_enabled(self) -> None:
+        store = KeycloakStateStore(
+            self.client,  # type: ignore[arg-type]
+            backoffice_client_id="backoffice",
+            service_client_ids=[DEFAULT_SERVICE_ID],
+            send_onboarding_action_emails=True,
+            onboarding_action_email_redirect_uri="http://localhost:9999/callback",
+            onboarding_action_email_lifespan_seconds=900,
+        )
+        service = AccessControlService(
+            store,
+            AuditWriter(self.audit_path),
+            StaticSubjectTokenValidator(self.subject_tokens),
+        )
+
+        created = service.create_account(
+            "acc-super",
+            {
+                "email": "prepared-admin@example.test",
+                "organization": "MVP Organization",
+                "name": "Prepared Admin",
+                "accountType": "admin",
+            },
+            "corr-create-prepared-admin",
+        )
+
+        user = self.client.find_user_by_attribute("iam.account_id", created["accountId"])
+        self.assertIsNotNone(user)
+        assert user is not None
+        self.assertEqual(user["requiredActions"], ["VERIFY_EMAIL", "UPDATE_PASSWORD", "CONFIGURE_TOTP"])
+        self.assertEqual(
+            self.client.action_emails,
+            [
+                {
+                    "userId": user["id"],
+                    "actions": ["VERIFY_EMAIL", "UPDATE_PASSWORD", "CONFIGURE_TOTP"],
+                    "clientId": "backoffice",
+                    "redirectUri": "http://localhost:9999/callback",
+                    "lifespanSeconds": 900,
+                }
+            ],
+        )
 
     def test_keycloak_account_type_drift_blocks_actor_resolution(self) -> None:
         self.client.assignments["super-sub"]["backoffice"].add("account-type-admin")

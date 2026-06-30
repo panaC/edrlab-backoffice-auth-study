@@ -42,7 +42,7 @@ Last reviewed: 2026-06-29
 
 | Item | Included |
 | --- | --- |
-| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, user-token and service-token audience mappers, OTP step-up ACR/LoA configuration for privileged onboarding, and smoke-test user. |
+| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, user-token and service-token audience mappers, invited-user required actions for onboarding, optional Keycloak action-email dispatch, OTP step-up ACR/LoA configuration for privileged onboarding, and smoke-test user. |
 | IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
 | Demo protected service | Split into `access-control/src/access_check_demo_service/`; exposes `GET /access-check-demo`, returns JSON `OK` or `KO`, obtains a client-credentials service token, and calls `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
@@ -78,6 +78,11 @@ The main variables are:
 | `KEYCLOAK_REALM` | Local MVP realm name. |
 | `KC_BOOTSTRAP_ADMIN_USERNAME` / `KC_BOOTSTRAP_ADMIN_PASSWORD` | Local Keycloak bootstrap administrator used by the scripted realm setup. |
 | `KEYCLOAK_BACKOFFICE_CLIENT_ID` / `KEYCLOAK_BACKOFFICE_CLIENT_SECRET` | Confidential OIDC client used for the backoffice user Authorization Code flow and user-token introspection. |
+| `KEYCLOAK_BACKOFFICE_REDIRECT_URI` | Redirect URI used by the local backoffice Authorization Code flow and optional onboarding action-email links. |
+| `KEYCLOAK_ONBOARDING_ACTION_EMAILS` | Optional Keycloak `execute-actions-email` dispatch for newly invited accounts. Defaults to `false` because the local Docker runtime does not configure SMTP. |
+| `KEYCLOAK_ONBOARDING_ACTION_EMAIL_LIFESPAN_SECONDS` | Optional action-email link lifespan when `KEYCLOAK_ONBOARDING_ACTION_EMAILS=true`. Leave empty to use Keycloak's default. |
+| `KEYCLOAK_SMTP_HOST` / `KEYCLOAK_SMTP_PORT` / `KEYCLOAK_SMTP_FROM` | Local SMTP settings used by the onboarding email e2e script when it configures Keycloak for Mailpit. |
+| `MAILPIT_IMAGE` / `MAILPIT_API_BASE_URL` | Mailpit container image and in-network API URL used by the onboarding email e2e script. |
 | `KEYCLOAK_SERVICE_CLIENT_ID` / `KEYCLOAK_SERVICE_CLIENT_SECRET` | Confidential service client used by `access-check-demo-service` with OAuth client credentials. |
 | `KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_ID` / `KEYCLOAK_IAM_CONTROL_PLANE_CLIENT_SECRET` | Confidential Keycloak service-account client used by the IAM API to read and mutate managed IAM state through Keycloak Admin REST. |
 | `KEYCLOAK_SUPER_ADMIN_USERNAME` / `KEYCLOAK_SUPER_ADMIN_PASSWORD` | Local non-production super-admin user used by Docker smoke verification of admin API calls. |
@@ -171,6 +176,22 @@ The script writes a Docker wrapper log to
 Docker test container writes its own readable log and JSON summary under
 `access-control/evidence/human-e2e-script-<timestamp>/`.
 
+To verify the optional SMTP-backed onboarding action-email path, run:
+
+```bash
+bash access-control/scripts/run-onboarding-email-e2e.sh
+```
+
+This starts the Docker Mailpit SMTP catcher, runs the IAM API with
+`KEYCLOAK_ONBOARDING_ACTION_EMAILS=true`, configures the local Keycloak realm
+SMTP settings for Mailpit, creates a fresh invited member through the IAM API,
+captures the Keycloak action email, completes the required first-login actions,
+and activates the account through `POST /iam/onboarding/activate`. Mailpit is
+available on `http://127.0.0.1:8025` during the run. The wrapper log is written
+to `access-control/evidence/onboarding-email-e2e-docker-<timestamp>/`, and the
+script evidence remains under
+`access-control/evidence/human-e2e-script-<timestamp>/`.
+
 ## Evidence
 
 Collect local runtime evidence with:
@@ -235,6 +256,7 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 - The Keycloak bootstrap configures OTP step-up for the MVP privileged onboarding path, but production OTP reset/recovery governance, brute-force posture review, monitoring, and support procedures still require explicit operations evidence.
 - Admin Console-to-IAM API calls authenticate with bearer user tokens in the runtime. `X-Actor-Account-Id` is ignored unless `IAM_ALLOW_DEV_ACTOR_HEADER=true` is set explicitly for focused local tests.
 - Onboarding activation now uses bearer-derived identity evidence and rejects request-body attempts to provide `subject`, `emailVerified`, `acr`, or other authorization-significant fields.
+- Invited Keycloak users created by the IAM API receive first-login required actions: `VERIFY_EMAIL` and `UPDATE_PASSWORD` for members, plus `CONFIGURE_TOTP` for `admin` and `super-admin` accounts. The local runtime prepares those actions but does not send Keycloak action emails unless `KEYCLOAK_ONBOARDING_ACTION_EMAILS=true` and realm SMTP is configured.
 - Indeterminate Keycloak state read failures are fail-closed and create local audit events with `operation=iam.request.indeterminate` or `authorization.check.indeterminate`.
 - The runtime does not include the Admin Console UI yet.
 - Direct Keycloak drift detection is represented by invariant checks in this runtime, including rejection of direct protected-service role mappings on users. Member service-role assignments are stored in IAM Control Plane-managed attributes. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
