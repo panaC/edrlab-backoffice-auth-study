@@ -26,6 +26,7 @@ Last reviewed: 2026-06-29
 - [Super-Admin Bootstrap](#super-admin-bootstrap)
 - [API Reference](#api-reference)
 - [Expected Outputs](#expected-outputs)
+- [Human E2E Testing](#human-e2e-testing)
 - [Evidence](#evidence)
 - [Backup and Restore](#backup-and-restore)
 - [Stop and Reset](#stop-and-reset)
@@ -41,7 +42,7 @@ Last reviewed: 2026-06-29
 
 | Item | Included |
 | --- | --- |
-| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, user-token and service-token audience mappers, and smoke-test user. |
+| Keycloak runtime | Local Docker Keycloak with a scripted MVP realm, managed IAM User Profile attributes, account-type roles, service-role metadata, canonical member service-role assignments in managed attributes, backoffice OIDC client, service client, IAM Control Plane service account, user-token and service-token audience mappers, OTP step-up ACR/LoA configuration for privileged onboarding, and smoke-test user. |
 | IAM API | `GET /healthz`, `/iam/me`, Keycloak-backed account management, onboarding activation, service-role management, service-role assignment, `POST /iam/authorization/check`, super-admin audit reads, OIDC subject-token introspection, and OIDC service-token validation. |
 | Demo protected service | Split into `access-control/src/access_check_demo_service/`; exposes `GET /access-check-demo`, returns JSON `OK` or `KO`, obtains a client-credentials service token, and calls `POST /iam/authorization/check`. |
 | Audit storage | Local append-only JSON Lines file with one complete event object per physical line. |
@@ -82,6 +83,8 @@ The main variables are:
 | `KEYCLOAK_SUPER_ADMIN_USERNAME` / `KEYCLOAK_SUPER_ADMIN_PASSWORD` | Local non-production super-admin user used by Docker smoke verification of admin API calls. |
 | `KEYCLOAK_BOOTSTRAP_RESET_FIXTURE_PASSWORDS` | Optional local recovery switch. Set to `true` only when the Keycloak bootstrap should reset existing non-production fixture user passwords. |
 | `KEYCLOAK_SMOKE_USERNAME` / `KEYCLOAK_SMOKE_EMAIL` / `KEYCLOAK_SMOKE_PASSWORD` | Local non-production user used by the Docker smoke verification. |
+| `IAM_NORMAL_ACR` | Non-privileged ACR value mapped to Keycloak LoA 1. Defaults to `iam-normal`. |
+| `IAM_PRIVILEGED_ACR` | Privileged ACR value required by IAM onboarding for `admin` and `super-admin` activation and mapped to Keycloak LoA 2. Defaults to `iam-privileged`. |
 | `BOOTSTRAP_SUPER_ADMIN_EMAIL` | First `super-admin` email used by the bootstrap process. |
 | `BOOTSTRAP_SUPER_ADMIN_NAME` | First `super-admin` display name. |
 | `BOOTSTRAP_SUPER_ADMIN_ORGANIZATION` | First `super-admin` organization. |
@@ -133,6 +136,40 @@ Endpoint families, request schemas, response examples, and common error codes ar
 - the smoke check proves a real Keycloak access token can authorize `access-check-demo-service`;
 - the smoke check creates or reuses a member account whose lifecycle, subject link, account type, and service-role assignment are stored in Keycloak;
 - the smoke check proves an invalid bearer value returns `KO`.
+
+## Human E2E Testing
+
+Use [Human E2E Test Process](./human-e2e-test-process.md) when a tester needs a
+manual pass with real Keycloak login/logout, member self-consultation, protected
+demo service access, admin member management, super-admin-only operations, audit
+consultation, and evidence capture.
+
+The current MVP runtime still has no Admin Console UI. Human e2e testing
+therefore uses Keycloak browser authentication plus IAM Control Plane API calls
+as the temporary operator workflow, while `access-check-demo-service` remains the
+real protected-service access check. Admin activation requests Keycloak
+step-up/OTP and records the observed `iam-privileged` ACR without storing OTP
+seed values. The helper
+`access-control/scripts/human-e2e-login.py` performs the browser Authorization
+Code + PKCE login and local callback capture needed to obtain short-lived bearer
+tokens for the manual API calls.
+
+Run the Docker-backed interactive script with:
+
+```bash
+bash access-control/scripts/run-human-e2e.sh
+```
+
+For a non-interactive pass that still writes script evidence:
+
+```bash
+bash access-control/scripts/run-human-e2e.sh --yes
+```
+
+The script writes a Docker wrapper log to
+`access-control/evidence/human-e2e-docker-<timestamp>/docker-run.log`. The
+Docker test container writes its own readable log and JSON summary under
+`access-control/evidence/human-e2e-script-<timestamp>/`.
 
 ## Evidence
 
@@ -195,6 +232,7 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 - `dev-sub:<subject>` remains available only for focused unit tests and non-OIDC local fallback paths.
 - `FileStateStore` remains available for focused unit tests and non-OIDC local fallback paths. The Docker MVP runtime uses `KeycloakStateStore` as the IAM state backend.
 - The Docker MVP validates OIDC access tokens through Keycloak introspection rather than local JWT signature validation. Local JWT validation, JWKS caching, algorithm allowlisting, and signing-key rotation behavior are not runtime paths in this slice.
+- The Keycloak bootstrap configures OTP step-up for the MVP privileged onboarding path, but production OTP reset/recovery governance, brute-force posture review, monitoring, and support procedures still require explicit operations evidence.
 - Admin Console-to-IAM API calls authenticate with bearer user tokens in the runtime. `X-Actor-Account-Id` is ignored unless `IAM_ALLOW_DEV_ACTOR_HEADER=true` is set explicitly for focused local tests.
 - Onboarding activation now uses bearer-derived identity evidence and rejects request-body attempts to provide `subject`, `emailVerified`, `acr`, or other authorization-significant fields.
 - Indeterminate Keycloak state read failures are fail-closed and create local audit events with `operation=iam.request.indeterminate` or `authorization.check.indeterminate`.

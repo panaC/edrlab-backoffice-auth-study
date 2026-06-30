@@ -72,6 +72,7 @@ the accepted schema policy ([Keycloak IAM Schema Policy](./keycloak-iam-schema-p
 | Realm SMTP | Configure realm email so Keycloak can send action emails for verification and credential setup ([Keycloak email configuration](https://www.keycloak.org/docs/latest/server_admin/#configuring-email-for-a-realm)). |
 | Public registration | Keep disabled; account creation starts in the IAM Control Plane API, not in public Keycloak self-registration ([MVP scope - Out of Scope](../evaluation/mvp-scope.md#out-of-scope)). |
 | Backoffice client | Use the configured backoffice Authorization Code + PKCE client, default `backoffice`, and a redirect URI controlled by the Admin Console ([access-control runbook](../../access-control/README.md#what-this-slice-includes)). |
+| ACR/LoA step-up | Map `iam-normal` to LoA 1 and `iam-privileged` to LoA 2, and bind the browser flow so privileged authentication requests require OTP before Keycloak emits the privileged ACR ([ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md)). |
 | User provisioning | Create or update the Keycloak user through the controlled provisioning path, using the same email as the IAM invited account ([Keycloak IAM Schema Policy](./keycloak-iam-schema-policy.md#edit-permissions)). |
 | Member actions | Send `VERIFY_EMAIL` and `UPDATE_PASSWORD` through `execute-actions-email`. |
 | Privileged actions | Send `VERIFY_EMAIL`, `UPDATE_PASSWORD`, and `CONFIGURE_TOTP` when the accepted OTP privileged-authentication path applies ([Keycloak OTP](https://www.keycloak.org/docs/latest/server_admin/#creating-an-otp), [ADR 0003](../decisions/0003-accept-otp-for-privileged-authentication.md)). |
@@ -137,8 +138,10 @@ The endpoint schema and runtime error codes are defined in the
 
 - The Phase 6 runtime does not include the Admin Console UI yet
   ([MVP scope - Current MVP State](../evaluation/mvp-scope.md#current-mvp-state)).
-- OTP operational safeguards remain open MVP evidence. Production privileged
-  activation must not be accepted without explicit closure or accepted risk
+- OTP step-up is configured and verified for the MVP runtime privileged
+  activation path, but reset/recovery posture, brute-force safeguards,
+  monitoring, and support operations remain partial MVP evidence. Production
+  privileged activation must not be accepted without explicit closure or accepted risk
   (`FR-034`, `FR-043`, `FR-044`;
   [MVP scope - Production Readiness Gaps](../evaluation/mvp-scope.md#production-readiness-gaps)).
 - Full Keycloak schema migration and drift workflow evidence remains partial

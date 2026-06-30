@@ -4,10 +4,39 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-06-30
+
+### Changed
+
+- Configured the Phase 6 `access-control/` Keycloak bootstrap with OTP
+  step-up ACR/LoA evidence for privileged onboarding, mapping `iam-normal` to
+  LoA 1 and `iam-privileged` to LoA 2.
+- Updated the Docker human e2e runner so admin onboarding provisions a
+  non-production OTP fixture credential, performs a real Keycloak OTP step-up
+  login, records the observed privileged ACR without storing OTP seed values,
+  and completes downstream admin/member/protected-service flows.
+- Updated the human e2e service-role catalog check to disable and archive its
+  run-scoped service role after proving super-admin catalog mutation, preventing
+  active test roles from accumulating in the runtime catalog.
+- Updated runtime, onboarding, MVP scope, and human e2e documentation to mark
+  the privileged OTP activation path as verified while keeping OTP
+  reset/recovery, brute-force, monitoring, and support posture as partial
+  production-readiness evidence.
+
 ## 2026-06-29
 
 ### Added
 
+- Added `access-control/human-e2e-test-process.md` with a manual human e2e
+  checklist for real Keycloak authentication, login/logout handling, member
+  self-service, protected demo-service access, admin member management,
+  super-admin-only operations, audit consultation, and evidence capture.
+- Added `access-control/scripts/human-e2e-login.py` as a local manual-test
+  helper for browser Authorization Code + PKCE login and localhost callback token
+  capture.
+- Added a Docker-backed human e2e runner with
+  `access-control/scripts/run-human-e2e.sh`, a `human-e2e` Compose tool service,
+  and readable script evidence logs under `access-control/evidence/`.
 - Added Docker-volume backup and restore scripts for the Phase 6 `access-control/` MVP runtime, including checksum verification, a restore confirmation gate, and generated-backup ignore rules.
 - Added `docs/architecture/keycloak-iam-onboarding.md` as the dedicated Keycloak/IAM onboarding architecture note.
 - Added `SEC-DRIFT-002` regression evidence for direct Keycloak lifecycle drift, including fail-closed authorization denial and `drift_detected` audit assertions.

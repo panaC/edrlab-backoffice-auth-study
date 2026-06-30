@@ -10,7 +10,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
+from .config import DEFAULT_PRIVILEGED_ACR, DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
 
 
 def env(name: str, default: str) -> str:
@@ -43,6 +43,9 @@ SMOKE_EMAIL = env("KEYCLOAK_SMOKE_EMAIL", "mvp-member@example.test")
 SMOKE_PASSWORD = env("KEYCLOAK_SMOKE_PASSWORD", "change-me-member-password")
 BACKOFFICE_REDIRECT_URI = env("KEYCLOAK_BACKOFFICE_REDIRECT_URI", "http://localhost:9999/callback")
 RESET_FIXTURE_PASSWORDS = env_bool("KEYCLOAK_BOOTSTRAP_RESET_FIXTURE_PASSWORDS")
+NORMAL_ACR = env("IAM_NORMAL_ACR", "iam-normal")
+PRIVILEGED_ACR = env("IAM_PRIVILEGED_ACR", DEFAULT_PRIVILEGED_ACR)
+STEP_UP_FLOW_ALIAS = env("KEYCLOAK_STEP_UP_FLOW_ALIAS", "iam-browser-step-up")
 
 IAM_USER_ATTRIBUTES = (
     "iam.account_id",
@@ -53,7 +56,7 @@ IAM_USER_ATTRIBUTES = (
     "iam.schema_version",
     "iam.last_control_plane_mutation_at",
 )
-REALM_EVENT_TYPES = ("LOGIN", "LOGIN_ERROR", "LOGOUT", "CODE_TO_TOKEN", "CLIENT_LOGIN")
+REALM_EVENT_TYPES = ("LOGIN", "LOGIN_ERROR", "LOGOUT", "CODE_TO_TOKEN", "CLIENT_LOGIN", "UPDATE_TOTP", "REMOVE_TOTP")
 USER_PROFILE_UNMANAGED_ATTRIBUTE_POLICY = "DISABLED"
 
 
@@ -61,6 +64,8 @@ def main() -> None:
     wait_for_keycloak()
     token = admin_token()
     ensure_realm(token)
+    ensure_acr_loa_mapping(token)
+    ensure_step_up_browser_flow(token)
     ensure_user_profile(token)
     backoffice_uuid = ensure_client(token, backoffice_client_payload())
     service_uuid = ensure_client(token, service_client_payload())
@@ -124,6 +129,10 @@ def ensure_realm(token: str) -> None:
         "enabledEventTypes": list(REALM_EVENT_TYPES),
         "adminEventsEnabled": True,
         "adminEventsDetailsEnabled": True,
+        "otpPolicyType": "totp",
+        "otpPolicyAlgorithm": "HmacSHA1",
+        "otpPolicyDigits": 6,
+        "otpPolicyPeriod": 30,
     }
     existing = api_get(token, f"realms/{KEYCLOAK_REALM}", ok_missing=True)
     if existing is None:
@@ -134,6 +143,148 @@ def ensure_realm(token: str) -> None:
         merged = merge_realm_representation(existing, payload)
         if merged != existing:
             api_json("PUT", token, f"realms/{KEYCLOAK_REALM}", merged, expected={200, 204})
+
+
+def ensure_acr_loa_mapping(token: str) -> None:
+    realm = api_get(token, f"realms/{KEYCLOAK_REALM}")
+    if not isinstance(realm, dict):
+        raise RuntimeError("Unexpected Keycloak realm response")
+    attributes = dict(realm.get("attributes") if isinstance(realm.get("attributes"), dict) else {})
+    desired_map = {NORMAL_ACR: 1, PRIVILEGED_ACR: 2}
+    current_map = _json_object(attributes.get("acr.loa.map"))
+    if current_map == desired_map:
+        return
+    attributes["acr.loa.map"] = json.dumps(desired_map, separators=(",", ":"))
+    api_json("PUT", token, f"realms/{KEYCLOAK_REALM}", {**realm, "attributes": attributes}, expected={200, 204})
+
+
+def ensure_step_up_browser_flow(token: str) -> None:
+    if flow_by_alias(token, STEP_UP_FLOW_ALIAS) is None:
+        create_step_up_browser_flow(token)
+    realm = api_get(token, f"realms/{KEYCLOAK_REALM}")
+    if not isinstance(realm, dict):
+        raise RuntimeError("Unexpected Keycloak realm response")
+    if realm.get("browserFlow") != STEP_UP_FLOW_ALIAS:
+        api_json("PUT", token, f"realms/{KEYCLOAK_REALM}", {**realm, "browserFlow": STEP_UP_FLOW_ALIAS}, expected={200, 204})
+
+
+def create_step_up_browser_flow(token: str) -> None:
+    api_json(
+        "POST",
+        token,
+        f"realms/{KEYCLOAK_REALM}/authentication/flows",
+        {
+            "alias": STEP_UP_FLOW_ALIAS,
+            "providerId": "basic-flow",
+            "topLevel": True,
+            "builtIn": False,
+        },
+        expected={201, 204},
+    )
+    add_execution(token, STEP_UP_FLOW_ALIAS, "auth-cookie", "ALTERNATIVE")
+
+    auth_flow = f"{STEP_UP_FLOW_ALIAS}-auth"
+    loa1_flow = f"{STEP_UP_FLOW_ALIAS}-loa1"
+    loa2_flow = f"{STEP_UP_FLOW_ALIAS}-loa2"
+    add_subflow(token, STEP_UP_FLOW_ALIAS, auth_flow, "ALTERNATIVE")
+    add_subflow(token, auth_flow, loa1_flow, "CONDITIONAL")
+    configure_loa_execution(token, loa1_flow, 1, 36000)
+    add_execution(token, loa1_flow, "auth-username-password-form", "REQUIRED")
+    add_subflow(token, auth_flow, loa2_flow, "CONDITIONAL")
+    configure_loa_execution(token, loa2_flow, 2, 0)
+    add_execution(token, loa2_flow, "auth-otp-form", "REQUIRED")
+
+
+def flow_by_alias(token: str, alias: str) -> dict[str, Any] | None:
+    flows = api_get(token, f"realms/{KEYCLOAK_REALM}/authentication/flows")
+    if not isinstance(flows, list):
+        raise RuntimeError("Unexpected Keycloak authentication-flow response")
+    matches = [flow for flow in flows if isinstance(flow, dict) and flow.get("alias") == alias]
+    if len(matches) > 1:
+        raise RuntimeError(f"Multiple Keycloak authentication flows named {alias}")
+    return matches[0] if matches else None
+
+
+def add_execution(token: str, flow_alias: str, provider_id: str, requirement: str) -> dict[str, Any]:
+    encoded_flow = urllib.parse.quote(flow_alias, safe="")
+    api_json(
+        "POST",
+        token,
+        f"realms/{KEYCLOAK_REALM}/authentication/flows/{encoded_flow}/executions/execution",
+        {"provider": provider_id},
+        expected={201, 204},
+    )
+    execution = execution_by_provider(token, flow_alias, provider_id)
+    set_execution_requirement(token, flow_alias, execution, requirement)
+    return execution
+
+
+def add_subflow(token: str, parent_alias: str, child_alias: str, requirement: str) -> None:
+    encoded_parent = urllib.parse.quote(parent_alias, safe="")
+    api_json(
+        "POST",
+        token,
+        f"realms/{KEYCLOAK_REALM}/authentication/flows/{encoded_parent}/executions/flow",
+        {"alias": child_alias, "type": "basic-flow", "provider": "basic-flow"},
+        expected={201, 204},
+    )
+    execution = execution_by_display_name(token, parent_alias, child_alias)
+    set_execution_requirement(token, parent_alias, execution, requirement)
+
+
+def configure_loa_execution(token: str, flow_alias: str, level: int, max_age_seconds: int) -> None:
+    execution = add_execution(token, flow_alias, "conditional-level-of-authentication", "REQUIRED")
+    api_json(
+        "POST",
+        token,
+        f"realms/{KEYCLOAK_REALM}/authentication/executions/{execution['id']}/config",
+        {
+            "alias": f"{STEP_UP_FLOW_ALIAS}-loa-{level}",
+            "config": {
+                "loa-condition-level": str(level),
+                "loa-max-age": str(max_age_seconds),
+            },
+        },
+        expected={201, 204},
+    )
+
+
+def execution_by_provider(token: str, flow_alias: str, provider_id: str) -> dict[str, Any]:
+    matches = [
+        item
+        for item in flow_executions(token, flow_alias)
+        if item.get("providerId") == provider_id and item.get("authenticationConfig") is None
+    ]
+    if not matches:
+        raise RuntimeError(f"Execution provider {provider_id} not found in Keycloak flow {flow_alias}")
+    return matches[-1]
+
+
+def execution_by_display_name(token: str, flow_alias: str, display_name: str) -> dict[str, Any]:
+    matches = [item for item in flow_executions(token, flow_alias) if item.get("displayName") == display_name]
+    if not matches:
+        raise RuntimeError(f"Execution {display_name} not found in Keycloak flow {flow_alias}")
+    return matches[-1]
+
+
+def flow_executions(token: str, flow_alias: str) -> list[dict[str, Any]]:
+    encoded_flow = urllib.parse.quote(flow_alias, safe="")
+    executions = api_get(token, f"realms/{KEYCLOAK_REALM}/authentication/flows/{encoded_flow}/executions")
+    if not isinstance(executions, list):
+        raise RuntimeError("Unexpected Keycloak authentication-flow execution response")
+    return [item for item in executions if isinstance(item, dict)]
+
+
+def set_execution_requirement(token: str, flow_alias: str, execution: dict[str, Any], requirement: str) -> None:
+    encoded_flow = urllib.parse.quote(flow_alias, safe="")
+    payload = {**execution, "requirement": requirement}
+    api_json(
+        "PUT",
+        token,
+        f"realms/{KEYCLOAK_REALM}/authentication/flows/{encoded_flow}/executions",
+        payload,
+        expected={200, 204},
+    )
 
 
 def ensure_user_profile(token: str) -> None:
@@ -430,6 +581,10 @@ def merge_realm_representation(existing: dict[str, Any], desired: dict[str, Any]
         "eventsExpiration",
         "adminEventsEnabled",
         "adminEventsDetailsEnabled",
+        "otpPolicyType",
+        "otpPolicyAlgorithm",
+        "otpPolicyDigits",
+        "otpPolicyPeriod",
     ):
         if key in desired:
             merged[key] = desired[key]
@@ -562,6 +717,16 @@ def _dict(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         return {}
     return {str(key): item for key, item in value.items() if isinstance(key, str)}
+
+
+def _json_object(value: Any) -> dict[str, Any]:
+    if not isinstance(value, str):
+        return {}
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def _string(value: Any) -> str:
