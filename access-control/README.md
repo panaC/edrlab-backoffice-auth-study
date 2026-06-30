@@ -74,6 +74,7 @@ The main variables are:
 | Variable | Purpose |
 | --- | --- |
 | `IAM_SERVICE_TOKEN` | Shared local service token used by `access-check-demo-service` to call `POST /iam/authorization/check`. |
+| `IAM_CALL_TIMEOUT_MS` | Per-attempt timeout, in milliseconds, used by `access-check-demo-service` when calling `POST /iam/authorization/check`. Defaults to `500` |
 | `KEYCLOAK_IMAGE` | Pinned local Keycloak image used by Docker Compose. |
 | `KEYCLOAK_REALM` | Local MVP realm name. |
 | `KC_BOOTSTRAP_ADMIN_USERNAME` / `KC_BOOTSTRAP_ADMIN_PASSWORD` | Local Keycloak bootstrap administrator used by the scripted realm setup. |
@@ -202,6 +203,8 @@ bash access-control/scripts/collect-evidence.sh
 
 Evidence is written to `access-control/evidence/<timestamp>/` and is ignored by Git. The evidence includes Docker Compose service status, the Docker test summary, and the Docker Keycloak smoke result.
 
+The IAM API and demo protected service emit structured technical JSON logs to container stderr. These logs include request completion metadata (`method`, `path`, `status`, `elapsedMs`, `correlationId`), authorization-check timing, demo-to-IAM dependency timing, and client-disconnect events. They intentionally do not log bearer tokens, service tokens, request bodies, passwords, OTP values, client secrets, or raw subject tokens. Durable business/security evidence remains in the append-only audit JSONL file.
+
 ## Backup and Restore
 
 The local MVP stores durable runtime state in two Docker volumes:
@@ -258,6 +261,7 @@ RESET_CONFIRM=delete-access-control-mvp-state bash access-control/scripts/reset.
 - Onboarding activation now uses bearer-derived identity evidence and rejects request-body attempts to provide `subject`, `emailVerified`, `acr`, or other authorization-significant fields.
 - Invited Keycloak users created by the IAM API receive first-login required actions: `VERIFY_EMAIL` and `UPDATE_PASSWORD` for members, plus `CONFIGURE_TOTP` for `admin` and `super-admin` accounts. The local runtime prepares those actions but does not send Keycloak action emails unless `KEYCLOAK_ONBOARDING_ACTION_EMAILS=true` and realm SMTP is configured.
 - Indeterminate Keycloak state read failures are fail-closed and create local audit events with `operation=iam.request.indeterminate` or `authorization.check.indeterminate`.
+- Client disconnects while the IAM API or demo service writes a response are logged to technical container stderr with the correlation ID but are not durable business-audit indeterminate events.
 - The runtime does not include the Admin Console UI yet.
 - Direct Keycloak drift detection is represented by invariant checks in this runtime, including rejection of direct protected-service role mappings on users. Member service-role assignments are stored in IAM Control Plane-managed attributes. Full migration reporting, reconciliation workflow, and production direct-admin governance remain outside this slice.
 - Subject-link drift detection for direct `iam.linked_subject` edits is proposed but not implemented. The proposed direction is an EDRLab-controlled append-only subject-link ledger outside Keycloak; until accepted and tested, `SEC-DRIFT-004` remains open.

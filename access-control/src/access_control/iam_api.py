@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
@@ -12,6 +13,7 @@ from .config import audit_path
 from .http_util import JsonBodyValidationError, correlation_id, json_response, problem_response, read_json
 from .service import AccessControlService, ApiError
 from .store import state_store_from_env
+from .technical_logging import elapsed_ms, technical_log
 from .tokens import ServiceAuthenticator, TokenValidationError, service_authenticator_from_env
 
 
@@ -28,6 +30,7 @@ class IamHandler(BaseHTTPRequestHandler):
     server_version = "IamControlPlane/0.1"
 
     def log_message(self, format: str, *args: object) -> None:
+        # Use structured technical_log events instead of BaseHTTPRequestHandler text access logs.
         return
 
     @property
@@ -54,18 +57,25 @@ class IamHandler(BaseHTTPRequestHandler):
         self._handle("DELETE")
 
     def _handle(self, method: str) -> None:
+        started = time.perf_counter()
         parsed = urlparse(self.path)
         path = parsed.path
         corr = correlation_id(self.headers.get("X-Correlation-Id"))
+        status = 500
+        error_code: str | None = None
+        response_delivered = False
         try:
             result = self._dispatch(method, path, corr)
             status = result.pop("_status", 200) if isinstance(result, dict) else 200
-            json_response(self, status, result, corr)
+            response_delivered = self._json_response(status, result, corr)
         except ApiError as exc:
-            problem_response(self, exc.status, exc.code, exc.title, exc.detail, corr)
+            status = exc.status
+            error_code = exc.code
+            response_delivered = self._problem_response(exc.status, exc.code, exc.title, exc.detail, corr)
         except JsonBodyValidationError:
-            problem_response(
-                self,
+            status = 422
+            error_code = "validation_error"
+            response_delivered = self._problem_response(
                 422,
                 "validation_error",
                 "Unprocessable Entity",
@@ -73,20 +83,79 @@ class IamHandler(BaseHTTPRequestHandler):
                 corr,
             )
         except json.JSONDecodeError:
-            problem_response(self, 400, "invalid_json", "Invalid JSON", "Request body is not valid JSON.", corr)
+            status = 400
+            error_code = "invalid_json"
+            response_delivered = self._problem_response(
+                400,
+                "invalid_json",
+                "Invalid JSON",
+                "Request body is not valid JSON.",
+                corr,
+            )
         except Exception as exc:
             try:
                 self.service.audit_indeterminate_request(method, path, corr, exc)
             except Exception:
                 pass
-            problem_response(
-                self,
+            status = 503
+            error_code = "internal_error"
+            response_delivered = self._problem_response(
                 503,
                 "internal_error",
                 "Service Unavailable",
                 "The IAM Control Plane API could not safely handle the request.",
                 corr,
             )
+        finally:
+            self._log_request_completed(method, path, status, corr, started, response_delivered, error_code)
+
+    def _json_response(self, status: int, result: dict[str, object], corr: str) -> bool:
+        try:
+            json_response(self, status, result, corr)
+            return True
+        except (BrokenPipeError, ConnectionResetError):
+            self._log_client_disconnect(corr, status)
+            return False
+
+    def _problem_response(self, status: int, code: str, title: str, detail: str, corr: str) -> bool:
+        try:
+            problem_response(self, status, code, title, detail, corr)
+            return True
+        except (BrokenPipeError, ConnectionResetError):
+            self._log_client_disconnect(corr, status)
+            return False
+
+    def _log_client_disconnect(self, corr: str, status: int) -> None:
+        technical_log(
+            "client_disconnected_before_response",
+            component="iam-api",
+            correlationId=corr,
+            method=self.command,
+            path=urlparse(self.path).path,
+            intendedStatus=status,
+        )
+
+    def _log_request_completed(
+        self,
+        method: str,
+        path: str,
+        status: int,
+        corr: str,
+        started: float,
+        response_delivered: bool,
+        error_code: str | None,
+    ) -> None:
+        technical_log(
+            "http_request_completed",
+            component="iam-api",
+            correlationId=corr,
+            method=method,
+            path=path,
+            status=status,
+            errorCode=error_code,
+            elapsedMs=elapsed_ms(started, time.perf_counter()),
+            responseDelivered=response_delivered,
+        )
 
     def _dispatch(self, method: str, path: str, corr: str) -> dict[str, object]:
         if method == "GET" and path == "/healthz":

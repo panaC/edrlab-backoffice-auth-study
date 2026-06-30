@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import time
 import uuid
 from typing import Any
 
 from .audit import AuditWriter, build_event
 from .config import DEFAULT_PRIVILEGED_ACR, DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID, privileged_acr
 from .store import StateStore
+from .technical_logging import elapsed_ms, technical_log
 from .tokens import SubjectEvidence, SubjectTokenValidator, TokenValidationError, subject_token_validator_from_env
 
 
@@ -604,15 +606,26 @@ class AccessControlService:
         return self._change_assignment(actor_id, account_id, role_id, correlation_id, assign=False)
 
     def authorization_check(self, payload: dict[str, Any], correlation_id: str) -> dict[str, Any]:
+        started = time.perf_counter()
+        token_validated_at: float | None = None
+        state_loaded_at: float | None = None
+        service_id = "unresolved"
+        required_role = "unresolved"
         subject_token = self._required_string(payload, "subjectToken")
-        service_id = self._required_string(payload, "serviceId")
-        required_role = self._required_string(payload, "requiredRole")
-        subject = self._parse_subject_token(subject_token)
         account: dict[str, Any] | None = None
+        decision = "indeterminate"
+        reason = "unhandled"
         try:
+            service_id = self._required_string(payload, "serviceId")
+            required_role = self._required_string(payload, "requiredRole")
+            subject = self._parse_subject_token(subject_token)
+            token_validated_at = time.perf_counter()
             state = self.store.load()
+            state_loaded_at = time.perf_counter()
             role = state["serviceRoles"].get(required_role)
             if not role or role.get("serviceId") != service_id or role.get("status") != "active":
+                decision = "deny"
+                reason = "role_not_active"
                 return self._deny(correlation_id, service_id, required_role, "role_not_active")
             accounts = [
                 account
@@ -620,19 +633,32 @@ class AccessControlService:
                 if account.get("linkedSubject") == subject
             ]
             if len(accounts) != 1:
+                decision = "deny"
+                reason = "linked_account_not_found"
                 return self._deny(correlation_id, service_id, required_role, "linked_account_not_found")
             account = accounts[0]
             self._assert_account_invariants(account)
             if account["lifecycle"] != "active":
+                decision = "deny"
+                reason = "account_not_active"
                 return self._deny(correlation_id, service_id, required_role, "account_not_active", account)
             if account["accountType"] in {"admin", "super-admin"}:
+                decision = "allow"
+                reason = "privileged_account"
                 return self._allow(correlation_id, service_id, required_role, account)
             if required_role in account.get("serviceRoles", []):
+                decision = "allow"
+                reason = "assigned_role"
                 return self._allow(correlation_id, service_id, required_role, account)
+            decision = "deny"
+            reason = "not_authorized"
             return self._deny(correlation_id, service_id, required_role, "not_authorized", account)
         except ApiError as exc:
             if exc.code == "iam_state_drift":
+                decision = "deny"
+                reason = "drift_detected"
                 return self._deny(correlation_id, service_id, required_role, "drift_detected", account)
+            reason = exc.code
             self._audit(
                 "authorization.check.indeterminate",
                 "service",
@@ -645,6 +671,7 @@ class AccessControlService:
             )
             raise
         except Exception:
+            reason = "invariant_violation"
             self._audit(
                 "authorization.check.indeterminate",
                 "service",
@@ -656,6 +683,17 @@ class AccessControlService:
                 client_id=DEFAULT_SERVICE_ID,
             )
             raise ApiError(503, "indeterminate", "Service Unavailable", "Authorization state cannot be safely determined.")
+        finally:
+            self._log_authorization_check_timing(
+                correlation_id,
+                service_id,
+                required_role,
+                decision,
+                reason,
+                started,
+                token_validated_at,
+                state_loaded_at,
+            )
 
     def read_audit_events(self, actor_id: str | None, correlation_id: str) -> list[dict[str, Any]]:
         actor = self._require_actor(actor_id)
@@ -971,6 +1009,36 @@ class AccessControlService:
         if not isinstance(value, str) or not value.strip():
             raise ApiError(422, "validation_error", "Unprocessable Entity", f"{field} is required.")
         return value.strip()
+
+    def _log_authorization_check_timing(
+        self,
+        correlation_id: str,
+        service_id: str,
+        required_role: str,
+        decision: str,
+        reason: str,
+        started: float,
+        token_validated_at: float | None,
+        state_loaded_at: float | None,
+    ) -> None:
+        now = time.perf_counter()
+        fields: dict[str, Any] = {}
+        if token_validated_at is not None:
+            fields["subjectTokenValidationMs"] = elapsed_ms(started, token_validated_at)
+        if state_loaded_at is not None:
+            from_time = token_validated_at if token_validated_at is not None else started
+            fields["stateLoadMs"] = elapsed_ms(from_time, state_loaded_at)
+        technical_log(
+            "authorization_check_timing",
+            component="iam-api",
+            correlationId=correlation_id,
+            serviceId=service_id,
+            requiredRole=required_role,
+            decision=decision,
+            reason=reason,
+            elapsedMs=elapsed_ms(started, now),
+            **fields,
+        )
 
 
 def _looks_like_keycloak_error(exc: BaseException) -> bool:

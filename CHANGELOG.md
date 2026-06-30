@@ -8,6 +8,13 @@ This repository is a study repository, not a released software package. Changelo
 
 ### Changed
 
+- Hardened the Phase 6 Keycloak smoke path diagnostics: IAM API and demo
+  service requests now emit structured technical JSON logs, response
+  BrokenPipe/client-disconnects stay out of durable indeterminate audit events,
+  `authorization/check` and demo-to-IAM calls emit timing evidence, and the demo
+  service IAM call timeout can be overridden for staging smoke investigation.
+- Compressed `ABSTRACT.md` into a short current-state summary for the Phase 6
+  access-control MVP runtime and remaining readiness gates.
 - Implemented Keycloak-side onboarding preparation for newly invited accounts:
   required first-login actions are set for members and privileged accounts, and
   optional `execute-actions-email` dispatch can be enabled for SMTP-backed

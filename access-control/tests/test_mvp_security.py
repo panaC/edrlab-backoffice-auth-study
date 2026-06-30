@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import tempfile
@@ -14,6 +16,7 @@ from pathlib import Path
 
 from access_check_demo_service.app import DemoHandler
 from access_control.audit import AuditWriter
+from access_control import iam_api
 from access_control import keycloak_bootstrap
 from access_control.config import DEFAULT_SERVICE_ID, DEFAULT_SERVICE_ROLE_ID
 from access_control.iam_api import IamServer
@@ -1354,6 +1357,55 @@ class IamHttpAuthenticationTests(unittest.TestCase):
         self.assertEqual(event["reasonCode"], "keycloak_indeterminate")
         self.assertEqual(event["correlationId"], "corr-keycloak-failure")
 
+    def test_client_disconnect_during_response_is_not_audited_as_indeterminate(self) -> None:
+        original_json_response = iam_api.json_response
+
+        def raise_broken_pipe(*_args: object, **_kwargs: object) -> None:
+            raise BrokenPipeError("client disconnected")
+
+        iam_api.json_response = raise_broken_pipe
+        try:
+            with self.assertRaises(Exception):
+                self._json_request(
+                    "GET",
+                    "/healthz",
+                    headers={"X-Correlation-Id": "corr-client-disconnect"},
+                )
+        finally:
+            iam_api.json_response = original_json_response
+
+        self.assertFalse(
+            any(
+                event.get("operation") == "iam.request.indeterminate"
+                and event.get("correlationId") == "corr-client-disconnect"
+                for event in self._audit_events()
+            )
+        )
+
+    def test_iam_request_completion_log_omits_authorization_secrets(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            status, body = self._json_request(
+                "GET",
+                "/healthz",
+                headers={
+                    "Authorization": "Bearer should-not-appear",
+                    "X-Correlation-Id": "corr-access-log",
+                },
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body, {"status": "ok"})
+        logs = [json.loads(line) for line in stderr.getvalue().splitlines() if line.strip()]
+        access_logs = [log for log in logs if log.get("event") == "http_request_completed"]
+        self.assertTrue(access_logs)
+        self.assertEqual(access_logs[-1]["component"], "iam-api")
+        self.assertEqual(access_logs[-1]["method"], "GET")
+        self.assertEqual(access_logs[-1]["path"], "/healthz")
+        self.assertEqual(access_logs[-1]["status"], 200)
+        self.assertEqual(access_logs[-1]["correlationId"], "corr-access-log")
+        self.assertNotIn("should-not-appear", stderr.getvalue())
+
     def _state(self) -> dict[str, object]:
         return self.service.store.load()
 
@@ -1690,6 +1742,7 @@ class HttpContractTests(unittest.TestCase):
             "IAM_SERVICE_TOKEN_URL": os.environ.get("IAM_SERVICE_TOKEN_URL"),
             "IAM_SERVICE_CLIENT_ID": os.environ.get("IAM_SERVICE_CLIENT_ID"),
             "IAM_SERVICE_CLIENT_SECRET": os.environ.get("IAM_SERVICE_CLIENT_SECRET"),
+            "IAM_CALL_TIMEOUT_MS": os.environ.get("IAM_CALL_TIMEOUT_MS"),
         }
 
     def tearDown(self) -> None:
@@ -1773,6 +1826,73 @@ class HttpContractTests(unittest.TestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(body, {"authorized": True, "result": "OK"})
         self.assertEqual(iam_server.requests[0]["authorization"], "Bearer service-access-token")  # type: ignore[attr-defined]
+
+    def test_demo_uses_configured_iam_call_timeout(self) -> None:
+        _, iam_url = self._serve(
+            StubIamHandler,
+            status=200,
+            body={"decision": "allow"},
+        )
+        os.environ["IAM_API_URL"] = f"{iam_url}/iam/authorization/check"
+        os.environ["IAM_SERVICE_TOKEN"] = "test-service-token"
+        os.environ["IAM_CALL_TIMEOUT_MS"] = "1"
+        _, demo_url = self._serve(DemoHandler)
+
+        request = urllib.request.Request(
+            f"{demo_url}/access-check-demo",
+            headers={"Authorization": "Bearer dev-sub:any-subject"},
+        )
+        with urllib.request.urlopen(request, timeout=2) as response:
+            body = json.loads(response.read().decode("utf-8"))
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(body, {"authorized": True, "result": "OK"})
+
+    def test_demo_request_and_dependency_logs_omit_bearer_tokens(self) -> None:
+        _, iam_url = self._serve(
+            StubIamHandler,
+            status=200,
+            body={"decision": "allow"},
+        )
+        os.environ["IAM_API_URL"] = f"{iam_url}/iam/authorization/check"
+        os.environ["IAM_SERVICE_TOKEN"] = "service-secret-should-not-appear"
+        _, demo_url = self._serve(DemoHandler)
+
+        request = urllib.request.Request(
+            f"{demo_url}/access-check-demo",
+            headers={
+                "Authorization": "Bearer user-token-should-not-appear",
+                "X-Correlation-Id": "corr-demo-access-log",
+            },
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            with urllib.request.urlopen(request, timeout=2) as response:
+                body = json.loads(response.read().decode("utf-8"))
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(body, {"authorized": True, "result": "OK"})
+        logs = [json.loads(line) for line in stderr.getvalue().splitlines() if line.strip()]
+        self.assertTrue(
+            any(
+                log.get("component") == "access-check-demo-service"
+                and log.get("event") == "http_request_completed"
+                and log.get("path") == "/access-check-demo"
+                and log.get("status") == 200
+                for log in logs
+            )
+        )
+        self.assertTrue(
+            any(
+                log.get("component") == "access-check-demo-service"
+                and log.get("event") == "iam_authorization_check_call_completed"
+                and log.get("dependency") == "iam-api"
+                and log.get("status") == 200
+                for log in logs
+            )
+        )
+        self.assertNotIn("user-token-should-not-appear", stderr.getvalue())
+        self.assertNotIn("service-secret-should-not-appear", stderr.getvalue())
 
     def _serve(
         self,

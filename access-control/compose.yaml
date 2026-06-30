@@ -66,7 +66,7 @@ services:
       IAM_SERVICE_CLIENT_ID: ${KEYCLOAK_SERVICE_CLIENT_ID:-access-check-demo-service}
       IAM_SERVICE_CLIENT_SECRET: ${KEYCLOAK_SERVICE_CLIENT_SECRET:-change-me-demo-service-secret}
       OIDC_TIMEOUT_MS: "1000"
-      IAM_CALL_TIMEOUT_MS: "500"
+      IAM_CALL_TIMEOUT_MS: ${IAM_CALL_TIMEOUT_MS:-500}
       IAM_CALL_RETRY_COUNT: "1"
     depends_on:
       - iam-api
