@@ -4,6 +4,23 @@ All notable project-level documentation changes should be recorded here.
 
 This repository is a study repository, not a released software package. Changelog entries should focus on meaningful changes to project phase, scope, requirements, documentation structure, evaluation artifacts, and Proof-of-Concept planning.
 
+## 2026-07-02
+
+### Added
+
+- Added an initial Ansible deployment baseline under `deployment/ansible/` for
+  provisioning a hardened Debian single-host Docker VPS, rendering the
+  access-control runtime environment from vault-backed variables, running the
+  existing bootstrap and verification scripts, and documenting current
+  deployment limitations.
+- Added a Docker-based Ansible lab with a control container and a minimal Debian
+  SSH target on a dedicated bridge IP, plus a synchronize deployment mode for
+  testing the runtime role from the current checkout.
+- Added an opt-in Caddy reverse-proxy/TLS Ansible role, a dedicated
+  `reverse-proxy.yml` playbook, deployment documentation for public and internal
+  TLS modes, and Docker lab HTTPS smoke checks for Keycloak, the IAM API, and
+  the demo service.
+
 ## 2026-06-30
 
 ### Changed

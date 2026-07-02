@@ -1,0 +1,2 @@
+*.sh text eol=lf
+deployment/ansible/test-lab/control/run-lab.sh text eol=lf

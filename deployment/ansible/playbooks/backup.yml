@@ -1,0 +1,11 @@
+---
+- name: Create a local access-control runtime backup
+  hosts: all
+  become: true
+  tasks:
+    - name: Run Docker volume backup
+      ansible.builtin.command: bash access-control/scripts/backup.sh
+      args:
+        chdir: "{{ access_control_app_dir }}"
+      become_user: "{{ deployment_admin_user }}"
+      changed_when: true

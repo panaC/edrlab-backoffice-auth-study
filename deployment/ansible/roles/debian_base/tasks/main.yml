@@ -1,0 +1,72 @@
+---
+- name: Assert Debian target
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Debian"
+    fail_msg: "This deployment baseline currently targets freshly installed Debian VPS hosts only."
+
+- name: Require SSH public key for managed admin user
+  ansible.builtin.assert:
+    that:
+      - deployment_admin_ssh_public_keys | length > 0
+    fail_msg: "Set deployment_admin_ssh_public_keys before disabling password or root SSH login."
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade installed packages
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ debian_base_packages }}"
+    state: present
+
+- name: Create managed admin group
+  ansible.builtin.group:
+    name: "{{ deployment_admin_user }}"
+    state: present
+
+- name: Set system timezone
+  community.general.timezone:
+    name: "{{ debian_base_timezone }}"
+
+- name: Create managed admin user
+  ansible.builtin.user:
+    name: "{{ deployment_admin_user }}"
+    group: "{{ deployment_admin_user }}"
+    groups:
+      - sudo
+    append: true
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+- name: Install managed admin SSH keys
+  ansible.posix.authorized_key:
+    user: "{{ deployment_admin_user }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ deployment_admin_ssh_public_keys }}"
+
+- name: Allow passwordless sudo for managed admin user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ deployment_admin_user }}"
+    content: "{{ deployment_admin_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Enable unattended security upgrades
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    owner: root
+    group: root
+    mode: "0644"

@@ -1,0 +1,106 @@
+---
+deployment_admin_user: deploy
+deployment_admin_ssh_public_keys: []
+
+debian_base_timezone: Etc/UTC
+debian_base_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - fail2ban
+  - git
+  - gnupg
+  - python3
+  - python3-apt
+  - rsync
+  - sudo
+  - tzdata
+  - unattended-upgrades
+  - ufw
+
+ssh_port: 22
+ssh_permit_root_login: false
+ssh_password_authentication: false
+ssh_extra_allow_users: []
+
+firewall_enabled: true
+firewall_allowed_tcp_ports:
+  - 22
+  - 80
+  - 443
+
+docker_users:
+  - "{{ deployment_admin_user }}"
+docker_daemon_config: {}
+
+access_control_app_dir: /opt/backoffice-auth-server
+access_control_deploy_method: git
+access_control_source_path: ""
+access_control_repo_url: git@example.invalid:edrlab/backoffice-auth-server.git
+access_control_repo_version: main
+access_control_run_bootstrap: true
+access_control_run_verify_after_deploy: false
+access_control_command_environment: {}
+
+access_control_host_bind:
+  keycloak: 127.0.0.1
+  iam_api: 127.0.0.1
+  demo: 127.0.0.1
+  mailpit_ui: 127.0.0.1
+  mailpit_smtp: 127.0.0.1
+
+access_control_ports:
+  keycloak: 8080
+  iam_api: 8000
+  demo: 8001
+  mailpit_ui: 8025
+  mailpit_smtp: 1025
+
+caddy_enabled: false
+caddy_admin_api: "127.0.0.1:2019"
+caddy_email: ""
+caddy_tls_mode: public
+caddy_sites:
+  - name: keycloak
+    address: "{{ public_keycloak_fqdn | default('auth.example.invalid') }}"
+    upstream: "http://127.0.0.1:{{ access_control_ports.keycloak }}"
+    tls_mode: "{{ caddy_tls_mode }}"
+  - name: iam-api
+    address: "{{ public_iam_fqdn | default('iam.example.invalid') }}"
+    upstream: "http://127.0.0.1:{{ access_control_ports.iam_api }}"
+    tls_mode: "{{ caddy_tls_mode }}"
+  - name: demo
+    address: "{{ public_demo_fqdn | default('demo.example.invalid') }}"
+    upstream: "http://127.0.0.1:{{ access_control_ports.demo }}"
+    tls_mode: "{{ caddy_tls_mode }}"
+
+access_control_env:
+  iam_service_token: "{{ vault_iam_service_token | default('CHANGE_ME_GENERATE_IAM_SERVICE_TOKEN') }}"
+  iam_call_timeout_ms: 500
+  keycloak_image: quay.io/keycloak/keycloak:26.6.1
+  keycloak_realm: access-control-mvp
+  keycloak_bootstrap_admin_username: admin
+  keycloak_bootstrap_admin_password: "{{ vault_keycloak_bootstrap_admin_password | default('CHANGE_ME_GENERATE_BOOTSTRAP_ADMIN_PASSWORD') }}"
+  keycloak_backoffice_client_id: backoffice
+  keycloak_backoffice_client_secret: "{{ vault_keycloak_backoffice_client_secret | default('CHANGE_ME_GENERATE_BACKOFFICE_CLIENT_SECRET') }}"
+  keycloak_backoffice_redirect_uri: http://localhost:9999/callback
+  keycloak_onboarding_action_emails: false
+  keycloak_onboarding_action_email_lifespan_seconds: ""
+  keycloak_smtp_host: ""
+  keycloak_smtp_port: 587
+  keycloak_smtp_from: "no-reply@{{ public_fqdn | default('example.invalid') }}"
+  mailpit_image: axllent/mailpit:v1.27.8
+  mailpit_api_base_url: http://mailpit:8025
+  keycloak_service_client_id: access-check-demo-service
+  keycloak_service_client_secret: "{{ vault_keycloak_service_client_secret | default('CHANGE_ME_GENERATE_DEMO_SERVICE_CLIENT_SECRET') }}"
+  keycloak_iam_control_plane_client_id: iam-control-plane
+  keycloak_iam_control_plane_client_secret: "{{ vault_keycloak_iam_control_plane_client_secret | default('CHANGE_ME_GENERATE_IAM_CONTROL_PLANE_CLIENT_SECRET') }}"
+  keycloak_super_admin_username: mvp-super-admin
+  keycloak_super_admin_password: "{{ vault_keycloak_super_admin_password | default('CHANGE_ME_GENERATE_SUPER_ADMIN_PASSWORD') }}"
+  keycloak_smoke_username: mvp-member
+  keycloak_smoke_email: "mvp-member@{{ public_fqdn | default('example.invalid') }}"
+  keycloak_smoke_password: "{{ vault_keycloak_smoke_password | default('CHANGE_ME_GENERATE_SMOKE_MEMBER_PASSWORD') }}"
+  bootstrap_super_admin_email: "{{ vault_bootstrap_super_admin_email | default('super-admin@example.invalid') }}"
+  bootstrap_super_admin_name: Initial Super Admin
+  bootstrap_super_admin_organization: MVP Organization
+  bootstrap_super_admin_subject: "{{ vault_bootstrap_super_admin_subject | default('CHANGE_ME_BOOTSTRAP_SUPER_ADMIN_SUBJECT') }}"

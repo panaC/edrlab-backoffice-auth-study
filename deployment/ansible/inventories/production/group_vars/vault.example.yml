@@ -1,0 +1,13 @@
+---
+# Copy this file to vault.yml, replace every value, then encrypt it:
+# ansible-vault encrypt inventories/production/group_vars/vault.yml
+
+vault_iam_service_token: "replace-with-generated-service-token"
+vault_keycloak_bootstrap_admin_password: "replace-with-generated-admin-password"
+vault_keycloak_backoffice_client_secret: "replace-with-generated-backoffice-secret"
+vault_keycloak_service_client_secret: "replace-with-generated-demo-service-secret"
+vault_keycloak_iam_control_plane_client_secret: "replace-with-generated-iam-control-plane-secret"
+vault_keycloak_super_admin_password: "replace-with-generated-super-admin-password"
+vault_keycloak_smoke_password: "replace-with-generated-smoke-password"
+vault_bootstrap_super_admin_email: "super-admin@example.org"
+vault_bootstrap_super_admin_subject: "replace-with-stable-bootstrap-subject"

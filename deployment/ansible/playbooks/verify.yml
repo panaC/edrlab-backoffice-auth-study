@@ -1,0 +1,18 @@
+---
+- name: Verify the deployed access-control runtime
+  hosts: all
+  become: true
+  tasks:
+    - name: Run Docker MVP verification
+      ansible.builtin.command: bash access-control/scripts/verify.sh
+      args:
+        chdir: "{{ access_control_app_dir }}"
+      become_user: "{{ deployment_admin_user }}"
+      changed_when: false
+
+    - name: Collect runtime evidence
+      ansible.builtin.command: bash access-control/scripts/collect-evidence.sh
+      args:
+        chdir: "{{ access_control_app_dir }}"
+      become_user: "{{ deployment_admin_user }}"
+      changed_when: true

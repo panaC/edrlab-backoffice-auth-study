@@ -1,0 +1,10 @@
+---
+access_control_secret_fields:
+  - iam_service_token
+  - keycloak_bootstrap_admin_password
+  - keycloak_backoffice_client_secret
+  - keycloak_service_client_secret
+  - keycloak_iam_control_plane_client_secret
+  - keycloak_super_admin_password
+  - keycloak_smoke_password
+  - bootstrap_super_admin_subject

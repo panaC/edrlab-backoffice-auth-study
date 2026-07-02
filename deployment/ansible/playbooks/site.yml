@@ -1,0 +1,9 @@
+---
+- name: Provision Debian host
+  import_playbook: provision.yml
+
+- name: Deploy access-control runtime
+  import_playbook: deploy-access-control.yml
+
+- name: Verify access-control runtime
+  import_playbook: verify.yml

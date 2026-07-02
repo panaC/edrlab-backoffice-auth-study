@@ -1,0 +1,10 @@
+---
+- name: Provision a hardened Debian Docker host
+  hosts: all
+  become: "{{ ansible_user | default('') != 'root' }}"
+  roles:
+    - debian_base
+    - docker_host
+    - firewall
+    - reverse_proxy
+    - ssh_hardening

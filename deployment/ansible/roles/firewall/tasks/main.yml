@@ -1,0 +1,30 @@
+---
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Allow configured TCP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ firewall_allowed_tcp_ports }}"
+  when: firewall_enabled | bool
+
+- name: Set default incoming policy
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  when: firewall_enabled | bool
+
+- name: Set default outgoing policy
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  when: firewall_enabled | bool
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+  when: firewall_enabled | bool

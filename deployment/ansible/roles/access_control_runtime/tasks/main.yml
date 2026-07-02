@@ -1,0 +1,116 @@
+---
+- name: Reject placeholder repository URL
+  ansible.builtin.assert:
+    that:
+      - access_control_repo_url is defined
+      - "'example.invalid' not in access_control_repo_url"
+    fail_msg: "Set access_control_repo_url to the deployable repository URL."
+  when: access_control_deploy_method == "git"
+
+- name: Reject unsupported runtime deployment method
+  ansible.builtin.assert:
+    that:
+      - access_control_deploy_method in ["git", "synchronize"]
+    fail_msg: "Set access_control_deploy_method to either git or synchronize."
+
+- name: Require source path for synchronize deployment
+  ansible.builtin.assert:
+    that:
+      - access_control_source_path | length > 0
+    fail_msg: "Set access_control_source_path when access_control_deploy_method is synchronize."
+  when: access_control_deploy_method == "synchronize"
+
+- name: Reject placeholder secrets
+  ansible.builtin.assert:
+    that:
+      - access_control_env[item] is defined
+      - not (access_control_env[item] | string is match('^(CHANGE_ME|replace-with-)'))
+    fail_msg: "Replace access_control_env.{{ item }} through inventories/production/group_vars/vault.yml."
+  loop: "{{ access_control_secret_fields }}"
+  no_log: true
+
+- name: Ensure application parent directory exists
+  ansible.builtin.file:
+    path: "{{ access_control_app_dir | dirname }}"
+    state: directory
+    owner: "{{ deployment_admin_user }}"
+    group: "{{ deployment_admin_user }}"
+    mode: "0755"
+
+- name: Check out access-control repository
+  ansible.builtin.git:
+    repo: "{{ access_control_repo_url }}"
+    dest: "{{ access_control_app_dir }}"
+    version: "{{ access_control_repo_version }}"
+    update: true
+    force: false
+  become_user: "{{ deployment_admin_user }}"
+  when: access_control_deploy_method == "git"
+
+- name: Synchronize control checkout to target
+  ansible.posix.synchronize:
+    src: "{{ access_control_source_path }}/"
+    dest: "{{ access_control_app_dir }}/"
+    archive: true
+    delete: false
+    rsync_opts:
+      - "--exclude=.git/"
+      - "--exclude=access-control/.env.local"
+      - "--exclude=access-control/backups/"
+      - "--exclude=access-control/evidence/"
+      - "--exclude=access-control/runtime/"
+      - "--exclude=deployment/ansible/inventories/*/hosts.yml"
+      - "--exclude=deployment/ansible/inventories/*/group_vars/vault.yml"
+  become: false
+  when: access_control_deploy_method == "synchronize"
+
+- name: Ensure synchronized checkout ownership
+  ansible.builtin.file:
+    path: "{{ access_control_app_dir }}"
+    state: directory
+    owner: "{{ deployment_admin_user }}"
+    group: "{{ deployment_admin_user }}"
+    recurse: true
+  when: access_control_deploy_method == "synchronize"
+
+- name: Normalize synchronized shell script line endings
+  ansible.builtin.shell: "find access-control deployment -type f -name '*.sh' -exec sed -i 's/\\r$//' {} +"
+  args:
+    chdir: "{{ access_control_app_dir }}"
+  changed_when: false
+  when: access_control_deploy_method == "synchronize"
+
+- name: Render runtime environment
+  ansible.builtin.template:
+    src: env.local.j2
+    dest: "{{ access_control_app_dir }}/access-control/.env.local"
+    owner: "{{ deployment_admin_user }}"
+    group: "{{ deployment_admin_user }}"
+    mode: "0600"
+  no_log: true
+
+- name: Start access-control runtime
+  ansible.builtin.command: bash access-control/scripts/start.sh
+  args:
+    chdir: "{{ access_control_app_dir }}"
+  environment: "{{ access_control_command_environment }}"
+  become_user: "{{ deployment_admin_user }}"
+  changed_when: true
+
+- name: Bootstrap access-control runtime
+  ansible.builtin.command: bash access-control/scripts/bootstrap.sh
+  args:
+    chdir: "{{ access_control_app_dir }}"
+  environment: "{{ access_control_command_environment }}"
+  become_user: "{{ deployment_admin_user }}"
+  changed_when: true
+  when: access_control_run_bootstrap | bool
+
+- name: Verify runtime after deployment
+  ansible.builtin.command: bash access-control/scripts/verify.sh
+  args:
+    chdir: "{{ access_control_app_dir }}"
+  environment: "{{ access_control_command_environment }}"
+  become_user: "{{ deployment_admin_user }}"
+  changed_when: false
+  when: access_control_run_verify_after_deploy | bool

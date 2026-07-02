@@ -1,0 +1,6 @@
+---
+- name: Deploy the Phase 6 access-control MVP runtime
+  hosts: all
+  become: true
+  roles:
+    - access_control_runtime

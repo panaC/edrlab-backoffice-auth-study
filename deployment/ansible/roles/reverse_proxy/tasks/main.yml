@@ -1,0 +1,67 @@
+---
+- name: Skip Caddy reverse proxy when disabled
+  ansible.builtin.debug:
+    msg: "Caddy reverse proxy is disabled. Set caddy_enabled=true to configure it."
+  when: not caddy_enabled | bool
+
+- name: Validate Caddy site configuration
+  ansible.builtin.assert:
+    that:
+      - caddy_sites | length > 0
+      - item.address is defined
+      - item.address | length > 0
+      - item.upstream is defined
+      - item.upstream | length > 0
+      - (item.tls_mode | default(caddy_tls_mode)) in ["public", "internal", "off"]
+    fail_msg: "Each caddy_sites entry needs address, upstream, and tls_mode public/internal/off."
+  loop: "{{ caddy_sites }}"
+  when: caddy_enabled | bool
+
+- name: Reject placeholder public TLS hostnames
+  ansible.builtin.assert:
+    that:
+      - "'example.invalid' not in item.address"
+    fail_msg: "Replace placeholder Caddy hostname {{ item.address }} before enabling public TLS."
+  loop: "{{ caddy_sites }}"
+  when:
+    - caddy_enabled | bool
+    - (item.tls_mode | default(caddy_tls_mode)) == "public"
+
+- name: Install Caddy
+  ansible.builtin.apt:
+    name: caddy
+    state: present
+    update_cache: true
+  when: caddy_enabled | bool
+
+- name: Ensure Caddy log directory exists
+  ansible.builtin.file:
+    path: /var/log/caddy
+    state: directory
+    owner: caddy
+    group: caddy
+    mode: "0750"
+  when: caddy_enabled | bool
+
+- name: Render Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify:
+    - reload caddy
+  when: caddy_enabled | bool
+
+- name: Validate Caddyfile
+  ansible.builtin.command: caddy validate --config /etc/caddy/Caddyfile
+  changed_when: false
+  when: caddy_enabled | bool
+
+- name: Enable Caddy service
+  ansible.builtin.service:
+    name: caddy
+    enabled: true
+    state: started
+  when: caddy_enabled | bool

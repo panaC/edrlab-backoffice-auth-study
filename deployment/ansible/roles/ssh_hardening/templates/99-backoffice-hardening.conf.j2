@@ -1,0 +1,14 @@
+# Managed by Ansible for the backoffice access-control VPS.
+Port {{ ssh_port }}
+PermitRootLogin {{ 'yes' if ssh_permit_root_login else 'no' }}
+PasswordAuthentication {{ 'yes' if ssh_password_authentication else 'no' }}
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+PubkeyAuthentication yes
+X11Forwarding no
+AllowTcpForwarding no
+ClientAliveInterval 300
+ClientAliveCountMax 2
+MaxAuthTries 3
+LoginGraceTime 30
+AllowUsers {{ ([deployment_admin_user] + ssh_extra_allow_users) | unique | join(' ') }}
